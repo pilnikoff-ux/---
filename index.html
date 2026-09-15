@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="uk" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Психологічний Навігатор &amp; Goal Makers</title>
+    <meta name="description" content="Платформа психологічного самопізнання, трансформації переконань та досягнення цілей за підтримки мультимодального ШІ-консиліуму" />
+    <meta property="og:title" content="Психологічний Навігатор &amp; Goal Makers" />
+    <meta property="og:description" content="Платформа психологічного самопізнання, трансформації переконань та досягнення цілей за підтримки мультимодального ШІ-консиліуму" />
+    <meta name="theme-color" content="#0c0a09" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Навігатор" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      (function() {
+        // Prevent third-party browser extensions (MetaMask, Web3 providers, etc.),
+        // missing client_id warnings from Google Identity, and benign dev-server WebSocket messages from crashing or displaying errors
+        function isIgnorable(msg) {
+          if (!msg) return false;
+          var str = String(msg).toLowerCase();
+          return (
+            str.includes('metamask') ||
+            str.includes('ethereum') ||
+            str.includes('web3') ||
+            str.includes('[vite]') ||
+            str.includes('websocket') ||
+            str.includes('gsi_logger') ||
+            str.includes('missing required parameter: client_id') ||
+            str.includes('failed to connect to metamask')
+          );
+        }
+
+        var originalConsoleError = console.error;
+        console.error = function() {
+          var args = Array.prototype.slice.call(arguments);
+          var joined = args.map(function(a) { return String(a); }).join(' ');
+          if (isIgnorable(joined)) {
+            return;
+          }
+          originalConsoleError.apply(console, arguments);
+        };
+
+        var originalConsoleWarn = console.warn;
+        console.warn = function() {
+          var args = Array.prototype.slice.call(arguments);
+          var joined = args.map(function(a) { return String(a); }).join(' ');
+          if (isIgnorable(joined)) {
+            return;
+          }
+          originalConsoleWarn.apply(console, arguments);
+        };
+
+        window.addEventListener('error', function(event) {
+          if (isIgnorable(event.message) || isIgnorable(event.filename)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return true;
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function(event) {
+          var reason = event.reason;
+          var msg = (typeof reason === 'string' ? reason : reason && reason.message) || '';
+          if (isIgnorable(msg)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return true;
+          }
+        }, true);
+      })();
+    </script>
+  </head>
+  <body class="bg-stone-950 text-stone-100 selection:bg-teal-500/30 selection:text-teal-200">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
