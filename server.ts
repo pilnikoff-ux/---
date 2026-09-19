@@ -1563,6 +1563,186 @@ ${JSON.stringify(goalData || {})}`;
   }
 });
 
+// Endpoint: Pre-Mortem (Премортем Гері Кляйна: аналіз повного краху з майбутнього)
+app.post('/api/gemini/pre-mortem', async (req: Request, res: Response) => {
+  try {
+    const { plan, expertRole, horizonMonths, contextNotes, lang } = req.body;
+
+    if (!plan || typeof plan !== 'string' || !plan.trim()) {
+      return res.status(400).json({ error: 'План є обов’язковим полем для аналізу Премортем' });
+    }
+
+    const language = lang === 'en' ? 'English' : lang === 'ru' ? 'Russian' : 'Ukrainian';
+    const horizon = horizonMonths || 6;
+    const persona = expertRole && expertRole.trim() ? expertRole.trim() : 'Безкомпромісний антикризовий стратег та профільний експерт ринку';
+
+    const systemInstruction = `Ти — світовий експерт з управління ризиками та авторської методології «Премортем» (Pre-Mortem) когнітивного психолога Гері Кляйна.
+
+ТВОЯ ЕКСПЕРТНА РОЛЬ У ЦЬОМУ ДІАЛОЗІ: ${persona}.
+ГОВОРИ ВІД ІМЕНІ ЦІЄЇ РОЛІ з максимальним рівнем експертної глибини, специфічного сленгу, математики, механіки ринку та психології поведінки.
+
+МЕТОДОЛОГІЧНА ПЕРЕДУМОВА ПРЕМОРТЕМ:
+Пройшло рівно ${horizon} місяців від сьогодні. План користувача зазнав ТОТАЛЬНОГО, КАТАСТРОФІЧНОГО КРАХУ. Всі гроші або час злито, ресурси вичерпано, мети не досягнуто. Цей крах — доконаний факт майбутнього.
+
+ЗАЛІЗНІ ПРАВИЛА ТВОЄЇ ВІДПОВІДІ (СТРОГО):
+1. НІКОЛИ НЕ ЗАСПАКОЮЙ КОРИСТУВАЧА. Жодних фраз на кшталт «все буде добре», «це цінний досвід», «ви на правильному шляху».
+2. НІЯКИХ ЗАГАЛЬНИХ РЕКОМЕНДАЦІЙ ЧИ ВОДИ («треба дисципліна», «треба диверсифікація»). Тільки конкретні механізми: slippage, funding rate, black swan, overconfidence bias, market regime shift, counterparty risk, margin call, customer churn, margin squeeze тощо.
+3. ПОТРІБНА «РОЗТЯЖКА», А НЕ «ВІДЧУТТЯ»! Кожен сигнал має бути вимірюваним фактом (цифра, метрика, співвідношення, зафіксована подія), а не абстрактним відчуттям.
+4. ЯКЩО У ПЛАНУ Є ТОТАЛЬНИЙ ІЗ'ЯН (fatal flaw) — СКАЖИ ПРО ЦЕ ПРЯМО ТА ХІРУРГІЧНО ВІДВЕРТО.
+5. МОВА: ${language}.
+6. ВІДПОВІДЬ СТРОГО У JSON за заданою схемою.
+
+СТРУКТУРНІ БЛОКИ:
+- failureCauses: РІВНО 7 імовірних детальних причин краху. Для кожної:
+  * number: від 1 до 7
+  * title: коротка пронизлива назва провалу
+  * mechanism: детальний опис ланцюжка подій і чому це сталося
+  * earlyWarningSignal: 1 вимірюваний цифровий/фактичний показник (метрика, відсоток, співвідношення, не відчуття!), що це починає відбуватися
+  * checkWeek: точний номер тижня від 1 до ${horizon * 4}, коли користувач ЗОБОВ'ЯЗАНИЙ це перевірити
+- firstEarlyRedFlag: найперший тривожний сигнал, який з'явився ще на перших тижнях і який проігнорували
+- monthlyChronicle: щомісячна хроніка розпаду за всі ${horizon} місяців (Місяць 1 по ${horizon}): що відбувалося і яка саме критична деталь призвела до наступної стадії катастрофи
+- mostDangerousFailure: який із 7 провалів НАЙНЕБЕЗПЕЧНІШИЙ, чому саме він смертельний для проєкту і чим він принципово відрізняється від інших 6
+- biggestHiddenAssumption: найбільше приховане хибне допущення, яке користувач зробив несвідомо і сприйняв як аксіому; відверта правда та діагноз фатального дефекту плану
+- revisedAntiFragilePlan: переписаний бронебійний план, де КОЖЕН із 7 провалів закритий контрзаходом. Що конкретно змінити і чому.
+- killSwitchChecklist: 3-5 пунктів передстартової перевірки (Kill-Switch Checklist). Що обов'язково перевірити ДО будь-яких витрат/запусків, і який ТОЧНИЙ РЕЗУЛЬТАТ означає: «НЕГАЙНО ВІДМОВИТИСЯ ВІД ПЛАНУ НАЗАВЖДИ»
+- adversaryPerspective: зіграй персону, яка найбільше виграє від краху плану (маркетмейкер, арбітражер, жорсткий конкурент, рекрутер або опонент). Що ця сторона зробить у тиждень твого запуску, і який прихований хід користувач би ніколи не помітив сам.`;
+
+    const prompt = `Проведи сесію Премортем (Pre-Mortem) для наступного плану:
+ПЛАН КОРИСТУВАЧА:
+"${plan}"
+
+ГОРИЗОНТ ЧАСУ: ${horizon} місяців (проєкт вже повністю розбився вщент).
+РОЛЬ ЕКСПЕРТА: ${persona}
+${contextNotes ? `ДОДАТКОВИЙ КОНТЕКСТ / РЕСУРСИ: ${contextNotes}` : ''}
+
+Надай детальний, хірургічно жорсткий аналіз краху за всіма 7 сценаріями, хронікою розпаду, поглядом конкурента та бронебійним переписаним планом.`;
+
+    const response = await generateWithRetryAndFallback({
+      preferredModel: 'gemini-3.8-flash',
+      fallbackModels: ['gemini-flash-latest', 'gemini-3.1-flash-lite'],
+      contents: prompt,
+      config: {
+        systemInstruction,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            failureCauses: {
+              type: Type.ARRAY,
+              description: 'Рівно 7 детальних сценаріїв краху',
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  number: { type: Type.NUMBER },
+                  title: { type: Type.STRING },
+                  mechanism: { type: Type.STRING },
+                  earlyWarningSignal: { type: Type.STRING, description: '1 вимірюваний цифровий/фактичний показник (метрика, факт)' },
+                  checkWeek: { type: Type.NUMBER, description: 'Точний тиждень аудиту' },
+                },
+                required: ['number', 'title', 'mechanism', 'earlyWarningSignal', 'checkWeek'],
+              },
+            },
+            firstEarlyRedFlag: { type: Type.STRING, description: 'Найперший тривожний сигнал' },
+            monthlyChronicle: {
+              type: Type.ARRAY,
+              description: 'Хроніка розпаду помісячно',
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  month: { type: Type.NUMBER },
+                  title: { type: Type.STRING },
+                  whatHappened: { type: Type.STRING },
+                  destructiveDetail: { type: Type.STRING },
+                },
+                required: ['month', 'title', 'whatHappened', 'destructiveDetail'],
+              },
+            },
+            mostDangerousFailure: {
+              type: Type.OBJECT,
+              properties: {
+                causeNumber: { type: Type.NUMBER },
+                title: { type: Type.STRING },
+                whyDeadliest: { type: Type.STRING },
+                fundamentalDifference: { type: Type.STRING },
+              },
+              required: ['causeNumber', 'title', 'whyDeadliest', 'fundamentalDifference'],
+            },
+            biggestHiddenAssumption: {
+              type: Type.OBJECT,
+              properties: {
+                assumption: { type: Type.STRING },
+                brutalTruth: { type: Type.STRING },
+                fatalFlawDiagnosis: { type: Type.STRING },
+              },
+              required: ['assumption', 'brutalTruth', 'fatalFlawDiagnosis'],
+            },
+            revisedAntiFragilePlan: {
+              type: Type.OBJECT,
+              properties: {
+                summary: { type: Type.STRING },
+                concreteSteps: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      causeNumber: { type: Type.NUMBER },
+                      originalVulnerability: { type: Type.STRING },
+                      revisedAction: { type: Type.STRING },
+                      whyRationale: { type: Type.STRING },
+                    },
+                    required: ['causeNumber', 'originalVulnerability', 'revisedAction', 'whyRationale'],
+                  },
+                },
+                newRulesOfEngagement: { type: Type.ARRAY, items: { type: Type.STRING } },
+              },
+              required: ['summary', 'concreteSteps', 'newRulesOfEngagement'],
+            },
+            killSwitchChecklist: {
+              type: Type.ARRAY,
+              description: '3-5 критичних пунктів перед запуском із критерієм повної відмови',
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.STRING },
+                  checkItem: { type: Type.STRING },
+                  killThreshold: { type: Type.STRING },
+                },
+                required: ['id', 'checkItem', 'killThreshold'],
+              },
+            },
+            adversaryPerspective: {
+              type: Type.OBJECT,
+              properties: {
+                persona: { type: Type.STRING },
+                launchWeekTrap: { type: Type.STRING },
+                invisibleStrike: { type: Type.STRING },
+              },
+              required: ['persona', 'launchWeekTrap', 'invisibleStrike'],
+            },
+          },
+          required: [
+            'failureCauses',
+            'firstEarlyRedFlag',
+            'monthlyChronicle',
+            'mostDangerousFailure',
+            'biggestHiddenAssumption',
+            'revisedAntiFragilePlan',
+            'killSwitchChecklist',
+            'adversaryPerspective',
+          ],
+        },
+      },
+    });
+
+    const parsed = JSON.parse(response.text || '{}');
+    res.json(parsed);
+  } catch (error: any) {
+    console.error('Error in pre-mortem:', error);
+    const msg = cleanErrorMessage(error);
+    res.status(500).json({ error: msg });
+  }
+});
+
 // Endpoint: Action Guide & Step-by-Step Execution Protocol
 app.post('/api/gemini/action-guide', async (req: Request, res: Response) => {
   try {
@@ -1927,6 +2107,129 @@ app.get('/api/telemetry/export-logs-csv', (req: Request, res: Response) => {
   res.send(csv);
 });
 
+// ==========================================
+// Multi-Device Cloud Sync Endpoints
+// (Enables cross-device synchronization between phone, laptop, and PC via Google Account)
+// ==========================================
+const SYNC_DATA_DIR = path.join(process.cwd(), 'data', 'user_sync');
+if (!fs.existsSync(SYNC_DATA_DIR)) {
+  try {
+    fs.mkdirSync(SYNC_DATA_DIR, { recursive: true });
+  } catch (e) {
+    console.warn('Could not create sync directory', e);
+  }
+}
+
+function getSyncFilePath(key: string): string {
+  const sanitized = key.toLowerCase().replace(/[^a-z0-9_@-]/g, '_');
+  return path.join(SYNC_DATA_DIR, `${sanitized}.json`);
+}
+
+// 1. Push user data from client to cloud server
+app.post('/api/sync/push', (req: Request, res: Response) => {
+  try {
+    const { email, login, userId, profile, journalEntries, clientTimestamp } = req.body;
+    const syncKey = (email || login || userId || '').trim().toLowerCase();
+
+    if (!syncKey) {
+      return res.status(400).json({ error: 'User identifier (email, login, or ID) is required for sync' });
+    }
+
+    const filePath = getSyncFilePath(syncKey);
+    let existingData: any = { journalEntries: [], profile: null, updatedAt: null };
+
+    if (fs.existsSync(filePath)) {
+      try {
+        existingData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      } catch (err) {
+        console.warn('Error reading existing sync file, overwriting', err);
+      }
+    }
+
+    // Merge journal entries by ID without duplicates, keeping latest date
+    const clientEntries: any[] = Array.isArray(journalEntries) ? journalEntries : [];
+    const serverEntries: any[] = Array.isArray(existingData.journalEntries) ? existingData.journalEntries : [];
+
+    const entryMap = new Map<string, any>();
+    // First populate from server
+    for (const e of serverEntries) {
+      if (e && e.id) entryMap.set(e.id, e);
+    }
+    // Then merge client entries
+    for (const e of clientEntries) {
+      if (e && e.id) {
+        entryMap.set(e.id, e);
+      }
+    }
+
+    const mergedEntries = Array.from(entryMap.values()).sort(
+      (a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()
+    );
+
+    const mergedProfile = profile || existingData.profile;
+    const now = new Date().toISOString();
+
+    const recordToSave = {
+      syncKey,
+      profile: mergedProfile,
+      journalEntries: mergedEntries,
+      updatedAt: now,
+      clientTimestamp: clientTimestamp || now,
+    };
+
+    fs.writeFileSync(filePath, JSON.stringify(recordToSave, null, 2), 'utf-8');
+
+    res.json({
+      success: true,
+      count: mergedEntries.length,
+      profile: mergedProfile,
+      journalEntries: mergedEntries,
+      lastSynced: now,
+    });
+  } catch (err: any) {
+    console.error('Failed to process cloud sync push', err);
+    res.status(500).json({ error: cleanErrorMessage(err) });
+  }
+});
+
+// 2. Pull user data from cloud server to client
+app.post('/api/sync/pull', (req: Request, res: Response) => {
+  try {
+    const { email, login, userId } = req.body;
+    const syncKey = (email || login || userId || '').trim().toLowerCase();
+
+    if (!syncKey) {
+      return res.status(400).json({ error: 'User identifier (email, login, or ID) is required' });
+    }
+
+    const filePath = getSyncFilePath(syncKey);
+
+    if (!fs.existsSync(filePath)) {
+      return res.json({
+        success: true,
+        found: false,
+        journalEntries: [],
+        profile: null,
+        message: 'No previous cloud records found for this account',
+      });
+    }
+
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    const parsed = JSON.parse(raw);
+
+    res.json({
+      success: true,
+      found: true,
+      journalEntries: parsed.journalEntries || [],
+      profile: parsed.profile || null,
+      lastSynced: parsed.updatedAt || new Date().toISOString(),
+    });
+  } catch (err: any) {
+    console.error('Failed to process cloud sync pull', err);
+    res.status(500).json({ error: cleanErrorMessage(err) });
+  }
+});
+
 async function setupServer() {
   const isProduction =
     process.env.NODE_ENV === 'production' ||
@@ -1936,8 +2239,12 @@ async function setupServer() {
   if (!isProduction) {
     try {
       const { createServer: createViteServer } = await import('vite');
+      const isHmrDisabled = process.env.DISABLE_HMR === 'true';
       const vite = await createViteServer({
-        server: { middlewareMode: true },
+        server: {
+          middlewareMode: true,
+          hmr: isHmrDisabled ? false : undefined,
+        },
         appType: 'spa',
       });
       app.use(vite.middlewares);

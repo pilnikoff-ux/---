@@ -16,6 +16,7 @@ import { DailyAffirmations } from './components/DailyAffirmations';
 import { HundredWishesPractice } from './components/HundredWishesPractice';
 import { SelfReflectionTool } from './components/SelfReflectionTool';
 import { SmartGoalsTool } from './components/SmartGoalsTool';
+import { PreMortemTool } from './components/PreMortemTool';
 import { FeedbackSystem } from './components/FeedbackSystem';
 import { KnowledgeBase } from './components/KnowledgeBase';
 import { MyJournal } from './components/MyJournal';
@@ -25,7 +26,14 @@ import { PracticeReminderModal } from './components/PracticeReminderModal';
 import { NotificationBanner } from './components/NotificationBanner';
 import { Footer } from './components/Footer';
 import { getJournalEntries } from './services/storageService';
-import { getUserProfile, isProfileComplete } from './services/userStatsService';
+import {
+  getUserProfile,
+  isProfileComplete,
+  hasUserEnteredData,
+  isAuthDismissed,
+  setAuthDismissed,
+} from './services/userStatsService';
+import { syncCloudData } from './services/cloudSyncService';
 import {
   getReminderConfig,
   playSereneChime,
@@ -76,11 +84,31 @@ export function App() {
 
   useEffect(() => {
     updateJournalCount();
-    // In a new browser or first visit, if mandatory profile fields are not completed, open modal immediately
+
     const profile = getUserProfile();
-    if (!isProfileComplete(profile)) {
+    const hasData = hasUserEnteredData(profile);
+    const dismissed = isAuthDismissed();
+
+    // Only prompt for login/registration if user hasn't entered data AND hasn't dismissed it
+    if (!hasData && !dismissed) {
       setIsProfileModalOpen(true);
     }
+
+    // If user has profile data, run background cloud synchronization across devices
+    if (hasData) {
+      syncCloudData().then(() => updateJournalCount()).catch(() => {});
+    }
+
+    // Keep journal count updated on cloud sync
+    const handleCloudSync = () => {
+      updateJournalCount();
+    };
+    window.addEventListener('journal_cloud_synced', handleCloudSync);
+    window.addEventListener('storage', handleCloudSync);
+    return () => {
+      window.removeEventListener('journal_cloud_synced', handleCloudSync);
+      window.removeEventListener('storage', handleCloudSync);
+    };
   }, []);
 
   // Background reminder scheduler
@@ -248,6 +276,13 @@ export function App() {
           />
         )}
 
+        {activeTab === 'preMortem' && (
+          <PreMortemTool
+            onSavedToJournal={handleSavedToJournal}
+            onSendToSmartGoal={handleSendWishToSmartGoal}
+          />
+        )}
+
         {activeTab === 'archetypes' && (
           <JungianArchetypes onSavedToJournal={handleSavedToJournal} />
         )}
@@ -318,17 +353,16 @@ export function App() {
       {/* App Footer: Studio branding, Release version & Telegram contact */}
       <Footer />
 
-      {/* User Profile & Mandatory Registration Modal */}
+      {/* User Profile & Authentication Modal */}
       <UserAuthAndStatsModal
         isOpen={isProfileModalOpen}
         onClose={() => {
-          const p = getUserProfile();
-          if (isProfileComplete(p)) {
-            setIsProfileModalOpen(false);
-          }
+          setAuthDismissed();
+          setIsProfileModalOpen(false);
         }}
-        isMandatoryOnboarding={!isProfileComplete(getUserProfile())}
+        isMandatoryOnboarding={!hasUserEnteredData(getUserProfile())}
         onProfileSaved={() => {
+          setAuthDismissed();
           updateJournalCount();
           setIsProfileModalOpen(false);
         }}

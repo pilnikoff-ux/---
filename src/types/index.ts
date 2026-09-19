@@ -672,6 +672,71 @@ export interface SmartGoalData {
   };
 }
 
+// 4. Практика «Премортем» (Gary Klein Pre-Mortem: Аналіз катастрофи з майбутнього)
+export interface PreMortemFailureCause {
+  number: number; // 1 to 7
+  title: string;
+  mechanism: string; // Чому і як саме стався крах
+  earlyWarningSignal: string; // 1 вимірюваний цифровий/фактичний сигнал розтяжки (не відчуття!)
+  checkWeek: number; // Точний тиждень перевірки (тижні 1-24)
+}
+
+export interface PreMortemTimelineMonth {
+  month: number; // 1 to 6
+  title: string;
+  whatHappened: string; // Що відбувалося в цей місяць
+  destructiveDetail: string; // Ключова деталь, яка запустила ланцюгову реакцію розпаду
+}
+
+export interface PreMortemKillSwitchItem {
+  id: string;
+  checkItem: string; // Що обов'язково перевірити ДО будь-якого запуску
+  killThreshold: string; // Конкретний вимірюваний результат, який означає ПОВНУ ВІДМОВУ від плану (Stop-loss)
+}
+
+export interface PreMortemRevisedStep {
+  causeNumber: number;
+  originalVulnerability: string;
+  revisedAction: string; // Що конкретно змінити
+  whyRationale: string; // Чому це робить план бронебійним / антикрихким
+}
+
+export interface PreMortemAdversaryMove {
+  persona: string; // Хто цей суперник/конкурент, хто найбільше виграє від твого провалу
+  launchWeekTrap: string; // Що суперник зробить у тиждень твого старту
+  invisibleStrike: string; // Прихований підступний хід, який ти ніколи б не помітив самостійно
+}
+
+export interface PreMortemData {
+  id: string;
+  title: string;
+  date: string;
+  expertPersona: string; // Наприклад: "Криптоексперт / Маркетмейкер", "Стартап-архітектор" тощо
+  originalPlan: string; // Початковий план користувача
+  targetHorizon: string; // "6 місяців"
+  failureCauses: PreMortemFailureCause[]; // 7 конкретних провальних сценаріїв
+  firstEarlyRedFlag: string; // Перший тривожний сигнал, який можна було помітити
+  monthlyChronicle: PreMortemTimelineMonth[]; // 6 місяців розпаду
+  mostDangerousFailure: {
+    causeNumber: number;
+    title: string;
+    whyDeadliest: string;
+    fundamentalDifference: string;
+  };
+  biggestHiddenAssumption: {
+    assumption: string; // Найбільше приховане допущення
+    brutalTruth: string; // Відверта правда без прикрас
+    fatalFlawDiagnosis: string; // Діагноз тотального із'яну
+  };
+  revisedAntiFragilePlan: {
+    summary: string;
+    concreteSteps: PreMortemRevisedStep[];
+    newRulesOfEngagement: string[];
+  };
+  killSwitchChecklist: PreMortemKillSwitchItem[]; // 3-5 пунктів передстартової перевірки
+  adversaryPerspective: PreMortemAdversaryMove; // Позиція суперника / конкурента
+}
+
 export interface JournalEntry {
   id: string;
   type:
@@ -691,6 +756,7 @@ export interface JournalEntry {
     | 'hundredWishes'
     | 'selfReflection'
     | 'smartGoals'
+    | 'preMortem'
     | 'feedback';
   title: string;
   date: string;

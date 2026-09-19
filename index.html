@@ -1,6 +1,85 @@
 <!doctype html>
 <html lang="uk" class="dark">
   <head>
+    <script>
+      (function() {
+        // Prevent third-party browser extensions (MetaMask, Web3 providers, etc.),
+        // missing client_id warnings from Google Identity, and benign dev-server WebSocket messages from crashing or displaying errors
+        function isIgnorable(msg) {
+          if (!msg) return false;
+          var str = '';
+          if (typeof msg === 'string') {
+            str = msg;
+          } else if (msg instanceof Error) {
+            str = (msg.message || '') + ' ' + (msg.stack || '');
+          } else {
+            try {
+              str = JSON.stringify(msg) || String(msg);
+            } catch(e) {
+              str = String(msg);
+            }
+          }
+          str = str.toLowerCase();
+          return (
+            str.includes('vite') ||
+            str.includes('websocket') ||
+            str.includes('ws://') ||
+            str.includes('wss://') ||
+            str.includes('metamask') ||
+            str.includes('ethereum') ||
+            str.includes('web3') ||
+            str.includes('gsi_logger') ||
+            str.includes('missing required parameter: client_id') ||
+            str.includes('failed to connect to metamask')
+          );
+        }
+
+        function makeFilter(orig) {
+          return function() {
+            for (var i = 0; i < arguments.length; i++) {
+              if (isIgnorable(arguments[i])) return;
+            }
+            var joined = Array.prototype.slice.call(arguments).map(function(a) {
+              try { return typeof a === 'object' ? JSON.stringify(a) : String(a); } catch(e) { return String(a); }
+            }).join(' ');
+            if (isIgnorable(joined)) return;
+            orig.apply(console, arguments);
+          };
+        }
+
+        console.error = makeFilter(console.error);
+        console.warn = makeFilter(console.warn);
+
+        window.addEventListener('error', function(event) {
+          var target = event.target;
+          if (target && (target instanceof WebSocket || target.tagName === 'SCRIPT')) {
+            var url = target.src || target.url || '';
+            if (isIgnorable(url)) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              return true;
+            }
+          }
+          var msg = event.message || (event.error && (event.error.message || event.error.stack)) || '';
+          var file = event.filename || '';
+          if (isIgnorable(msg) || isIgnorable(file)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return true;
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function(event) {
+          var reason = event.reason;
+          var msg = (typeof reason === 'string' ? reason : reason && (reason.message || reason.stack)) || '';
+          if (isIgnorable(msg) || isIgnorable(reason)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return true;
+          }
+        }, true);
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Психологічний Навігатор &amp; Goal Makers</title>
@@ -17,64 +96,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script>
-      (function() {
-        // Prevent third-party browser extensions (MetaMask, Web3 providers, etc.),
-        // missing client_id warnings from Google Identity, and benign dev-server WebSocket messages from crashing or displaying errors
-        function isIgnorable(msg) {
-          if (!msg) return false;
-          var str = String(msg).toLowerCase();
-          return (
-            str.includes('metamask') ||
-            str.includes('ethereum') ||
-            str.includes('web3') ||
-            str.includes('[vite]') ||
-            str.includes('websocket') ||
-            str.includes('gsi_logger') ||
-            str.includes('missing required parameter: client_id') ||
-            str.includes('failed to connect to metamask')
-          );
-        }
-
-        var originalConsoleError = console.error;
-        console.error = function() {
-          var args = Array.prototype.slice.call(arguments);
-          var joined = args.map(function(a) { return String(a); }).join(' ');
-          if (isIgnorable(joined)) {
-            return;
-          }
-          originalConsoleError.apply(console, arguments);
-        };
-
-        var originalConsoleWarn = console.warn;
-        console.warn = function() {
-          var args = Array.prototype.slice.call(arguments);
-          var joined = args.map(function(a) { return String(a); }).join(' ');
-          if (isIgnorable(joined)) {
-            return;
-          }
-          originalConsoleWarn.apply(console, arguments);
-        };
-
-        window.addEventListener('error', function(event) {
-          if (isIgnorable(event.message) || isIgnorable(event.filename)) {
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            return true;
-          }
-        }, true);
-
-        window.addEventListener('unhandledrejection', function(event) {
-          var reason = event.reason;
-          var msg = (typeof reason === 'string' ? reason : reason && reason.message) || '';
-          if (isIgnorable(msg)) {
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            return true;
-          }
-        }, true);
-      })();
-    </script>
   </head>
   <body class="bg-stone-950 text-stone-100 selection:bg-teal-500/30 selection:text-teal-200">
     <div id="root"></div>

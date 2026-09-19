@@ -23,7 +23,8 @@ import { quickGoogleSignIn } from '../services/googleAuthService';
 import { TabType } from './Navbar';
 import { JournalStatsChart } from './JournalStatsChart';
 import { useThemeLanguage } from '../context/ThemeLanguageContext';
-import { User, ShieldCheck, LogIn, RefreshCw } from 'lucide-react';
+import { User, ShieldCheck, LogIn, RefreshCw, Cloud, Check } from 'lucide-react';
+import { syncCloudData, subscribeToSyncState, CloudSyncState } from '../services/cloudSyncService';
 
 interface MyJournalProps {
   onNavigateToTool: (tab: TabType) => void;
@@ -38,8 +39,13 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
   const [showChart, setShowChart] = useState<boolean>(true);
-
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [syncState, setSyncState] = useState<CloudSyncState>({
+    isSyncing: false,
+    lastSyncedAt: localStorage.getItem('psych_nav_last_cloud_sync'),
+    error: null,
+    syncedCount: 0,
+  });
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -60,7 +66,38 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
 
   useEffect(() => {
     loadEntries();
+    const unsub = subscribeToSyncState((state) => {
+      setSyncState(state);
+    });
+    const handleStorageSync = () => {
+      loadEntries();
+    };
+    window.addEventListener('journal_cloud_synced', handleStorageSync);
+    window.addEventListener('storage', handleStorageSync);
+    return () => {
+      unsub();
+      window.removeEventListener('journal_cloud_synced', handleStorageSync);
+      window.removeEventListener('storage', handleStorageSync);
+    };
   }, []);
+
+  const handleManualSync = async () => {
+    const res = await syncCloudData(true);
+    loadEntries();
+    if (res.success) {
+      showToast(
+        lang === 'ru'
+          ? `✓ Синхронизировано между вашими устройствами! Записей: ${res.count}`
+          : `✓ Синхронізовано між вашими пристроями! Записів: ${res.count}`
+      );
+    } else {
+      showToast(
+        lang === 'ru'
+          ? 'Для синхронизации подключите Google аккаунт в профиле'
+          : 'Для синхронізації підключіть Google акаунт у профілі'
+      );
+    }
+  };
 
   const handleGoogleQuickAuth = () => {
     if (currentUser?.email) {
@@ -178,6 +215,11 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
           label: lang === 'en' ? 'SMART Goal' : 'Ціль по SMART',
           color: 'bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/30',
         };
+      case 'preMortem':
+        return {
+          label: lang === 'en' ? 'Pre-Mortem' : 'Премортем',
+          color: 'bg-rose-500/15 dark:bg-rose-500/25 text-rose-700 dark:text-rose-300 border-rose-500/40',
+        };
       default:
         return {
           label: lang === 'en' ? 'Practice' : 'Практика',
@@ -188,6 +230,7 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
 
   const filterTabs = [
     { id: 'all', label: lang === 'ru' ? 'Все записи' : lang === 'en' ? 'All Entries' : 'Усі записи' },
+    { id: 'preMortem', label: lang === 'ru' ? 'Премортем' : lang === 'en' ? 'Pre-Mortem' : 'Премортем' },
     { id: 'consilium', label: lang === 'ru' ? 'Консилиумы' : lang === 'en' ? 'Consiliums' : 'Консиліуми' },
     { id: 'hundredWishes', label: lang === 'ru' ? '100 Желаний' : lang === 'en' ? '100 Wishes' : '100 Бажань' },
     { id: 'selfReflection', label: lang === 'ru' ? 'Саморефлексия' : lang === 'en' ? 'Reflection' : 'Саморефлексія' },
@@ -274,48 +317,87 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
 
       {/* User / Google Authentication Status Card */}
       {currentUser ? (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl border border-stone-200 dark:border-stone-800 bg-stone-100/90 dark:bg-stone-900/90 shadow-xs">
-          <div className="flex items-center gap-3">
-            {currentUser.avatarUrl ? (
-              <img
-                src={currentUser.avatarUrl}
-                alt=""
-                className="w-10 h-10 rounded-xl object-cover border border-teal-500/40 shadow-xs"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-xl bg-teal-600/20 text-teal-400 border border-teal-500/30 flex items-center justify-center font-bold text-sm">
-                {(currentUser.name || currentUser.login).slice(0, 1).toUpperCase()}
-              </div>
-            )}
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold text-stone-900 dark:text-stone-100">
-                  {currentUser.fullName || currentUser.name}
-                </span>
-                {currentUser.authProvider === 'google' && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold px-2 py-0.5 border border-emerald-500/30">
-                    <ShieldCheck className="w-3 h-3" /> Google Авторизація
+        <>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl border border-stone-200 dark:border-stone-800 bg-stone-100/90 dark:bg-stone-900/90 shadow-xs">
+            <div className="flex items-center gap-3">
+              {currentUser.avatarUrl ? (
+                <img
+                  src={currentUser.avatarUrl}
+                  alt=""
+                  className="w-10 h-10 rounded-xl object-cover border border-teal-500/40 shadow-xs"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-teal-600/20 text-teal-400 border border-teal-500/30 flex items-center justify-center font-bold text-sm">
+                  {(currentUser.name || currentUser.login).slice(0, 1).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold text-stone-900 dark:text-stone-100">
+                    {currentUser.fullName || currentUser.name}
                   </span>
-                )}
+                  {currentUser.authProvider === 'google' && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold px-2 py-0.5 border border-emerald-500/30">
+                      <ShieldCheck className="w-3 h-3" /> Google Авторизація
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                  {currentUser.email || currentUser.login} • {lang === 'ru' ? 'Изолированный личный журнал' : 'Ізольований особистий журнал'} ({entries.length} {entries.length === 1 ? (lang === 'ru' ? 'запись' : 'запис') : (lang === 'ru' ? 'записей' : 'записів')})
+                </p>
               </div>
-              <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                {currentUser.email || currentUser.login} • {lang === 'ru' ? 'Изолированный личный журнал' : 'Ізольований особистий журнал'} ({entries.length} {entries.length === 1 ? (lang === 'ru' ? 'запись' : 'запис') : (lang === 'ru' ? 'записей' : 'записів')})
-              </p>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {onOpenProfileModal && (
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={onOpenProfileModal}
-                className="px-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-700 text-xs font-medium cursor-pointer transition-colors"
+                onClick={handleManualSync}
+                disabled={syncState.isSyncing}
+                title="Синхронізація між ПК, телефоном та ноутбуком"
+                className="px-3 py-1.5 rounded-xl border border-teal-500/40 bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
               >
-                {lang === 'ru' ? 'Профиль / Сменить' : 'Профіль / Змінити'}
+                <RefreshCw className={`w-3.5 h-3.5 ${syncState.isSyncing ? 'animate-spin text-teal-500' : ''}`} />
+                <span>
+                  {syncState.isSyncing
+                    ? lang === 'ru'
+                      ? 'Синхронизация...'
+                      : 'Синхронізація...'
+                    : lang === 'ru'
+                    ? 'Синхронизировать'
+                    : 'Синхронізувати'}
+                </span>
               </button>
+
+              {onOpenProfileModal && (
+                <button
+                  type="button"
+                  onClick={onOpenProfileModal}
+                  className="px-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-700 text-xs font-medium cursor-pointer transition-colors"
+                >
+                  {lang === 'ru' ? 'Профиль / Сменить' : 'Профіль / Змінити'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Cross-Device Cloud Sync Banner */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3.5 py-2 rounded-xl bg-teal-950/20 dark:bg-teal-950/35 border border-teal-500/30 text-xs text-teal-800 dark:text-teal-300">
+            <div className="flex items-center gap-2">
+              <Cloud className="w-4 h-4 text-teal-500 shrink-0" />
+              <span>
+                {lang === 'ru'
+                  ? `Синхронизация активна: ПК ↔ Ноутбук ↔ Телефон (${currentUser.email || currentUser.login})`
+                  : `Синхронізація активна: ПК ↔ Ноутбук ↔ Телефон (${currentUser.email || currentUser.login})`}
+              </span>
+            </div>
+            {syncState.lastSyncedAt && (
+              <span className="text-[11px] text-stone-500 dark:text-stone-400">
+                {lang === 'ru' ? 'Хмара оновлена: ' : 'Хмару оновлено: '}
+                {new Date(syncState.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
             )}
           </div>
-        </div>
+        </>
       ) : (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border border-teal-500/40 bg-teal-950/20 dark:bg-teal-950/30">
           <div className="flex items-center gap-3">
@@ -799,6 +881,89 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
                         <p className="text-stone-800 dark:text-stone-200 font-medium">{selectedEntry.data.first72hStep}</p>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {selectedEntry.type === 'preMortem' && selectedEntry.data && (
+                  <div className="space-y-3 text-xs">
+                    <div className="rounded-xl border border-rose-500/30 bg-rose-50/40 dark:bg-rose-950/20 p-3.5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase text-rose-700 dark:text-rose-300">
+                          {lang === 'en' ? 'Disaster Horizon & Expert Role:' : 'Горизонт краху та роль експерта:'}
+                        </span>
+                        <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-800 dark:text-rose-300 font-mono text-[11px] font-bold">
+                          {selectedEntry.data.targetHorizon || '6 місяців'}
+                        </span>
+                      </div>
+                      <p className="text-stone-800 dark:text-stone-200 font-medium">
+                        {selectedEntry.data.expertPersona}
+                      </p>
+                    </div>
+
+                    {selectedEntry.data.firstEarlyRedFlag && (
+                      <div className="rounded-xl border border-amber-500/30 bg-amber-50/40 dark:bg-amber-950/20 p-3 space-y-1">
+                        <strong className="text-amber-700 dark:text-amber-300 block text-[11px] uppercase font-bold">
+                          ⚠️ {lang === 'en' ? 'First Ignored Red Flag:' : 'Перший проігнорований дзвіночок:'}
+                        </strong>
+                        <p className="text-stone-700 dark:text-stone-300 leading-relaxed">
+                          {selectedEntry.data.firstEarlyRedFlag}
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedEntry.data.mostDangerousFailure && (
+                      <div className="rounded-xl border border-red-600/40 bg-red-50/40 dark:bg-red-950/30 p-3.5 space-y-1.5">
+                        <div className="flex items-center gap-2 text-red-700 dark:text-red-400 font-bold text-[11px] uppercase">
+                          <span>☠️ Смертельний провал #{selectedEntry.data.mostDangerousFailure.causeNumber}: {selectedEntry.data.mostDangerousFailure.title}</span>
+                        </div>
+                        <p className="text-stone-700 dark:text-stone-300 text-xs">
+                          {selectedEntry.data.mostDangerousFailure.whyDeadliest}
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedEntry.data.biggestHiddenAssumption && (
+                      <div className="rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 p-3.5 space-y-1 text-xs">
+                        <strong className="text-stone-800 dark:text-stone-200 block text-[11px]">
+                          💥 Сліпе допущення: <span className="font-normal">{selectedEntry.data.biggestHiddenAssumption.assumption}</span>
+                        </strong>
+                        <p className="text-rose-600 dark:text-rose-400 font-medium">
+                          Тотальний із'ян: {selectedEntry.data.biggestHiddenAssumption.fatalFlawDiagnosis}
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedEntry.data.failureCauses && (
+                      <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                        <strong className="text-stone-700 dark:text-stone-300 block text-[11px] uppercase">
+                          Причини краху та дедлайни:
+                        </strong>
+                        {selectedEntry.data.failureCauses.map((c: any) => (
+                          <div
+                            key={c.number}
+                            className="p-2 rounded-lg bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 space-y-1"
+                          >
+                            <div className="flex items-center justify-between font-bold text-stone-800 dark:text-stone-200">
+                              <span>#{c.number} {c.title}</span>
+                              <span className="text-rose-500 text-[10px]">Тижд. {c.checkWeek}</span>
+                            </div>
+                            <p className="text-[11px] text-stone-600 dark:text-stone-400">
+                              Сигнал: {c.earlyWarningSignal}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => onNavigateToTool('preMortem')}
+                        className="w-full py-2 rounded-xl bg-rose-600/15 hover:bg-rose-600/25 border border-rose-500/30 text-rose-700 dark:text-rose-300 font-bold text-xs transition-all"
+                      >
+                        Перейти до практики Премортем →
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

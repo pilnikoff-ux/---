@@ -2,6 +2,8 @@ import { UserProfile, UserActivityLog, UserFeedback, SelfLearningSettings } from
 export type { SelfLearningSettings };
 
 const USER_PROFILE_KEY = 'psych_nav_user_profile_v1';
+const AUTH_DISMISSED_KEY = 'psych_nav_auth_dismissed_v1';
+const PROFILE_DRAFT_KEY = 'psych_nav_profile_draft_v1';
 const ACTIVITY_LOGS_KEY = 'psych_nav_activity_logs_v1';
 const FEEDBACKS_KEY = 'psych_nav_feedbacks_v1';
 const SELF_LEARNING_SETTINGS_KEY = 'psych_nav_self_learning_rules_v1';
@@ -16,18 +18,70 @@ const DEFAULT_GUEST_PROFILE: UserProfile = {
   fieldOfActivity: 'Дослідник власного потенціалу',
 };
 
-// Check if user profile has all mandatory fields filled
+// Check if user has entered their credentials / profile data previously
+export function hasUserEnteredData(profile: UserProfile | null): boolean {
+  if (!profile) return false;
+  if (profile.id === 'guest_user' || profile.login === 'guest') return false;
+
+  const login = (profile.login || '').trim();
+  const name = (profile.fullName || profile.name || '').trim();
+  const email = (profile.email || '').trim();
+
+  return login.length > 0 || name.length > 0 || email.length > 0;
+}
+
+// Check if user profile is considered complete or valid for continuing without forced popup
 export function isProfileComplete(profile: UserProfile | null): boolean {
   if (!profile) return false;
   if (profile.id === 'guest_user' || profile.login === 'guest') return false;
 
   const login = (profile.login || '').trim();
   const name = (profile.fullName || profile.name || '').trim();
-  const birthDate = (profile.birthDate || profile.dateOfBirth || '').trim();
-  const field = (profile.fieldOfActivity || '').trim();
+  const email = (profile.email || '').trim();
 
-  // All fields are strictly required: Login, Full Name, Birth Date, Field of Activity
-  return login.length > 0 && name.length > 0 && birthDate.length > 0 && field.length > 0;
+  // Valid profile if user has provided login or email, and a name or login
+  return (login.length > 0 || email.length > 0) && (name.length > 0 || login.length > 0);
+}
+
+// Track whether the onboarding/auth modal was dismissed or previously handled
+export function isAuthDismissed(): boolean {
+  try {
+    return localStorage.getItem(AUTH_DISMISSED_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function setAuthDismissed(): void {
+  try {
+    localStorage.setItem(AUTH_DISMISSED_KEY, 'true');
+  } catch (e) {
+    console.error('Failed to set auth dismissed flag', e);
+  }
+}
+
+// Draft storage for unfinished inputs
+export function saveProfileDraft(draft: Partial<UserProfile>): void {
+  try {
+    localStorage.setItem(PROFILE_DRAFT_KEY, JSON.stringify(draft));
+  } catch (e) {
+    console.error('Failed to save profile draft', e);
+  }
+}
+
+export function getProfileDraft(): Partial<UserProfile> | null {
+  try {
+    const raw = localStorage.getItem(PROFILE_DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearProfileDraft(): void {
+  try {
+    localStorage.removeItem(PROFILE_DRAFT_KEY);
+  } catch {}
 }
 
 // Check if current user is owner / administrator (pilnikoff@gmail.com)
@@ -89,6 +143,8 @@ export function saveUserProfile(profileData: {
 
   try {
     localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profile));
+    setAuthDismissed();
+    clearProfileDraft();
   } catch (e) {
     console.error('Failed to save user profile', e);
   }

@@ -30,11 +30,16 @@ import {
   isAppOwner,
   getAdminTelemetrySummary,
   saveAdminGoogleSheetsConfig,
+  isAuthDismissed,
+  setAuthDismissed,
+  saveProfileDraft,
+  getProfileDraft,
 } from '../services/userStatsService';
 import {
   getGoogleProfileDraft,
   getQuickGoogleDraft,
 } from '../services/googleAuthService';
+import { syncCloudData } from '../services/cloudSyncService';
 import { UserProfile } from '../types';
 
 interface UserAuthAndStatsModalProps {
@@ -136,37 +141,29 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       const p = getUserProfile();
+      const draft = getProfileDraft();
       setProfile(p);
       setErrorMessage(null);
       setGoogleConnectedNotice(null);
       setSavedSuccess(false);
 
-      if (p && isProfileComplete(p)) {
-        setLogin(p.login || '');
-        setFullName(p.fullName || p.name || '');
-        setEmail(p.email || '');
-        setDateOfBirth(p.dateOfBirth || p.birthDate || '');
-        setFieldOfActivity(p.fieldOfActivity || '');
-        setAuthProvider(p.authProvider === 'google' ? 'google' : 'local');
-        setAvatarUrl(p.avatarUrl);
-        if (p.authProvider === 'google' && p.email) {
+      // Prioritize existing saved profile, fallback to any previously entered draft
+      const effective = p || draft;
+      if (effective) {
+        setLogin(effective.login || '');
+        setFullName(effective.fullName || (effective as any).name || '');
+        setEmail(effective.email || '');
+        setDateOfBirth(effective.dateOfBirth || (effective as any).birthDate || '');
+        setFieldOfActivity(effective.fieldOfActivity || '');
+        setAuthProvider(effective.authProvider === 'google' ? 'google' : 'local');
+        setAvatarUrl(effective.avatarUrl);
+        if (effective.authProvider === 'google' && effective.email) {
           setGoogleConnectedNotice(
             lang === 'ru'
-              ? `✓ Google аккаунт (${p.email}) подключен`
-              : `✓ Google акаунт (${p.email}) підключено`
+              ? `✓ Google аккаунт (${effective.email}) подключен`
+              : `✓ Google акаунт (${effective.email}) підключено`
           );
         }
-      } else {
-        // Pristine empty state for new user: absolutely NO sample data
-        setLogin('');
-        setFullName('');
-        setEmail('');
-        setDateOfBirth('');
-        setFieldOfActivity('');
-        setPassword('');
-        setAuthProvider('local');
-        setAvatarUrl(undefined);
-        setGoogleConnectedNotice(null);
       }
 
       // If user is owner, load admin telemetry
@@ -242,6 +239,19 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
     }
   };
 
+  const updateDraft = (patch: Partial<UserProfile>) => {
+    saveProfileDraft({
+      login,
+      fullName,
+      email,
+      dateOfBirth,
+      fieldOfActivity,
+      authProvider,
+      avatarUrl,
+      ...patch,
+    });
+  };
+
   const applyGoogleDraft = (draft: {
     login: string;
     fullName: string;
@@ -249,21 +259,37 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
     avatarUrl: string;
     authProvider: 'google';
   }) => {
-    if (!login.trim()) {
-      setLogin(draft.login);
-    }
-    if (!fullName.trim()) {
-      setFullName(draft.fullName);
-    }
+    const cleanLogin = draft.login || login.trim() || draft.email.split('@')[0];
+    const cleanName = draft.fullName || fullName.trim() || cleanLogin;
+
+    setLogin(cleanLogin);
+    setFullName(cleanName);
     setEmail(draft.email);
     setAvatarUrl(draft.avatarUrl);
     setAuthProvider('google');
     setErrorMessage(null);
     setGoogleConnectedNotice(
       lang === 'ru'
-        ? `✓ Google аккаунт (${draft.email}) подключен! Пожалуйста, укажите дату рождения и сферу деятельности для завершения.`
-        : `✓ Google акаунт (${draft.email}) підключено! Будь ласка, заповніть дату народження та сферу діяльності для завершення.`
+        ? `✓ Google аккаунт (${draft.email}) подключен`
+        : `✓ Google акаунт (${draft.email}) підключено`
     );
+
+    // Immediately persist Google profile so refresh never loses user login
+    const saved = saveUserProfile({
+      login: cleanLogin,
+      name: cleanName,
+      fullName: cleanName,
+      email: draft.email,
+      avatarUrl: draft.avatarUrl,
+      authProvider: 'google',
+      fieldOfActivity: fieldOfActivity || 'Дослідник власного потенціалу',
+      dateOfBirth: dateOfBirth || undefined,
+    });
+    setProfile(saved);
+    setAuthDismissed();
+
+    // Trigger cloud synchronization across devices (laptop, phone, PC)
+    syncCloudData().catch(() => {});
   };
 
   const handleQuickGoogleDraft = (targetEmail?: string) => {
@@ -289,37 +315,25 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
     e.preventDefault();
     setErrorMessage(null);
 
-    // Strict validation: all 4 fields are mandatory
-    const cleanLogin = login.trim();
-    const cleanFullName = fullName.trim();
+    // Flexible validation: login or email is required, name defaults to login
+    const cleanLogin = (login.trim() || email.split('@')[0] || 'user').trim();
+    const cleanFullName = (fullName.trim() || cleanLogin).trim();
     const cleanBirthDate = dateOfBirth.trim();
-    const cleanField = fieldOfActivity.trim();
+    const cleanField = (fieldOfActivity.trim() || 'Дослідник власного потенціалу').trim();
 
-    if (!cleanLogin) {
-      setErrorMessage(lang === 'ru' ? 'Пожалуйста, укажите логин (никнейм)' : 'Будь ласка, вкажіть логін (нікнейм)');
-      return;
-    }
-    if (!cleanFullName) {
-      setErrorMessage(lang === 'ru' ? 'Пожалуйста, укажите ваше полное имя' : 'Будь ласка, вкажіть ваше повне імʼя');
-      return;
-    }
-    if (!cleanBirthDate) {
-      setErrorMessage(lang === 'ru' ? 'Пожалуйста, укажите вашу дату рождения' : 'Будь ласка, оберіть вашу дату народження');
-      return;
-    }
-    if (!cleanField) {
-      setErrorMessage(lang === 'ru' ? 'Пожалуйста, укажите сферу деятельности' : 'Будь ласка, вкажіть вашу сферу діяльності');
+    if (!cleanLogin && !email.trim()) {
+      setErrorMessage(lang === 'ru' ? 'Пожалуйста, укажите логин или email' : 'Будь ласка, вкажіть логін або email');
       return;
     }
 
     const newProfile: UserProfile = {
-      id: profile?.id || `user_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      id: profile?.id || (email.trim() ? `google_${email.replace(/[^a-z0-9]/gi, '_')}` : `user_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`),
       login: cleanLogin,
       name: cleanFullName,
       fullName: cleanFullName,
       email: email.trim() || undefined,
-      birthDate: cleanBirthDate,
-      dateOfBirth: cleanBirthDate,
+      birthDate: cleanBirthDate || undefined,
+      dateOfBirth: cleanBirthDate || undefined,
       fieldOfActivity: cleanField,
       pinOrPassword: password.trim() || undefined,
       authProvider: authProvider,
@@ -332,6 +346,10 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
     saveUserProfile(newProfile);
     setProfile(newProfile);
     setSavedSuccess(true);
+    setAuthDismissed();
+
+    // Trigger cloud synchronization across devices
+    syncCloudData().catch(() => {});
 
     if (onProfileSaved) {
       onProfileSaved();
@@ -340,11 +358,14 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
     setTimeout(() => {
       setSavedSuccess(false);
       onClose();
-    }, 900);
+    }, 800);
   };
 
   const handleLogout = () => {
     clearUserSession();
+    try {
+      localStorage.removeItem('psych_nav_auth_dismissed_v1');
+    } catch {}
     setProfile(null);
     setLogin('');
     setFullName('');
@@ -444,16 +465,16 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
-              {/* If registration is not strictly blocking, allow close */}
-              {!mustCompleteRegistration && (
-                <button
-                  onClick={onClose}
-                  className="p-2 rounded-xl text-stone-400 hover:text-white hover:bg-stone-800 transition-colors cursor-pointer"
-                  title="Закрити"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  setAuthDismissed();
+                  onClose();
+                }}
+                className="p-2 rounded-xl text-stone-400 hover:text-white hover:bg-stone-800 transition-colors cursor-pointer"
+                title="Закрити"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
           </div>
 
@@ -729,17 +750,19 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-stone-300 flex items-center justify-between">
                       <span>
-                        {lang === 'ru' ? '1. Логин (Никнейм):' : '1. Логін (Нікнейм):'} <span className="text-rose-400 font-bold">*</span>
+                        {lang === 'ru' ? '1. Логин (Никнейм):' : '1. Логін (Нікнейм):'} <span className="text-teal-400 font-bold">*</span>
                       </span>
                       <span className="text-[10px] text-stone-400">
-                        {lang === 'ru' ? 'Обязательно' : 'Обовʼязково'}
+                        {lang === 'ru' ? 'Логин или email' : 'Логін або email'}
                       </span>
                     </label>
                     <input
                       type="text"
-                      required
                       value={login}
-                      onChange={(e) => setLogin(e.target.value)}
+                      onChange={(e) => {
+                        setLogin(e.target.value);
+                        updateDraft({ login: e.target.value });
+                      }}
                       placeholder="наприклад: ivan_m"
                       className="w-full text-xs bg-stone-950/80 border border-stone-700/80 rounded-xl p-3 text-stone-100 placeholder:text-stone-600 focus:outline-none focus:border-teal-500"
                     />
@@ -749,17 +772,19 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-stone-300 flex items-center justify-between">
                       <span>
-                        {lang === 'ru' ? '2. Полное имя / Как обращаться:' : '2. Повне імʼя / Як звертатися:'} <span className="text-rose-400 font-bold">*</span>
+                        {lang === 'ru' ? '2. Полное имя / Как обращаться:' : '2. Повне імʼя / Як звертатися:'}
                       </span>
-                      <span className="text-[10px] text-stone-400">
-                        {lang === 'ru' ? 'Обязательно' : 'Обовʼязково'}
+                      <span className="text-[10px] text-stone-500">
+                        {lang === 'ru' ? 'За бажанням' : 'За бажанням'}
                       </span>
                     </label>
                     <input
                       type="text"
-                      required
                       value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
+                      onChange={(e) => {
+                        setFullName(e.target.value);
+                        updateDraft({ fullName: e.target.value });
+                      }}
                       placeholder="Іван Мельник"
                       className="w-full text-xs bg-stone-950/80 border border-stone-700/80 rounded-xl p-3 text-stone-100 focus:outline-none focus:border-teal-500"
                     />
@@ -771,17 +796,19 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-stone-300 flex items-center justify-between">
                         <span>
-                          {lang === 'ru' ? '3. Дата рождения:' : '3. Дата народження:'} <span className="text-rose-400 font-bold">*</span>
+                          {lang === 'ru' ? '3. Дата рождения:' : '3. Дата народження:'}
                         </span>
-                        <span className="text-[10px] text-stone-400">
-                          {lang === 'ru' ? 'Обязательно' : 'Обовʼязково'}
+                        <span className="text-[10px] text-stone-500">
+                          {lang === 'ru' ? 'За бажанням' : 'За бажанням'}
                         </span>
                       </label>
                       <input
                         type="date"
-                        required
                         value={dateOfBirth}
-                        onChange={(e) => setDateOfBirth(e.target.value)}
+                        onChange={(e) => {
+                          setDateOfBirth(e.target.value);
+                          updateDraft({ dateOfBirth: e.target.value });
+                        }}
                         className="w-full text-xs bg-stone-950/80 border border-stone-700/80 rounded-xl p-3 text-stone-100 focus:outline-none focus:border-teal-500"
                       />
                     </div>
@@ -790,17 +817,19 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-stone-300 flex items-center justify-between">
                         <span>
-                          {lang === 'ru' ? '4. Сфера деятельности:' : '4. Сфера діяльності:'} <span className="text-rose-400 font-bold">*</span>
+                          {lang === 'ru' ? '4. Сфера деятельности:' : '4. Сфера діяльності:'}
                         </span>
-                        <span className="text-[10px] text-stone-400">
-                          {lang === 'ru' ? 'Обязательно' : 'Обовʼязково'}
+                        <span className="text-[10px] text-stone-500">
+                          {lang === 'ru' ? 'За бажанням' : 'За бажанням'}
                         </span>
                       </label>
                       <input
                         type="text"
-                        required
                         value={fieldOfActivity}
-                        onChange={(e) => setFieldOfActivity(e.target.value)}
+                        onChange={(e) => {
+                          setFieldOfActivity(e.target.value);
+                          updateDraft({ fieldOfActivity: e.target.value });
+                        }}
                         placeholder="Коучинг, IT, Бізнес, Психологія..."
                         className="w-full text-xs bg-stone-950/80 border border-stone-700/80 rounded-xl p-3 text-stone-100 focus:outline-none focus:border-teal-500"
                       />
@@ -813,7 +842,10 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                       <button
                         key={preset}
                         type="button"
-                        onClick={() => setFieldOfActivity(preset)}
+                        onClick={() => {
+                          setFieldOfActivity(preset);
+                          updateDraft({ fieldOfActivity: preset });
+                        }}
                         className="text-[10px] px-2 py-1 rounded-lg bg-stone-800/80 hover:bg-stone-700 text-stone-300 border border-stone-700/60 transition-colors cursor-pointer"
                       >
                         + {preset}

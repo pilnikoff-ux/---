@@ -23,6 +23,7 @@ import {
   MessageSquarePlus,
   UserCheck,
   Smartphone,
+  Skull,
 } from 'lucide-react';
 import { useThemeLanguage } from '../context/ThemeLanguageContext';
 import { PWAInstallButton } from './PWAInstallButton';
@@ -33,6 +34,7 @@ export type TabType =
   | 'hundredWishes'
   | 'selfReflection'
   | 'smartGoals'
+  | 'preMortem'
   | 'archetypes'
   | 'values'
   | 'beliefs'
@@ -136,6 +138,15 @@ export const Navbar: React.FC<NavbarProps> = ({
       accentColor: 'text-rose-500',
       activeBg: 'bg-rose-500/15 border-rose-500/40 text-rose-600 dark:text-rose-400 font-bold',
       dotColor: 'bg-rose-500',
+    },
+    {
+      id: 'preMortem',
+      label: lang === 'ru' ? 'Премортем' : lang === 'en' ? 'Pre-Mortem' : 'Премортем',
+      desc: lang === 'ru' ? 'Премортем Гэри Кляйна: крах из будущего' : lang === 'en' ? 'Gary Klein Pre-Mortem & Critical Risk Audit' : 'Премортем Гері Кляйна: крах із майбутнього',
+      icon: Skull,
+      accentColor: 'text-rose-600',
+      activeBg: 'bg-rose-600/15 border-rose-600/40 text-rose-600 dark:text-rose-400 font-bold',
+      dotColor: 'bg-rose-600',
     },
     {
       id: 'archetypes',

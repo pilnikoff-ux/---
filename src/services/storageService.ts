@@ -58,6 +58,8 @@ export function saveJournalEntry(
 
   try {
     localStorage.setItem(key, JSON.stringify(entries));
+    // Trigger background cloud synchronization across devices
+    import('./cloudSyncService').then((m) => m.syncCloudData()).catch(() => {});
   } catch (e) {
     console.error('Failed to save journal entry', e);
   }
@@ -70,6 +72,8 @@ export function deleteJournalEntry(id: string, userId?: string): void {
   const entries = getJournalEntries(userId).filter((e) => e.id !== id);
   try {
     localStorage.setItem(key, JSON.stringify(entries));
+    // Trigger background cloud synchronization across devices
+    import('./cloudSyncService').then((m) => m.syncCloudData()).catch(() => {});
   } catch (e) {
     console.error('Failed to delete journal entry', e);
   }

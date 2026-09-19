@@ -58,6 +58,8 @@ export const KnowledgeBase: React.FC<KnowledgeBaseProps> = ({ onNavigateToTool }
         return { label: 'Перейти в трекер «Мета Героя»', tab: 'goalMakers' };
       case 'goal_makers_confinement':
         return { label: 'Грати в гру «Goal MAker$»', tab: 'goalMakersBoard' };
+      case 'pre_mortem':
+        return { label: 'Відкрити практику Премортем', tab: 'preMortem' };
       default:
         return { label: 'Запустити Консиліум', tab: 'consilium' };
     }
