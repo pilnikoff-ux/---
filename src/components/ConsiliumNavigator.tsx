@@ -23,6 +23,7 @@ import {
   PieChart,
   Target,
   BookOpen,
+  Users,
 } from 'lucide-react';
 import { ConsiliumAnalysis, ApproachType } from '../types';
 import { requestConsiliumAnalysis } from '../services/geminiService';
@@ -31,6 +32,7 @@ import { logUserActivity } from '../services/userStatsService';
 import { useThemeLanguage } from '../context/ThemeLanguageContext';
 import { VoiceInputButton } from './VoiceInputButton';
 import { ActionStepByStepModal } from './ActionStepByStepModal';
+import { BodyDoublerModal } from './BodyDoublerModal';
 
 interface ConsiliumNavigatorProps {
   onSendToGoalMakers?: (data: { title: string; pointA: string; pointB: string; action24h: string }) => void;
@@ -340,6 +342,15 @@ export const ConsiliumNavigator: React.FC<ConsiliumNavigatorProps> = ({
     actionText: '',
     timeframe: '24h',
   });
+  const [bodyDoublerModal, setBodyDoublerModal] = useState<{
+    isOpen: boolean;
+    taskTitle: string;
+    timeframe: '15' | '25' | '45' | '60';
+  }>({
+    isOpen: false,
+    taskTitle: '',
+    timeframe: '25',
+  });
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     theoretical: true,
     jungian: true,
@@ -362,66 +373,68 @@ export const ConsiliumNavigator: React.FC<ConsiliumNavigatorProps> = ({
       (textLower.includes('заземлен') ||
         textLower.includes('дихан') ||
         textLower.includes('соматик') ||
-        textLower.includes('вегетатив')) &&
+        textLower.includes('вегетатив') ||
+        textLower.includes('grounding') ||
+        textLower.includes('somatic')) &&
       onOpenGrounding
     ) {
       chips.push({
-        label: lang === 'ru' ? '🌿 Заземление' : '🌿 Заземлення',
+        label: lang === 'en' ? '🌿 Grounding' : lang === 'ru' ? '🌿 Заземление' : '🌿 Заземлення',
         onClick: onOpenGrounding,
       });
     }
 
     if (
-      (textLower.includes('колес') || textLower.includes('баланс') || textLower.includes('сфер')) &&
+      (textLower.includes('колес') || textLower.includes('баланс') || textLower.includes('сфер') || textLower.includes('wheel') || textLower.includes('balance')) &&
       onSelectTab
     ) {
       chips.push({
-        label: lang === 'ru' ? '🎯 Колесо Баланса' : '🎯 Колесо Балансу',
+        label: lang === 'en' ? '🎯 Wheel of Balance' : lang === 'ru' ? '🎯 Колесо Баланса' : '🎯 Колесо Балансу',
         onClick: () => onSelectTab('wheelOfBalance'),
       });
     }
 
     if (
-      (textLower.includes('експеримент') || textLower.includes('кпт')) &&
+      (textLower.includes('експеримент') || textLower.includes('кпт') || textLower.includes('cbt') || textLower.includes('diary')) &&
       onSelectTab
     ) {
       chips.push({
-        label: lang === 'ru' ? '📝 КПТ Дневник' : '📝 КПТ Щоденник',
+        label: lang === 'en' ? '📝 CBT Diary' : lang === 'ru' ? '📝 КПТ Дневник' : '📝 КПТ Щоденник',
         onClick: () => onSelectTab('cbt'),
       });
     }
 
-    if (textLower.includes('цінност') && onSelectTab) {
+    if ((textLower.includes('цінност') || textLower.includes('value')) && onSelectTab) {
       chips.push({
-        label: lang === 'ru' ? '💎 Ценности' : '💎 Цінності',
+        label: lang === 'en' ? '💎 Values' : lang === 'ru' ? '💎 Ценности' : '💎 Цінності',
         onClick: () => onSelectTab('values'),
       });
     }
 
-    if ((textLower.includes('переконан') || textLower.includes('установк')) && onSelectTab) {
+    if ((textLower.includes('переконан') || textLower.includes('установк') || textLower.includes('belief')) && onSelectTab) {
       chips.push({
-        label: lang === 'ru' ? '🧠 Убеждения' : '🧠 Переконання',
+        label: lang === 'en' ? '🧠 Beliefs' : lang === 'ru' ? '🧠 Убеждения' : '🧠 Переконання',
         onClick: () => onSelectTab('beliefs'),
       });
     }
 
-    if ((textLower.includes('smart') || textLower.includes('дедлайн') || textLower.includes('ціл')) && onSelectTab) {
+    if ((textLower.includes('smart') || textLower.includes('дедлайн') || textLower.includes('ціл') || textLower.includes('goal')) && onSelectTab) {
       chips.push({
-        label: lang === 'ru' ? '🎯 SMART Цель' : '🎯 SMART Ціль',
+        label: lang === 'en' ? '🎯 SMART Goal' : lang === 'ru' ? '🎯 SMART Цель' : '🎯 SMART Ціль',
         onClick: () => onSelectTab('smartGoals'),
       });
     }
 
-    if ((textLower.includes('рефлексі') || textLower.includes('стоїц')) && onSelectTab) {
+    if ((textLower.includes('рефлексі') || textLower.includes('стоїц') || textLower.includes('reflect') || textLower.includes('stoic')) && onSelectTab) {
       chips.push({
-        label: lang === 'ru' ? '🌌 Рефлексия' : '🌌 Рефлексія',
+        label: lang === 'en' ? '🌌 Reflection' : lang === 'ru' ? '🌌 Рефлексия' : '🌌 Рефлексія',
         onClick: () => onSelectTab('selfReflection'),
       });
     }
 
-    if ((textLower.includes('бажан') || textLower.includes('100')) && onSelectTab) {
+    if ((textLower.includes('бажан') || textLower.includes('100') || textLower.includes('wish')) && onSelectTab) {
       chips.push({
-        label: lang === 'ru' ? '✨ 100 Желаний' : '✨ 100 Бажань',
+        label: lang === 'en' ? '✨ 100 Wishes' : lang === 'ru' ? '✨ 100 Желаний' : '✨ 100 Бажань',
         onClick: () => onSelectTab('hundredWishes'),
       });
     }
@@ -907,6 +920,21 @@ export const ConsiliumNavigator: React.FC<ConsiliumNavigatorProps> = ({
                   <span>{t('btn_transfer_to_goals', 'Передати в Goal Makers')}</span>
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() =>
+                  setBodyDoublerModal({
+                    isOpen: true,
+                    taskTitle: analysis.goalMakersActionPlan.immediate24hStep || situation,
+                    timeframe: '25',
+                  })
+                }
+                className="flex items-center gap-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/40 px-3.5 py-1.5 text-xs font-semibold text-indigo-800 dark:text-indigo-300 hover:bg-indigo-500/25 transition-all cursor-pointer"
+                title={lang === 'en' ? 'Launch ADHD Body Doubler for this task' : lang === 'ru' ? 'Запустить сессию Боди-дублера' : 'Запустити техніку Body Doubling для цієї задачі'}
+              >
+                <Users className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                <span>🤝 {lang === 'en' ? 'Body Double' : lang === 'ru' ? 'Боди-дублер' : 'Боді-дублер'}</span>
+              </button>
             </div>
           </div>
 
@@ -1313,7 +1341,7 @@ export const ConsiliumNavigator: React.FC<ConsiliumNavigatorProps> = ({
                         onClick={() => onSelectTab('cbt')}
                         className="inline-flex items-center gap-1 text-[11px] font-bold text-sky-700 dark:text-sky-400 hover:underline cursor-pointer"
                       >
-                        <span>{lang === 'ru' ? 'КПТ Дневник' : 'КПТ Щоденник'}</span>
+                        <span>{lang === 'en' ? 'CBT Diary' : lang === 'ru' ? 'КПТ Дневник' : 'КПТ Щоденник'}</span>
                         <ArrowRight className="h-3 w-3" />
                       </button>
                     )}
@@ -1322,26 +1350,43 @@ export const ConsiliumNavigator: React.FC<ConsiliumNavigatorProps> = ({
                     {analysis.therapeuticPerspectives.cbt.behavioralExperiment}
                   </p>
                   {renderInlineToolChips(analysis.therapeuticPerspectives.cbt.behavioralExperiment)}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setActiveActionModal({
-                        isOpen: true,
-                        actionText: analysis.therapeuticPerspectives.cbt.behavioralExperiment,
-                        timeframe: 'experiment',
-                      })
-                    }
-                    className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 px-3 py-1.5 text-[11px] font-bold text-sky-800 dark:text-sky-300 transition-colors cursor-pointer"
-                  >
-                    <Compass className="h-3.5 w-3.5" />
-                    <span>
-                      {lang === 'ru'
-                        ? 'Как провести эксперимент пошагово'
-                        : lang === 'en'
-                        ? 'How to conduct experiment step-by-step'
-                        : 'Як провести експеримент покроково'}
-                    </span>
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActiveActionModal({
+                          isOpen: true,
+                          actionText: analysis.therapeuticPerspectives.cbt.behavioralExperiment,
+                          timeframe: 'experiment',
+                        })
+                      }
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 px-3 py-1.5 text-[11px] font-bold text-sky-800 dark:text-sky-300 transition-colors cursor-pointer"
+                    >
+                      <Compass className="h-3.5 w-3.5" />
+                      <span>
+                        {lang === 'ru'
+                          ? 'Как провести эксперимент пошагово'
+                          : lang === 'en'
+                          ? 'How to conduct experiment step-by-step'
+                          : 'Як провести експеримент покроково'}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setBodyDoublerModal({
+                          isOpen: true,
+                          taskTitle: analysis.therapeuticPerspectives.cbt.behavioralExperiment,
+                          timeframe: '25',
+                        })
+                      }
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 px-3 py-1.5 text-[11px] font-bold text-indigo-800 dark:text-indigo-300 transition-colors cursor-pointer"
+                    >
+                      <Users className="h-3.5 w-3.5" />
+                      <span>{lang === 'en' ? '🤝 Focus with Body Double' : lang === 'ru' ? '🤝 Фокус с Боди-дублером' : '🤝 Фокус з Боді-дублером'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -1376,7 +1421,9 @@ export const ConsiliumNavigator: React.FC<ConsiliumNavigatorProps> = ({
                 >
                   <Target className="h-3.5 w-3.5" />
                   <span>
-                    {lang === 'ru'
+                    {lang === 'en'
+                      ? 'Format as SMART & WOOP'
+                      : lang === 'ru'
                       ? 'Оформить по SMART & WOOP'
                       : 'Оформити по SMART & WOOP'}
                   </span>
@@ -1399,20 +1446,37 @@ export const ConsiliumNavigator: React.FC<ConsiliumNavigatorProps> = ({
                   {renderInlineToolChips(analysis.goalMakersActionPlan.immediate24hStep)}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActiveActionModal({
-                      isOpen: true,
-                      actionText: analysis.goalMakersActionPlan.immediate24hStep,
-                      timeframe: '24h',
-                    })
-                  }
-                  className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 px-2.5 py-1.5 text-[11px] font-bold text-amber-900 dark:text-amber-300 transition-all cursor-pointer"
-                >
-                  <Compass className="h-3.5 w-3.5" />
-                  <span>{t('how_to_perform_btn', 'Як це виконувати (покрокова інструкція)')}</span>
-                </button>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveActionModal({
+                        isOpen: true,
+                        actionText: analysis.goalMakersActionPlan.immediate24hStep,
+                        timeframe: '24h',
+                      })
+                    }
+                    className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 px-2.5 py-1.5 text-[11px] font-bold text-amber-900 dark:text-amber-300 transition-all cursor-pointer"
+                  >
+                    <Compass className="h-3.5 w-3.5" />
+                    <span>{t('how_to_perform_btn', 'Як це виконувати (покрокова інструкція)')}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setBodyDoublerModal({
+                        isOpen: true,
+                        taskTitle: analysis.goalMakersActionPlan.immediate24hStep,
+                        timeframe: '25',
+                      })
+                    }
+                    className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1.5 text-[11px] font-bold shadow-sm transition-all cursor-pointer"
+                  >
+                    <Users className="h-3.5 w-3.5" />
+                    <span>🤝 {lang === 'en' ? 'Body Double (25 min)' : lang === 'ru' ? 'Боди-дублер (25 мин)' : 'Боді-дублер (25 хв)'}</span>
+                  </button>
+                </div>
               </div>
 
               {/* 7d Action */}
@@ -1428,20 +1492,37 @@ export const ConsiliumNavigator: React.FC<ConsiliumNavigatorProps> = ({
                   {renderInlineToolChips(analysis.goalMakersActionPlan.shortTerm7dMilestone)}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActiveActionModal({
-                      isOpen: true,
-                      actionText: analysis.goalMakersActionPlan.shortTerm7dMilestone,
-                      timeframe: '7d',
-                    })
-                  }
-                  className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 px-2.5 py-1.5 text-[11px] font-bold text-teal-900 dark:text-teal-300 transition-all cursor-pointer"
-                >
-                  <Compass className="h-3.5 w-3.5" />
-                  <span>{t('how_to_perform_btn', 'Як це виконувати (покрокова інструкція)')}</span>
-                </button>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveActionModal({
+                        isOpen: true,
+                        actionText: analysis.goalMakersActionPlan.shortTerm7dMilestone,
+                        timeframe: '7d',
+                      })
+                    }
+                    className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 px-2.5 py-1.5 text-[11px] font-bold text-teal-900 dark:text-teal-300 transition-all cursor-pointer"
+                  >
+                    <Compass className="h-3.5 w-3.5" />
+                    <span>{t('how_to_perform_btn', 'Як це виконувати (покрокова інструкція)')}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setBodyDoublerModal({
+                        isOpen: true,
+                        taskTitle: analysis.goalMakersActionPlan.shortTerm7dMilestone,
+                        timeframe: '45',
+                      })
+                    }
+                    className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 px-2.5 py-1.5 text-[11px] font-bold text-indigo-900 dark:text-indigo-300 transition-all cursor-pointer"
+                  >
+                    <Users className="h-3.5 w-3.5" />
+                    <span>🤝 {lang === 'en' ? 'Body Double (45 min)' : lang === 'ru' ? 'Боди-дублер (45 мин)' : 'Боді-дублер (45 хв)'}</span>
+                  </button>
+                </div>
               </div>
 
               {/* 30d Action */}
@@ -1457,21 +1538,76 @@ export const ConsiliumNavigator: React.FC<ConsiliumNavigatorProps> = ({
                   {renderInlineToolChips(analysis.goalMakersActionPlan.longTerm30dStrategy)}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setActiveActionModal({
-                      isOpen: true,
-                      actionText: analysis.goalMakersActionPlan.longTerm30dStrategy,
-                      timeframe: '30d',
-                    })
-                  }
-                  className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 px-2.5 py-1.5 text-[11px] font-bold text-sky-900 dark:text-sky-300 transition-all cursor-pointer"
-                >
-                  <Compass className="h-3.5 w-3.5" />
-                  <span>{t('how_to_perform_btn', 'Як це виконувати (покрокова інструкція)')}</span>
-                </button>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveActionModal({
+                        isOpen: true,
+                        actionText: analysis.goalMakersActionPlan.longTerm30dStrategy,
+                        timeframe: '30d',
+                      })
+                    }
+                    className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 px-2.5 py-1.5 text-[11px] font-bold text-sky-900 dark:text-sky-300 transition-all cursor-pointer"
+                  >
+                    <Compass className="h-3.5 w-3.5" />
+                    <span>{t('how_to_perform_btn', 'Як це виконувати (покрокова інструкція)')}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setBodyDoublerModal({
+                        isOpen: true,
+                        taskTitle: analysis.goalMakersActionPlan.longTerm30dStrategy,
+                        timeframe: '45',
+                      })
+                    }
+                    className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 px-2.5 py-1.5 text-[11px] font-bold text-indigo-900 dark:text-indigo-300 transition-all cursor-pointer"
+                  >
+                    <Users className="h-3.5 w-3.5" />
+                    <span>🤝 {lang === 'en' ? 'Body Double (45 min)' : lang === 'ru' ? 'Боди-дублер (45 мин)' : 'Боді-дублер (45 хв)'}</span>
+                  </button>
+                </div>
               </div>
+            </div>
+
+            {/* Dedicated Body Doubling Integration Banner */}
+            <div className="rounded-xl border border-indigo-500/30 bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-stone-900/60 p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-inner">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 shrink-0">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">
+                    {lang === 'en'
+                      ? '«Body Doubling» Technique: Overcoming Procrastination & ADHD Inertia'
+                      : lang === 'ru'
+                      ? 'Техника «Body Doubling» (Тело-дублер): Преодоление прокрастинации'
+                      : 'Техніка «Body Doubling» (Тіло-дублер): Подолання прокрастинації'}
+                  </h4>
+                  <p className="text-stone-300 text-[11px]">
+                    {lang === 'en'
+                      ? 'Launch a quiet co-working session with a virtual focus companion, ambient soundscapes, and structured self-reflection.'
+                      : lang === 'ru'
+                      ? 'Запустите тихую совместную сессию с виртуальным напарником для первого шага, звуковым эмбиентом и глубокой саморефлексией.'
+                      : 'Запустіть тиху спільну сесію з віртуальним напарником для першого кроку, звуковим ембієнтом та глибокою саморефлексією.'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setBodyDoublerModal({
+                    isOpen: true,
+                    taskTitle: analysis.goalMakersActionPlan.immediate24hStep || situation,
+                    timeframe: '25',
+                  })
+                }
+                className="whitespace-nowrap px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+              >
+                🤝 {lang === 'en' ? 'Start Session with Body Double' : lang === 'ru' ? 'Начать фокус-сессию с Боди' : 'Почати фокус-сесію з Боді'}
+              </button>
             </div>
           </div>
         </div>
@@ -1486,6 +1622,17 @@ export const ConsiliumNavigator: React.FC<ConsiliumNavigatorProps> = ({
         situationContext={situation}
         onSelectTab={onSelectTab}
         onOpenGrounding={onOpenGrounding}
+        onSavedToJournal={onSavedToJournal}
+      />
+
+      {/* Body Doubling Focus Modal */}
+      <BodyDoublerModal
+        isOpen={bodyDoublerModal.isOpen}
+        onClose={() => setBodyDoublerModal((prev) => ({ ...prev, isOpen: false }))}
+        taskTitle={bodyDoublerModal.taskTitle}
+        sourceContext={situation}
+        timeframe={bodyDoublerModal.timeframe}
+        onNavigateToTab={onSelectTab}
         onSavedToJournal={onSavedToJournal}
       />
     </div>

@@ -33,44 +33,103 @@ interface PreMortemToolProps {
   onSendToSmartGoal?: (title: string, category: string) => void;
 }
 
-const PRESETS = [
-  {
-    id: 'crypto-signals',
-    label: 'Криптоексперт: Торгові сигнали ($25 → $100/день)',
-    expertRole: 'Криптоексперт, квантовий трейдер з досвідом маркетмейкінгу та алго-систем',
-    plan: 'Мій план — вийти за допомогою Генератора торгових сигналів через місяць на сталий дохід 25$ щодня і постійно реінвестувати та вийти через пів року на дохід 100 доларів на день!',
-    context: 'Депозит 500-1000 USDT на біржі Binance/Bybit. Використання сигналів Telegram/Discord каналу. Кредитне плече 3x-10x.',
-    horizon: 6,
-  },
-  {
-    id: 'startup-saas',
-    label: 'Стартап-архітектор: Запуск AI-сервісу за 3 місяці',
-    expertRole: 'Венчурний інвестор та серійний фаундер B2B SaaS',
-    plan: 'Створити мікро-SaaS на базі ШІ за 2 місяці, запустити на Product Hunt і за 4 місяці вийти на $3,000 MRR без витрат на платний маркетинг.',
-    context: 'Один розробник, бюджет $1,000 на сервери. Очікування органічного вірального трафіку.',
-    horizon: 6,
-  },
-  {
-    id: 'career-jump',
-    label: 'Кар’єрний стратег: Перехід в IT / Подвоєння доходу',
-    expertRole: 'Executive-хедхантер та кар’єрний радник топ-менеджерів',
-    plan: 'Пройти 3-місячні курси, самостійно зібрати пет-проєкт та влаштуватися за 6 місяців Senior/Lead спеціалістом у закордонну компанію із зарплатою від $4,000.',
-    context: 'Англійська B1+, без комерційного досвіду в цьому стеку, 15 годин навчання на тиждень.',
-    horizon: 6,
-  },
-];
+const getPresets = (lang: string) => {
+  if (lang === 'en') {
+    return [
+      {
+        id: 'crypto-signals',
+        label: 'Crypto Expert: Trading Signals ($25 → $100/day)',
+        expertRole: 'Crypto expert, quantitative trader with market making and algo-trading background',
+        plan: 'My plan is to reach $25/day consistent income using a Trading Signal Generator in 1 month, reinvesting systematically to reach $100/day within 6 months!',
+        context: '$500-1000 USDT deposit on Binance/Bybit. Using Telegram/Discord signals. 3x-10x leverage.',
+        horizon: 6,
+      },
+      {
+        id: 'startup-saas',
+        label: 'Startup Architect: AI Service Launch in 3 Months',
+        expertRole: 'Venture investor and serial founder of B2B SaaS',
+        plan: 'Build an AI micro-SaaS in 2 months, launch on Product Hunt, and reach $3,000 MRR in 4 months without paid marketing spend.',
+        context: 'Solo developer, $1,000 server budget. Relying on viral organic traffic.',
+        horizon: 6,
+      },
+      {
+        id: 'career-jump',
+        label: 'Career Strategist: Transition to IT / 2x Salary',
+        expertRole: 'Executive headhunter and executive career advisor',
+        plan: 'Complete a 3-month course, build a pet project, and secure a Senior/Lead position at a foreign company within 6 months with $4,000+ salary.',
+        context: 'English B1+, no commercial production experience in this stack, 15 hours study/week.',
+        horizon: 6,
+      },
+    ];
+  }
+  if (lang === 'ru') {
+    return [
+      {
+        id: 'crypto-signals',
+        label: 'Криптоэксперт: Торговые сигналы ($25 → $100/день)',
+        expertRole: 'Криптоэксперт, квант-трейдер с опытом маркетмейкинга и алго-систем',
+        plan: 'Мой план — выйти с помощью Генератора торговых сигналов через месяц на стабильный доход 25$ в день, реинвестировать и через полгода выйти на 100$ в день!',
+        context: 'Депозит 500-1000 USDT на бирже Binance/Bybit. Сигналы Telegram/Discord. Плечо 3x-10x.',
+        horizon: 6,
+      },
+      {
+        id: 'startup-saas',
+        label: 'Стартап-архитектор: Запуск AI-сервиса за 3 месяца',
+        expertRole: 'Венчурный инвестор и серийный фаундер B2B SaaS',
+        plan: 'Создать микро-SaaS на базе ИИ за 2 месяца, запуститься на Product Hunt и за 4 месяца выйти на $3,000 MRR без затрат на платный маркетинг.',
+        context: 'Один разработчик, бюджет $1,000 на серверы. Ожидание органического вирального трафика.',
+        horizon: 6,
+      },
+      {
+        id: 'career-jump',
+        label: 'Карьерный стратег: Переход в IT / Удвоение дохода',
+        expertRole: 'Executive-хедхантер и карьерный советник топ-менеджеров',
+        plan: 'Пройти 3-месячные курсы, самостоятельно собрать пет-проект и устроиться за 6 месяцев Senior/Lead специалистом в зарубежную компанию с зарплатой от $4,000.',
+        context: 'Английский B1+, без коммерческого опыта в стеке, 15 часов обучения в неделю.',
+        horizon: 6,
+      },
+    ];
+  }
+  return [
+    {
+      id: 'crypto-signals',
+      label: 'Криптоексперт: Торгові сигнали ($25 → $100/день)',
+      expertRole: 'Криптоексперт, квантовий трейдер з досвідом маркетмейкінгу та алго-систем',
+      plan: 'Мій план — вийти за допомогою Генератора торгових сигналів через місяць на сталий дохід 25$ щодня і постійно реінвестувати та вийти через пів року на дохід 100 доларів на день!',
+      context: 'Депозит 500-1000 USDT на біржі Binance/Bybit. Використання сигналів Telegram/Discord каналу. Кредитне плече 3x-10x.',
+      horizon: 6,
+    },
+    {
+      id: 'startup-saas',
+      label: 'Стартап-архітектор: Запуск AI-сервісу за 3 місяці',
+      expertRole: 'Венчурний інвестор та серійний фаундер B2B SaaS',
+      plan: 'Створити мікро-SaaS на базі ШІ за 2 місяці, запустити на Product Hunt і за 4 місяці вийти на $3,000 MRR без витрат на платний маркетинг.',
+      context: 'Один розробник, бюджет $1,000 на сервери. Очікування органічного вірального трафіку.',
+      horizon: 6,
+    },
+    {
+      id: 'career-jump',
+      label: 'Кар’єрний стратег: Перехід в IT / Подвоєння доходу',
+      expertRole: 'Executive-хедхантер та кар’єрний радник топ-менеджерів',
+      plan: 'Пройти 3-місячні курси, самостійно зібрати пет-проєкт та влаштуватися за 6 місяців Senior/Lead спеціалістом у закордонну компанію із зарплатою від $4,000.',
+      context: 'Англійська B1+, без комерційного досвіду в цьому стеку, 15 годин навчання на тиждень.',
+      horizon: 6,
+    },
+  ];
+};
 
 export const PreMortemTool: React.FC<PreMortemToolProps> = ({
   onSavedToJournal,
   onSendToSmartGoal,
 }) => {
   const { lang } = useThemeLanguage();
+  const presets = getPresets(lang);
 
   const [plan, setPlan] = useState('');
   const [expertRole, setExpertRole] = useState('');
   const [horizonMonths, setHorizonMonths] = useState<number>(6);
   const [contextNotes, setContextNotes] = useState('');
-  const [activePreset, setActivePreset] = useState<(typeof PRESETS)[0] | null>(null);
+  const [activePreset, setActivePreset] = useState<ReturnType<typeof getPresets>[0] | null>(null);
   const [isPresetPreview, setIsPresetPreview] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<PreMortemData | null>(null);
@@ -231,24 +290,57 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs font-semibold uppercase tracking-wider">
               <Skull className="w-3.5 h-3.5" />
-              Методологія Гері Кляйна (Gary Klein)
+              {lang === 'en'
+                ? 'Gary Klein Methodology (Pre-Mortem)'
+                : lang === 'ru'
+                ? 'Методология Гэри Кляйна (Pre-Mortem)'
+                : 'Методологія Гері Кляйна (Gary Klein)'}
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-stone-100 tracking-tight font-display">
-              Премортем: Анатомія краху з майбутнього
+              {lang === 'en'
+                ? 'Pre-Mortem: Anatomy of Collapse from the Future'
+                : lang === 'ru'
+                ? 'Премортем: Анатомия краха из будущего'
+                : 'Премортем: Анатомія краху з майбутнього'}
             </h1>
             <p className="text-stone-300 text-sm sm:text-base max-w-2xl leading-relaxed">
-              Перенесіться на 6 місяців вперед, де ваш план уже <span className="text-rose-400 font-semibold">зазнав тотального фіаско</span>. 
-              Жодних заспокоювань, жодної «води» — лише хірургічний розбір прихованих допущень, смертельних пасток та конкретна матриця вимірюваних сигналів.
+              {lang === 'en' ? (
+                <>
+                  Fast-forward 6 months into the future where your plan has already{' '}
+                  <span className="text-rose-400 font-semibold">suffered total disaster</span>.
+                  No sugarcoating, no fluff — only surgical analysis of blind assumptions, lethal traps, and a concrete tripwire metric matrix.
+                </>
+              ) : lang === 'ru' ? (
+                <>
+                  Перенеситесь на 6 месяцев вперед, где ваш план уже{' '}
+                  <span className="text-rose-400 font-semibold">потерпел тотальное фиаско</span>.
+                  Никаких утешений, никакой «воды» — только хирургический разбор скрытых допущений, смертельных ловушек и конкретная матрица измеримых сигналов.
+                </>
+              ) : (
+                <>
+                  Перенесіться на 6 місяців вперед, де ваш план уже{' '}
+                  <span className="text-rose-400 font-semibold">зазнав тотального фіаско</span>. 
+                  Жодних заспокоювань, жодної «води» — лише хірургічний розбір прихованих допущень, смертельних пасток та конкретна матриця вимірюваних сигналів.
+                </>
+              )}
             </p>
           </div>
 
           <div className="bg-stone-950/80 border border-stone-800 rounded-xl p-3 sm:p-4 text-xs text-stone-400 space-y-1.5 shrink-0 max-w-xs">
             <div className="font-semibold text-stone-200 flex items-center gap-1.5">
               <Zap className="w-3.5 h-3.5 text-amber-400" />
-              Принцип перевернутого аналізу:
+              {lang === 'en'
+                ? 'Inverted Analysis Principle:'
+                : lang === 'ru'
+                ? 'Принцип инвертированного анализа:'
+                : 'Принцип перевернутого аналізу:'}
             </div>
             <p className="text-stone-400 leading-normal">
-              «Замість запитання "що може піти не так?", ми виходимо з факту: <span className="text-stone-200">катастрофа вже сталася</span>. Це знімає оптимістичне засліплення.»
+              {lang === 'en'
+                ? '“Instead of asking ‘what could go wrong?’, assume the catastrophe has ALREADY occurred. This dismantles optimistic blind spots.”'
+                : lang === 'ru'
+                ? '«Вместо вопроса "что может пойти не так?", мы исходим из факта: катастрофа уже произошла. Это снимает оптимистическое ослепление.»'
+                : '«Замість запитання "що може піти не так?", ми виходимо з факту: катастрофа вже сталася. Це знімає оптимістичне засліплення.»'}
             </p>
           </div>
         </div>
@@ -257,10 +349,14 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
         <div className="mt-6 pt-5 border-t border-stone-800/80">
           <div className="text-xs font-medium text-stone-400 mb-2.5 flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            Швидкий старт за реальними кейсами (або введіть свій):
+            {lang === 'en'
+              ? 'Quick Start with real-world cases (or enter your own):'
+              : lang === 'ru'
+              ? 'Быстрый старт на реальных кейсах (или введите свой):'
+              : 'Швидкий старт за реальними кейсами (або введіть свій):'}
           </div>
           <div className="flex flex-wrap gap-2">
-            {PRESETS.map((preset) => {
+            {presets.map((preset) => {
               const isActive = isPresetPreview && activePreset?.id === preset.id;
               return (
                 <button
@@ -288,9 +384,14 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
             <div className="flex items-center gap-2 text-rose-200">
               <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
               <span>
-                Зразок кейсу: <strong className="text-rose-300">{activePreset.label}</strong>.
+                {lang === 'en' ? 'Case sample: ' : lang === 'ru' ? 'Образец кейса: ' : 'Зразок кейсу: '}
+                <strong className="text-rose-300">{activePreset.label}</strong>.
                 <span className="text-stone-300 block sm:inline sm:ml-1">
-                  Поставте курсор у поле — і цей зразок автоматично зникне для вашого тексту.
+                  {lang === 'en'
+                    ? 'Click into the field — this template will clear automatically for your text.'
+                    : lang === 'ru'
+                    ? 'Поставьте курсор в поле — этот образец автоматически очистится для вашего текста.'
+                    : 'Поставте курсор у поле — і цей зразок автоматично зникне для вашого тексту.'}
                 </span>
               </span>
             </div>
@@ -299,17 +400,17 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                 type="button"
                 onClick={handleKeepPresetText}
                 className="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 text-[11px] font-medium transition-all cursor-pointer"
-                title="Залишити текст та редагувати"
+                title={lang === 'en' ? 'Keep text and edit' : lang === 'ru' ? 'Оставить текст и редактировать' : 'Залишити текст та редагувати'}
               >
-                ✏️ Залишити для редагування
+                ✏️ {lang === 'en' ? 'Keep & Edit' : lang === 'ru' ? 'Оставить для ред.' : 'Залишити для редагування'}
               </button>
               <button
                 type="button"
                 onClick={handleClearForm}
                 className="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-stone-200 text-[11px] transition-all cursor-pointer"
-                title="Очистити всі поля"
+                title={lang === 'en' ? 'Clear all fields' : lang === 'ru' ? 'Очистить все поля' : 'Очистити всі поля'}
               >
-                ✕ Очистити
+                ✕ {lang === 'en' ? 'Clear' : lang === 'ru' ? 'Очистить' : 'Очистити'}
               </button>
             </div>
           </div>
@@ -319,7 +420,12 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
           <div className="md:col-span-2 space-y-2">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
-                Ваш план, дія або мета, яку ви плануєте запустити <span className="text-rose-400">*</span>
+                {lang === 'en'
+                  ? 'Your plan, action, or goal you intend to launch'
+                  : lang === 'ru'
+                  ? 'Ваш план, действие или цель для запуска'
+                  : 'Ваш план, дія або мета, яку ви плануєте запустити'}{' '}
+                <span className="text-rose-400">*</span>
               </label>
               {plan && !isPresetPreview && (
                 <button
@@ -327,7 +433,7 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                   onClick={() => setPlan('')}
                   className="text-[11px] text-stone-500 hover:text-stone-300 transition-colors"
                 >
-                  Очистити
+                  {lang === 'en' ? 'Clear' : lang === 'ru' ? 'Очистить' : 'Очистити'}
                 </button>
               )}
             </div>
@@ -338,7 +444,13 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                 setIsPresetPreview(false);
                 setPlan(e.target.value);
               }}
-              placeholder="Приклад: Мій план — вийти за допомогою генератора торгових сигналів через місяць на сталий дохід 25$ щодня і постійно реінвестувати..."
+              placeholder={
+                lang === 'en'
+                  ? 'Example: My plan is to use a trading signal bot to reach $25 daily income within 1 month and reinvest steadily...'
+                  : lang === 'ru'
+                  ? 'Пример: Мой план — выйти с помощью торговых сигналов через месяц на $25 в день и постоянно реинвестировать...'
+                  : 'Приклад: Мій план — вийти за допомогою генератора торгових сигналів через місяць на сталий дохід 25$ щодня і постійно реінвестувати...'
+              }
               rows={4}
               className={`w-full rounded-xl p-3.5 text-sm transition-all resize-y placeholder:text-stone-400/80 dark:placeholder:text-stone-500/80 placeholder:italic focus:placeholder:text-transparent focus:outline-none focus:ring-1 focus:ring-rose-500 ${
                 isPresetPreview
@@ -351,7 +463,11 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
           <div className="space-y-4">
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
-                Роль суворого експерта
+                {lang === 'en'
+                  ? 'Rigorous Expert Persona'
+                  : lang === 'ru'
+                  ? 'Роль строгого эксперта'
+                  : 'Роль суворого експерта'}
               </label>
               <input
                 type="text"
@@ -361,7 +477,13 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                   setIsPresetPreview(false);
                   setExpertRole(e.target.value);
                 }}
-                placeholder="наприклад, Криптоексперт / Інвестор"
+                placeholder={
+                  lang === 'en'
+                    ? 'e.g. Crypto Quant / VC Investor'
+                    : lang === 'ru'
+                    ? 'например, Криптоэксперт / Инвестор'
+                    : 'наприклад, Криптоексперт / Інвестор'
+                }
                 className={`w-full rounded-xl px-3 py-2 text-xs transition-all placeholder:text-stone-400/80 dark:placeholder:text-stone-500/80 placeholder:italic focus:placeholder:text-transparent focus:outline-none focus:ring-1 focus:ring-rose-500 ${
                   isPresetPreview
                     ? 'bg-rose-950/20 border border-rose-500/40 text-stone-300/80 italic'
@@ -372,7 +494,11 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
 
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
-                Часовий горизонт катастрофи
+                {lang === 'en'
+                  ? 'Catastrophe Time Horizon'
+                  : lang === 'ru'
+                  ? 'Временной горизонт катастрофы'
+                  : 'Часовий горизонт катастрофи'}
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {[3, 6, 12].map((months) => (
@@ -386,7 +512,7 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                         : 'bg-stone-950 border-stone-800 text-stone-400 hover:text-stone-200'
                     }`}
                   >
-                    {months} міс.
+                    {months} {lang === 'en' ? 'mo.' : lang === 'ru' ? 'мес.' : 'міс.'}
                   </button>
                 ))}
               </div>
@@ -394,7 +520,11 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
 
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold uppercase tracking-wider text-stone-300">
-                Додатковий контекст / Ресурси (опціонально)
+                {lang === 'en'
+                  ? 'Additional Context / Resources (optional)'
+                  : lang === 'ru'
+                  ? 'Дополнительный контекст / Ресурсы (опционально)'
+                  : 'Додатковий контекст / Ресурси (опціонально)'}
               </label>
               <input
                 type="text"
@@ -404,7 +534,13 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                   setIsPresetPreview(false);
                   setContextNotes(e.target.value);
                 }}
-                placeholder="Бюджет, плече, години на тиждень..."
+                placeholder={
+                  lang === 'en'
+                    ? 'Budget, leverage, weekly hours...'
+                    : lang === 'ru'
+                    ? 'Бюджет, плечо, часы в неделю...'
+                    : 'Бюджет, плече, години на тиждень...'
+                }
                 className={`w-full rounded-xl px-3 py-2 text-xs transition-all placeholder:text-stone-400/80 dark:placeholder:text-stone-500/80 placeholder:italic focus:placeholder:text-transparent focus:outline-none focus:ring-1 focus:ring-rose-500 ${
                   isPresetPreview
                     ? 'bg-rose-950/20 border border-rose-500/40 text-stone-300/80 italic'
@@ -425,24 +561,42 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-xs text-stone-400 flex items-center gap-1.5">
             <Info className="w-4 h-4 text-stone-500" />
-            <span>ШІ прийме роль жорсткого скептика. Розтяжка, а не відчуття.</span>
+            <span>
+              {lang === 'en'
+                ? 'AI assumes the role of a harsh skeptic. Hard tripwire metrics, zero vague feelings.'
+                : lang === 'ru'
+                ? 'ИИ примет роль жесткого скептика. Растяжка, а не ощущения.'
+                : 'ШІ прийме роль жорсткого скептика. Розтяжка, а не відчуття.'}
+            </span>
           </div>
 
           <button
             type="button"
             onClick={handleRunAnalysis}
             disabled={isLoading || !plan.trim()}
-            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white font-bold text-sm shadow-lg shadow-rose-950/50 hover:shadow-rose-900/60 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white font-bold text-sm shadow-lg shadow-rose-950/50 hover:shadow-rose-900/60 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             {isLoading ? (
               <>
                 <RotateCcw className="w-4 h-4 animate-spin" />
-                <span>Аналізую катастрофу з {horizonMonths}-го місяця...</span>
+                <span>
+                  {lang === 'en'
+                    ? `Analyzing catastrophe from month ${horizonMonths}...`
+                    : lang === 'ru'
+                    ? `Анализирую катастрофу с ${horizonMonths}-го месяца...`
+                    : `Аналізую катастрофу з ${horizonMonths}-го місяця...`}
+                </span>
               </>
             ) : (
               <>
                 <Skull className="w-4 h-4" />
-                <span>Провести Премортем (Перенестись на {horizonMonths} міс. вперед)</span>
+                <span>
+                  {lang === 'en'
+                    ? `Conduct Pre-Mortem (Fast-forward ${horizonMonths} mo.)`
+                    : lang === 'ru'
+                    ? `Провести Премортем (Перенестись на ${horizonMonths} мес. вперед)`
+                    : `Провести Премортем (Перенестись на ${horizonMonths} міс. вперед)`}
+                </span>
               </>
             )}
           </button>
@@ -457,11 +611,16 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
               <span className="text-xs font-bold text-stone-200">
-                Премортем завершено: {result.failureCauses.length} сценаріїв краху
+                {lang === 'en'
+                  ? `Pre-Mortem complete: ${result.failureCauses.length} failure scenarios`
+                  : lang === 'ru'
+                  ? `Премортем завершен: ${result.failureCauses.length} сценариев краха`
+                  : `Премортем завершено: ${result.failureCauses.length} сценаріїв краху`}
               </span>
               <span className="text-xs text-stone-500 hidden sm:inline">|</span>
               <span className="text-xs text-stone-400 hidden sm:inline">
-                Експерт: {result.expertPersona}
+                {lang === 'en' ? 'Expert: ' : lang === 'ru' ? 'Эксперт: ' : 'Експерт: '}
+                {result.expertPersona}
               </span>
             </div>
 
@@ -469,18 +628,22 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
               <button
                 type="button"
                 onClick={handleCopyReport}
-                className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium transition-all flex items-center gap-1.5"
-                title="Копіювати весь звіт у буфер обміну"
+                className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer"
+                title={lang === 'en' ? 'Copy full report to clipboard' : lang === 'ru' ? 'Скопировать весь отчет' : 'Копіювати весь звіт у буфер обміну'}
               >
                 {copied ? (
                   <>
                     <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-emerald-400">Скопійовано!</span>
+                    <span className="text-emerald-400">
+                      {lang === 'en' ? 'Copied!' : lang === 'ru' ? 'Скопировано!' : 'Скопійовано!'}
+                    </span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-3.5 h-3.5" />
-                    <span>Скопіювати звіт</span>
+                    <span>
+                      {lang === 'en' ? 'Copy Report' : lang === 'ru' ? 'Скопировать отчет' : 'Скопіювати звіт'}
+                    </span>
                   </>
                 )}
               </button>
@@ -489,17 +652,21 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                 type="button"
                 onClick={handleSaveToJournal}
                 disabled={saved}
-                className="px-3 py-1.5 rounded-lg bg-rose-900/40 hover:bg-rose-900/60 border border-rose-700/50 text-rose-200 text-xs font-medium transition-all flex items-center gap-1.5 disabled:opacity-60"
+                className="px-3 py-1.5 rounded-lg bg-rose-900/40 hover:bg-rose-900/60 border border-rose-700/50 text-rose-200 text-xs font-medium transition-all flex items-center gap-1.5 disabled:opacity-60 cursor-pointer"
               >
                 {saved ? (
                   <>
                     <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-emerald-400">У Журналі</span>
+                    <span className="text-emerald-400">
+                      {lang === 'en' ? 'In Journal' : lang === 'ru' ? 'В Журнале' : 'У Журналі'}
+                    </span>
                   </>
                 ) : (
                   <>
                     <Bookmark className="w-3.5 h-3.5" />
-                    <span>Зберегти в Журнал</span>
+                    <span>
+                      {lang === 'en' ? 'Save to Journal' : lang === 'ru' ? 'Сохранить в Журнал' : 'Зберегти в Журнал'}
+                    </span>
                   </>
                 )}
               </button>
@@ -509,14 +676,20 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                   type="button"
                   onClick={() =>
                     onSendToSmartGoal(
-                      `Бронебійна мета: ${result.originalPlan.slice(0, 45)}...`,
+                      lang === 'en'
+                        ? `Antifragile Goal: ${result.originalPlan.slice(0, 45)}...`
+                        : lang === 'ru'
+                        ? `Бронебойная цель: ${result.originalPlan.slice(0, 45)}...`
+                        : `Бронебійна мета: ${result.originalPlan.slice(0, 45)}...`,
                       'skills_growth'
                     )
                   }
-                  className="px-3 py-1.5 rounded-lg bg-teal-900/40 hover:bg-teal-900/60 border border-teal-700/50 text-teal-200 text-xs font-medium transition-all flex items-center gap-1.5"
+                  className="px-3 py-1.5 rounded-lg bg-teal-900/40 hover:bg-teal-900/60 border border-teal-700/50 text-teal-200 text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <Target className="w-3.5 h-3.5" />
-                  <span>В SMART-цілі</span>
+                  <span>
+                    {lang === 'en' ? 'To SMART Goals' : lang === 'ru' ? 'В SMART-цели' : 'В SMART-цілі'}
+                  </span>
                 </button>
               )}
             </div>
@@ -529,13 +702,24 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
               <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl" />
               <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
                 <AlertTriangle className="w-4 h-4" />
-                Перший тривожний сигнал (який проігнорували)
+                {lang === 'en'
+                  ? 'First Tripwire Red Flag (Ignored in advance)'
+                  : lang === 'ru'
+                  ? 'Первый тревожный сигнал (который проигнорировали)'
+                  : 'Перший тривожний сигнал (який проігнорували)'}
               </div>
               <p className="text-stone-200 text-sm leading-relaxed">
                 {result.firstEarlyRedFlag}
               </p>
               <div className="text-xs text-amber-400/80 bg-amber-950/40 border border-amber-900/40 p-2.5 rounded-lg">
-                ⚠️ <span className="font-semibold">Діагностика:</span> Цей сигнал з’являється вже на 1-2 тижні. Якщо ви бачите його — план уже почав тріщати.
+                ⚠️ <span className="font-semibold">
+                  {lang === 'en' ? 'Diagnostics:' : lang === 'ru' ? 'Диагностика:' : 'Діагностика:'}
+                </span>{' '}
+                {lang === 'en'
+                  ? 'This signal emerges within week 1-2. If detected, the plan has begun failing.'
+                  : lang === 'ru'
+                  ? 'Этот сигнал появляется уже на 1-2 неделе. Если вы видите его — план уже начал трещать.'
+                  : 'Цей сигнал з’являється вже на 1-2 тижні. Якщо ви бачите його — план уже почав тріщати.'}
               </div>
             </div>
 
@@ -544,20 +728,30 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
               <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl" />
               <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
                 <AlertOctagon className="w-4 h-4" />
-                Найбільше приховане допущення & Тотальний із'ян
+                {lang === 'en'
+                  ? 'Biggest Hidden Assumption & Fatal Flaw'
+                  : lang === 'ru'
+                  ? 'Ключевое скрытое допущение и фатальный изъян'
+                  : 'Найбільше приховане допущення & Тотальний із\'ян'}
               </div>
               <div className="space-y-1.5 text-xs">
                 <div>
-                  <span className="text-stone-400 font-medium">Сліпе допущення: </span>
+                  <span className="text-stone-400 font-medium">
+                    {lang === 'en' ? 'Blind Assumption: ' : lang === 'ru' ? 'Слепое допущение: ' : 'Сліпе допущення: '}
+                  </span>
                   <span className="text-stone-100 font-semibold">{result.biggestHiddenAssumption.assumption}</span>
                 </div>
                 <div>
-                  <span className="text-stone-400 font-medium">Відверта правда: </span>
+                  <span className="text-stone-400 font-medium">
+                    {lang === 'en' ? 'Brutal Truth: ' : lang === 'ru' ? 'Жестокая правда: ' : 'Відверта правда: '}
+                  </span>
                   <span className="text-rose-300 font-medium">{result.biggestHiddenAssumption.brutalTruth}</span>
                 </div>
               </div>
               <div className="text-xs text-stone-300 bg-rose-950/40 border border-rose-900/40 p-2.5 rounded-lg leading-normal">
-                💥 <span className="font-semibold text-rose-300">Тотальний із'ян:</span> {result.biggestHiddenAssumption.fatalFlawDiagnosis}
+                💥 <span className="font-semibold text-rose-300">
+                  {lang === 'en' ? 'Fatal Flaw:' : lang === 'ru' ? 'Фатальный изъян:' : 'Тотальний із\'ян:'}
+                </span> {result.biggestHiddenAssumption.fatalFlawDiagnosis}
               </div>
             </div>
           </div>
@@ -567,29 +761,91 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-red-400 font-extrabold text-xs uppercase tracking-wider">
                 <Skull className="w-4 h-4" />
-                Смертельний ризик №{result.mostDangerousFailure.causeNumber}: {result.mostDangerousFailure.title}
+                {lang === 'en'
+                  ? `Deadliest Risk #${result.mostDangerousFailure.causeNumber}: ${result.mostDangerousFailure.title}`
+                  : lang === 'ru'
+                  ? `Смертельный риск №${result.mostDangerousFailure.causeNumber}: ${result.mostDangerousFailure.title}`
+                  : `Смертельний ризик №${result.mostDangerousFailure.causeNumber}: ${result.mostDangerousFailure.title}`}
               </div>
               <span className="px-2.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-red-300 text-[11px] font-bold">
-                Вбиває план наглухо
+                {lang === 'en' ? 'Kills Plan Outright' : lang === 'ru' ? 'Убивает план наглухо' : 'Вбиває план наглухо'}
               </span>
             </div>
             <div className="text-sm text-stone-200 leading-relaxed">
-              <p className="font-semibold text-stone-100 mb-1">Чому саме цей провал найнебезпечніший:</p>
+              <p className="font-semibold text-stone-100 mb-1">
+                {lang === 'en'
+                  ? 'Why this collapse scenario is the deadliest:'
+                  : lang === 'ru'
+                  ? 'Почему именно этот провал наиболее опасен:'
+                  : 'Чому саме цей провал найнебезпечніший:'}
+              </p>
               <p className="text-stone-300 text-xs sm:text-sm">{result.mostDangerousFailure.whyDeadliest}</p>
             </div>
             <div className="text-xs text-red-300/90 bg-red-950/50 border border-red-900/50 p-3 rounded-xl">
-              <span className="font-bold text-red-200">Чим принципово відрізняється від інших:</span> {result.mostDangerousFailure.fundamentalDifference}
+              <span className="font-bold text-red-200">
+                {lang === 'en'
+                  ? 'Fundamentally different from others:'
+                  : lang === 'ru'
+                  ? 'Принципиальное отличие от остальных:'
+                  : 'Чим принципово відрізняється від інших:'}
+              </span>{' '}
+              {result.mostDangerousFailure.fundamentalDifference}
             </div>
           </div>
 
           {/* Tab Navigation for Detailed Sections */}
           <div className="flex border-b border-stone-800 gap-2 overflow-x-auto pb-1">
             {[
-              { id: 'causes', label: `7 Причин краху & Сигнали`, icon: Skull },
-              { id: 'timeline', label: `Хроніка ${result.targetHorizon}`, icon: Calendar },
-              { id: 'adversary', label: `Хід Конкурента`, icon: Swords },
-              { id: 'revised', label: `Бронебійний план`, icon: ShieldAlert },
-              { id: 'killswitch', label: `Kill-Switch Чек-лист`, icon: AlertOctagon },
+              {
+                id: 'causes',
+                label:
+                  lang === 'en'
+                    ? '7 Failure Causes & Tripwires'
+                    : lang === 'ru'
+                    ? '7 Причин краха & Сигналы'
+                    : '7 Причин краху & Сигнали',
+                icon: Skull,
+              },
+              {
+                id: 'timeline',
+                label:
+                  lang === 'en'
+                    ? `Chronicle: ${result.targetHorizon}`
+                    : lang === 'ru'
+                    ? `Хроника: ${result.targetHorizon}`
+                    : `Хроніка: ${result.targetHorizon}`,
+                icon: Calendar,
+              },
+              {
+                id: 'adversary',
+                label:
+                  lang === 'en'
+                    ? 'Adversary Move'
+                    : lang === 'ru'
+                    ? 'Ход Конкурента'
+                    : 'Хід Конкурента',
+                icon: Swords,
+              },
+              {
+                id: 'revised',
+                label:
+                  lang === 'en'
+                    ? 'Bulletproof Plan'
+                    : lang === 'ru'
+                    ? 'Бронебойный план'
+                    : 'Бронебійний план',
+                icon: ShieldAlert,
+              },
+              {
+                id: 'killswitch',
+                label:
+                  lang === 'en'
+                    ? 'Kill-Switch Checklist'
+                    : lang === 'ru'
+                    ? 'Kill-Switch Чек-лист'
+                    : 'Kill-Switch Чек-лист',
+                icon: AlertOctagon,
+              },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -598,7 +854,7 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-bold rounded-t-xl transition-all whitespace-nowrap border-b-2 ${
+                  className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-bold rounded-t-xl transition-all whitespace-nowrap border-b-2 cursor-pointer ${
                     isActive
                       ? 'bg-stone-900 border-rose-500 text-rose-400'
                       : 'border-transparent text-stone-400 hover:text-stone-200 hover:bg-stone-900/50'
@@ -617,9 +873,17 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-stone-200 flex items-center gap-2">
                   <Skull className="w-4 h-4 text-rose-400" />
-                  <span>7 Сценаріїв краху та точна матриця розтяжки (факти, а не відчуття!)</span>
+                  <span>
+                    {lang === 'en'
+                      ? '7 Failure Scenarios & Tripwire Matrix (Hard Facts, Not Feelings!)'
+                      : lang === 'ru'
+                      ? '7 Сценариев краха и матрица растяжки (факты, а не ощущения!)'
+                      : '7 Сценаріїв краху та точна матриця розтяжки (факти, а не відчуття!)'}
+                  </span>
                 </h3>
-                <span className="text-xs text-stone-500">Натисніть на картку для деталей</span>
+                <span className="text-xs text-stone-500">
+                  {lang === 'en' ? 'Click card for details' : lang === 'ru' ? 'Нажмите на карточку' : 'Натисніть на картку для деталей'}
+                </span>
               </div>
 
               <div className="space-y-3">
@@ -655,18 +919,20 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                               <h4 className="text-sm font-bold text-stone-100">{cause.title}</h4>
                               {isDeadliest && (
                                 <span className="px-2 py-0.5 rounded bg-red-600/30 text-red-300 text-[10px] font-extrabold border border-red-500/40">
-                                  НАЙБІЛЬШ ФАТАЛЬНИЙ
+                                  {lang === 'en' ? 'DEADLIEST' : lang === 'ru' ? 'САМЫЙ ФАТАЛЬНЫЙ' : 'НАЙБІЛЬШ ФАТАЛЬНИЙ'}
                                 </span>
                               )}
                             </div>
                             <div className="flex items-center gap-3 mt-1 text-xs text-stone-400">
                               <span className="flex items-center gap-1 text-rose-400/90 font-medium">
                                 <Clock className="w-3 h-3" />
-                                Перевірка: Тиждень {cause.checkWeek}
+                                {lang === 'en' ? 'Check: Week ' : lang === 'ru' ? 'Проверка: Неделя ' : 'Перевірка: Тиждень '}
+                                {cause.checkWeek}
                               </span>
                               <span className="text-stone-600">•</span>
                               <span className="text-stone-400 line-clamp-1">
-                                Сигнал: {cause.earlyWarningSignal}
+                                {lang === 'en' ? 'Signal: ' : lang === 'ru' ? 'Сигнал: ' : 'Сигнал: '}
+                                {cause.earlyWarningSignal}
                               </span>
                             </div>
                           </div>
@@ -681,7 +947,7 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                         <div className="p-4 pt-0 border-t border-stone-800/80 bg-stone-950/40 space-y-3 text-xs">
                           <div>
                             <span className="font-bold text-stone-300 uppercase tracking-wider text-[11px]">
-                              Механізм краху:
+                              {lang === 'en' ? 'Failure Mechanism:' : lang === 'ru' ? 'Механизм краха:' : 'Механізм краху:'}
                             </span>
                             <p className="text-stone-200 mt-1 leading-relaxed text-sm">
                               {cause.mechanism}
@@ -692,26 +958,39 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                             <div className="p-3 bg-stone-900 border border-stone-800 rounded-xl space-y-1">
                               <span className="text-rose-400 font-bold uppercase tracking-wider text-[10px] flex items-center gap-1">
                                 <AlertOctagon className="w-3 h-3" />
-                                Вимірюваний сигнал розтяжки (Факт/Цифра):
+                                {lang === 'en'
+                                  ? 'Measurable Tripwire Signal (Fact/Metric):'
+                                  : lang === 'ru'
+                                  ? 'Измеримый сигнал растяжки (Факт/Цифра):'
+                                  : 'Вимірюваний сигнал розтяжки (Факт/Цифра):'}
                               </span>
                               <p className="text-stone-200 font-medium">
                                 {cause.earlyWarningSignal}
                               </p>
                               <span className="text-[10px] text-stone-500 block">
-                                Не орієнтуйтеся на відчуття. Зафіксуйте цей точний показник.
+                                {lang === 'en'
+                                  ? 'Do not rely on subjective feelings. Lock this objective metric.'
+                                  : lang === 'ru'
+                                  ? 'Не ориентируйтесь на ощущения. Зафиксируйте этот точный показатель.'
+                                  : 'Не орієнтуйтеся на відчуття. Зафіксуйте цей точний показник.'}
                               </span>
                             </div>
 
                             <div className="p-3 bg-stone-900 border border-stone-800 rounded-xl space-y-1">
                               <span className="text-amber-400 font-bold uppercase tracking-wider text-[10px] flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
-                                Дедлайн аудиту:
+                                {lang === 'en' ? 'Audit Deadline:' : lang === 'ru' ? 'Дедлайн аудита:' : 'Дедлайн аудиту:'}
                               </span>
                               <p className="text-stone-200 font-bold text-sm">
-                                Тиждень {cause.checkWeek}
+                                {lang === 'en' ? 'Week ' : lang === 'ru' ? 'Неделя ' : 'Тиждень '}
+                                {cause.checkWeek}
                               </p>
                               <span className="text-[10px] text-stone-500 block">
-                                Якщо на цьому тижні зафіксовано сигнал — негайно вмикайте протокол зупинки.
+                                {lang === 'en'
+                                  ? 'If this signal is registered by this week — trigger abort protocol immediately.'
+                                  : lang === 'ru'
+                                  ? 'Если на этой неделе зафиксирован сигнал — немедленно включайте протокол остановки.'
+                                  : 'Якщо на цьому тижні зафіксовано сигнал — негайно вмикайте протокол зупинки.'}
                               </span>
                             </div>
                           </div>
@@ -729,7 +1008,13 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-stone-200 flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-rose-400" />
-                <span>Щомісячна хроніка катастрофи (як розвивався крах крок за кроком)</span>
+                <span>
+                  {lang === 'en'
+                    ? 'Monthly Chronicle of Disaster (How failure unfolded step-by-step)'
+                    : lang === 'ru'
+                    ? 'Ежемесячная хроника катастрофы (как развивался крах шаг за шагом)'
+                    : 'Щомісячна хроніка катастрофи (як розвивався крах крок за кроком)'}
+                </span>
               </h3>
 
               <div className="relative border-l-2 border-rose-900/60 ml-4 pl-6 space-y-6">
@@ -745,7 +1030,8 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                           {item.title}
                         </h4>
                         <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-stone-800 text-stone-400">
-                          Місяць {item.month}
+                          {lang === 'en' ? 'Month ' : lang === 'ru' ? 'Месяц ' : 'Місяць '}
+                          {item.month}
                         </span>
                       </div>
 
@@ -754,7 +1040,14 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                       </p>
 
                       <div className="p-2.5 rounded-lg bg-rose-950/30 border border-rose-900/40 text-xs text-rose-300">
-                        <span className="font-bold text-rose-200">Фатальна деталь місяця:</span> {item.destructiveDetail}
+                        <span className="font-bold text-rose-200">
+                          {lang === 'en'
+                            ? 'Destructive Detail of the Month:'
+                            : lang === 'ru'
+                            ? 'Фатальная деталь месяца:'
+                            : 'Фатальна деталь місяця:'}
+                        </span>{' '}
+                        {item.destructiveDetail}
                       </div>
                     </div>
                   </div>
@@ -769,11 +1062,21 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
               <div className="bg-gradient-to-r from-purple-950/40 via-stone-900 to-purple-950/40 border border-purple-900/50 rounded-2xl p-5 sm:p-6 space-y-4">
                 <div className="flex items-center gap-2 text-purple-400 font-extrabold text-xs uppercase tracking-wider">
                   <Swords className="w-4 h-4" />
-                  Рольова гра: Позиція того, хто найбільше виграє від вашого краху
+                  {lang === 'en'
+                    ? 'Roleplay: Perspective of the party that profits most from your failure'
+                    : lang === 'ru'
+                    ? 'Ролевая игра: Позиция того, кто больше всех выиграет от вашего краха'
+                    : 'Рольова гра: Позиція того, хто найбільше виграє від вашого краху'}
                 </div>
 
                 <div className="space-y-1">
-                  <span className="text-xs text-stone-400 uppercase font-semibold">Ваш головний супротивник / вигодонабувач:</span>
+                  <span className="text-xs text-stone-400 uppercase font-semibold">
+                    {lang === 'en'
+                      ? 'Your primary adversary / beneficiary:'
+                      : lang === 'ru'
+                      ? 'Ваш главный соперник / выгодоприобретатель:'
+                      : 'Ваш головний супротивник / вигодонабувач:'}
+                  </span>
                   <h4 className="text-base font-extrabold text-purple-200">
                     {result.adversaryPerspective.persona}
                   </h4>
@@ -782,7 +1085,11 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <div className="bg-stone-950/80 border border-purple-900/40 rounded-xl p-4 space-y-2">
                     <span className="text-xs font-bold text-purple-400 uppercase tracking-wider block">
-                      ⚡ Що суперник зробить у тиждень вашого запуску:
+                      {lang === 'en'
+                        ? '⚡ What adversary does during your launch week:'
+                        : lang === 'ru'
+                        ? '⚡ Что соперник сделает на неделе вашего запуска:'
+                        : '⚡ Що суперник зробить у тиждень вашого запуску:'}
                     </span>
                     <p className="text-stone-200 text-xs sm:text-sm leading-relaxed">
                       {result.adversaryPerspective.launchWeekTrap}
@@ -791,7 +1098,11 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
 
                   <div className="bg-stone-950/80 border border-purple-900/40 rounded-xl p-4 space-y-2">
                     <span className="text-xs font-bold text-rose-400 uppercase tracking-wider block">
-                      👁️ Прихований хід, який ви б ніколи не помітили самі:
+                      {lang === 'en'
+                        ? '👁️ Invisible strike you would never notice yourself:'
+                        : lang === 'ru'
+                        ? '👁️ Невидимый ход, который вы бы никогда не заметили сами:'
+                        : '👁️ Прихований хід, який ви б ніколи не помітили самі:'}
                     </span>
                     <p className="text-stone-200 text-xs sm:text-sm leading-relaxed">
                       {result.adversaryPerspective.invisibleStrike}
@@ -800,7 +1111,14 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                 </div>
 
                 <div className="text-xs text-stone-400 bg-purple-950/20 border border-purple-900/30 p-3 rounded-xl">
-                  💡 <span className="font-semibold text-purple-300">Психологічний висновок:</span> Ви боретеся не з власною лінню, а з ринковою структурою та гравцями, які математично розраховують на вашу передбачувану поведінку.
+                  💡 <span className="font-semibold text-purple-300">
+                    {lang === 'en' ? 'Psychological Takeaway:' : lang === 'ru' ? 'Психологический вывод:' : 'Психологічний висновок:'}
+                  </span>{' '}
+                  {lang === 'en'
+                    ? 'You are not fighting your own laziness, but market structure and players mathematically betting on your predictable behavior.'
+                    : lang === 'ru'
+                    ? 'Вы боретесь не с собственной ленью, а со структурой рынка и игроками, математически рассчитывающими на ваше предсказуемое поведение.'
+                    : 'Ви боретеся не з власною лінню, а з ринковою структурою та гравцями, які математично розраховують на вашу передбачувану поведінку.'}
                 </div>
               </div>
             </div>
@@ -812,7 +1130,11 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
               <div className="bg-stone-900/90 border border-emerald-900/40 rounded-2xl p-5 sm:p-6 space-y-4">
                 <div className="flex items-center gap-2 text-emerald-400 font-extrabold text-xs uppercase tracking-wider">
                   <ShieldAlert className="w-4 h-4" />
-                  Переписаний бронебійний план (Anti-Fragile Execution)
+                  {lang === 'en'
+                    ? 'Revised Bulletproof Plan (Anti-Fragile Execution)'
+                    : lang === 'ru'
+                    ? 'Переписанный бронебойный план (Anti-Fragile Execution)'
+                    : 'Переписаний бронебійний план (Anti-Fragile Execution)'}
                 </div>
 
                 <p className="text-stone-200 text-sm leading-relaxed font-medium">
@@ -822,7 +1144,11 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                 {/* New Rules of Engagement */}
                 <div className="space-y-2 pt-2">
                   <span className="text-xs font-bold uppercase tracking-wider text-stone-300">
-                    Залізні правила взаємодії (Rules of Engagement):
+                    {lang === 'en'
+                      ? 'Iron Rules of Engagement:'
+                      : lang === 'ru'
+                      ? 'Железные правила взаимодействия (Rules of Engagement):'
+                      : 'Залізні правила взаємодії (Rules of Engagement):'}
                   </span>
                   <div className="grid grid-cols-1 gap-2">
                     {result.revisedAntiFragilePlan.newRulesOfEngagement.map((rule, idx) => (
@@ -840,7 +1166,11 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                 {/* Step-by-step Counter-Measures */}
                 <div className="space-y-3 pt-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-stone-300">
-                    Закриття провальних сценаріїв:
+                    {lang === 'en'
+                      ? 'Closing Failure Scenarios:'
+                      : lang === 'ru'
+                      ? 'Закрытие провальных сценариев:'
+                      : 'Закриття провальних сценаріїв:'}
                   </span>
                   <div className="space-y-2.5">
                     {result.revisedAntiFragilePlan.concreteSteps.map((step, idx) => (
@@ -850,26 +1180,43 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                       >
                         <div className="flex items-center justify-between text-stone-400">
                           <span className="font-bold text-rose-400">
-                            Закриття вразливості: {step.originalVulnerability}
+                            {lang === 'en' ? 'Closing Vulnerability: ' : lang === 'ru' ? 'Закрытие уязвимости: ' : 'Закриття вразливості: '}
+                            {step.originalVulnerability}
                           </span>
                           <span className="text-[10px] px-2 py-0.5 rounded bg-stone-800 text-stone-300">
-                            Крок #{idx + 1}
+                            {lang === 'en' ? 'Step #' : lang === 'ru' ? 'Шаг #' : 'Крок #'}{idx + 1}
                           </span>
                         </div>
                         <div className="text-stone-100 font-semibold text-sm">
                           {step.revisedAction}
                         </div>
                         <div className="text-emerald-400/90 text-[11px] leading-relaxed">
-                          <span className="font-bold">Чому це захищає:</span> {step.whyRationale}
+                          <span className="font-bold">
+                            {lang === 'en' ? 'Why this protects: ' : lang === 'ru' ? 'Почему защищает: ' : 'Чому це захищає: '}
+                          </span>{' '}
+                          {step.whyRationale}
                         </div>
                         {onSendToSmartGoal && (
                           <div className="pt-1 flex justify-end">
                             <button
                               type="button"
-                              onClick={() => onSendToSmartGoal(step.revisedAction, 'Антикрихкий крок Премортем')}
-                              className="text-[11px] text-teal-400 hover:text-teal-300 font-semibold underline transition-colors"
+                              onClick={() =>
+                                onSendToSmartGoal(
+                                  step.revisedAction,
+                                  lang === 'en'
+                                    ? 'Antifragile Step'
+                                    : lang === 'ru'
+                                    ? 'Антихрупкий шаг'
+                                    : 'Антикрихкий крок Премортем'
+                                )
+                              }
+                              className="text-[11px] text-teal-400 hover:text-teal-300 font-semibold underline transition-colors cursor-pointer"
                             >
-                              Перенести як SMART-ціль →
+                              {lang === 'en'
+                                ? 'Transfer as SMART goal →'
+                                : lang === 'ru'
+                                ? 'Перенести как SMART-цель →'
+                                : 'Перенести як SMART-ціль →'}
                             </button>
                           </div>
                         )}
@@ -888,14 +1235,34 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-red-400 font-extrabold text-xs uppercase tracking-wider">
                     <AlertOctagon className="w-4 h-4" />
-                    Передстартовий Kill-Switch чек-лист
+                    {lang === 'en'
+                      ? 'Pre-launch Kill-Switch Checklist'
+                      : lang === 'ru'
+                      ? 'Предстартовый Kill-Switch чек-лист'
+                      : 'Передстартовий Kill-Switch чек-лист'}
                   </div>
-                  <span className="text-xs text-stone-400">Перевірити ДО старту</span>
+                  <span className="text-xs text-stone-400">
+                    {lang === 'en' ? 'Check BEFORE start' : lang === 'ru' ? 'Проверить ДО старта' : 'Перевірити ДО старту'}
+                  </span>
                 </div>
 
                 <p className="text-xs text-stone-300">
-                  Перед тим, як вкласти хоча б одну гривню або запустити процес, проведіть ці тести. 
-                  Якщо результат відповідає критерію — <span className="text-red-400 font-bold">ви зобов’язані відмовитися від плану</span>.
+                  {lang === 'en' ? (
+                    <>
+                      Before investing a single dollar or committing time, run these tests. If the result meets the threshold —{' '}
+                      <span className="text-red-400 font-bold">you are strictly obligated to abandon the plan</span>.
+                    </>
+                  ) : lang === 'ru' ? (
+                    <>
+                      Перед тем, как вложить хоть один доллар или запустить процесс, проведите эти тесты. Если результат соответствует критерию —{' '}
+                      <span className="text-red-400 font-bold">вы обязаны отказаться от плана</span>.
+                    </>
+                  ) : (
+                    <>
+                      Перед тим, як вкласти хоча б одну гривню або запустити процес, проведіть ці тести. Якщо результат відповідає критерію —{' '}
+                      <span className="text-red-400 font-bold">ви зобов’язані відмовитися від плану</span>.
+                    </>
+                  )}
                 </p>
 
                 <div className="space-y-3">
@@ -918,7 +1285,11 @@ ${result.killSwitchChecklist.map((k) => `• ${k.checkItem} => КРИТЕРІЙ 
                       <div className="ml-8 p-3 rounded-lg bg-red-950/40 border border-red-900/50 text-red-300 text-xs leading-normal">
                         <span className="font-bold uppercase tracking-wide text-red-200 flex items-center gap-1.5 mb-1">
                           <AlertOctagon className="w-3.5 h-3.5 text-red-400" />
-                          Критерій повної відмови (Kill-Threshold):
+                          {lang === 'en'
+                            ? 'Complete Abandonment Criterion (Kill-Threshold):'
+                            : lang === 'ru'
+                            ? 'Критерий полной отмены (Kill-Threshold):'
+                            : 'Критерій повної відмови (Kill-Threshold):'}
                         </span>
                         {item.killThreshold}
                       </div>

@@ -24,6 +24,7 @@ import {
   UserCheck,
   Smartphone,
   Skull,
+  Users,
 } from 'lucide-react';
 import { useThemeLanguage } from '../context/ThemeLanguageContext';
 import { PWAInstallButton } from './PWAInstallButton';
@@ -31,6 +32,7 @@ import { getUserProfile } from '../services/userStatsService';
 
 export type TabType =
   | 'consilium'
+  | 'bodyDouble'
   | 'hundredWishes'
   | 'selfReflection'
   | 'smartGoals'
@@ -113,6 +115,20 @@ export const Navbar: React.FC<NavbarProps> = ({
       dotColor: 'bg-teal-500',
     },
     {
+      id: 'bodyDouble',
+      label: lang === 'ru' ? 'Боди-дублер' : lang === 'en' ? 'Body Double' : 'Боді-дублер',
+      desc:
+        lang === 'ru'
+          ? 'Техника Body Doubling: фокус-сессии и саморефлексия'
+          : lang === 'en'
+          ? 'ADHD Body Doubling focus companion & reflection'
+          : 'Техніка Body Doubling: фокус-сесії та саморефлексія',
+      icon: Users,
+      accentColor: 'text-indigo-500',
+      activeBg: 'bg-indigo-500/15 border-indigo-500/40 text-indigo-600 dark:text-indigo-400 font-bold',
+      dotColor: 'bg-indigo-500',
+    },
+    {
       id: 'hundredWishes',
       label: lang === 'ru' ? '100 Желаний' : lang === 'en' ? '100 Wishes' : '100 Бажань',
       desc: lang === 'ru' ? 'Практика 100 желаний и распаковка РАС' : lang === 'en' ? '100 Desires Practice & RAS Awakening' : 'Практика 100 бажань та зняття цензури',
@@ -132,7 +148,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     },
     {
       id: 'smartGoals',
-      label: lang === 'ru' ? 'Цілі по SMART' : lang === 'en' ? 'SMART Goals' : 'Цілі по SMART',
+      label: lang === 'ru' ? 'Цели по SMART' : lang === 'en' ? 'SMART Goals' : 'Цілі по SMART',
       desc: lang === 'ru' ? 'SMART + WOOP ментальный контрастинг и 72ч' : lang === 'en' ? 'SMART criteria, WOOP & 72h momentum' : 'SMART + WOOP ментальний контрастинг та 72 год',
       icon: Target,
       accentColor: 'text-rose-500',
@@ -150,8 +166,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     },
     {
       id: 'archetypes',
-      label: lang === 'en' ? 'Archetypes' : 'Архетипи & Тінь',
-      desc: lang === 'en' ? '12 Jungian Archetypes & Shadow Integration' : '12 Архетипів Юнга та інтеграція Тіні',
+      label: lang === 'en' ? 'Archetypes' : lang === 'ru' ? 'Архетипы & Тень' : 'Архетипи & Тінь',
+      desc: lang === 'en' ? '12 Jungian Archetypes & Shadow Integration' : lang === 'ru' ? '12 Архетипов Юнга и интеграция Тени' : '12 Архетипів Юнга та інтеграція Тіні',
       icon: Crown,
       accentColor: 'text-purple-500',
       activeBg: 'bg-purple-500/15 border-purple-500/40 text-purple-600 dark:text-purple-400 font-bold',
@@ -159,8 +175,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     },
     {
       id: 'values',
-      label: lang === 'en' ? 'Values & Drive' : 'Цінності',
-      desc: lang === 'en' ? 'Schwartz Values & Motivation Diagnostic' : 'Діагностика цінностей Шварца та мотивації',
+      label: lang === 'en' ? 'Values & Drive' : lang === 'ru' ? 'Ценности и Драйв' : 'Цінності & Драйв',
+      desc: lang === 'en' ? 'Schwartz Values & Motivation Diagnostic' : lang === 'ru' ? 'Диагностика ценностей Шварца и мотивации' : 'Діагностика цінностей Шварца та мотивації',
       icon: Target,
       accentColor: 'text-emerald-500',
       activeBg: 'bg-emerald-500/15 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 font-bold',
@@ -168,8 +184,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     },
     {
       id: 'beliefs',
-      label: lang === 'en' ? 'Beliefs' : 'Переконання',
-      desc: lang === 'en' ? 'Dilts Sleight of Mouth Belief Transformation' : 'Трансформація переконань Роберта Ділтса',
+      label: lang === 'en' ? 'Beliefs' : lang === 'ru' ? 'Убеждения' : 'Переконання',
+      desc: lang === 'en' ? 'Dilts Sleight of Mouth Belief Transformation' : lang === 'ru' ? 'Трансформация убеждений Роберта Дилтса' : 'Трансформація переконань Роберта Ділтса',
       icon: Brain,
       accentColor: 'text-indigo-500',
       activeBg: 'bg-indigo-500/15 border-indigo-500/40 text-indigo-600 dark:text-indigo-400 font-bold',
@@ -178,7 +194,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     {
       id: 'goalMakersBoard',
       label: 'Goal MAker$',
-      desc: lang === 'en' ? 'Confinement Training Board Game' : 'Настільна гра-тренінг «Goal MAker$»',
+      desc: lang === 'en' ? 'Confinement Training Board Game' : lang === 'ru' ? 'Настольная игра-тренинг «Goal MAker$»' : 'Настільна гра-тренінг «Goal MAker$»',
       icon: Dice6,
       accentColor: 'text-amber-500',
       activeBg: 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400 font-bold',
@@ -195,8 +211,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     },
     {
       id: 'affirmations',
-      label: lang === 'en' ? 'Affirmations' : 'Афірмації',
-      desc: lang === 'en' ? 'Daily Psychological Anchors' : 'Щоденні афірмації та нейро-опори',
+      label: lang === 'en' ? 'Affirmations' : lang === 'ru' ? 'Аффирмации' : 'Афірмації',
+      desc: lang === 'en' ? 'Daily Psychological Anchors & Stoic Wisdom' : lang === 'ru' ? 'Ежедневные аффирмации и нейро-опоры' : 'Щоденні афірмації та нейро-опори',
       icon: Sparkles,
       accentColor: 'text-amber-500',
       activeBg: 'bg-amber-500/15 border-amber-500/40 text-amber-600 dark:text-amber-400 font-bold',
@@ -258,8 +274,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     },
     {
       id: 'feedback',
-      label: lang === 'en' ? 'Feedback' : 'Зворотній звʼязок',
-      desc: lang === 'en' ? 'Feedback & AI Self-Learning Engine' : 'Зворотній звʼязок та самонавчання ШІ',
+      label: lang === 'en' ? 'Feedback' : lang === 'ru' ? 'Обратная связь' : 'Зворотний звʼязок',
+      desc: lang === 'en' ? 'Feedback & AI Self-Learning Engine' : lang === 'ru' ? 'Обратная связь и самообучение ИИ' : 'Зворотний звʼязок та самонавчання ШІ',
       icon: MessageSquarePlus,
       accentColor: 'text-cyan-500',
       activeBg: 'bg-cyan-500/15 border-cyan-500/40 text-cyan-600 dark:text-cyan-400 font-bold',
@@ -320,7 +336,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="button"
               onClick={onOpenProfileModal}
               className="flex items-center gap-1.5 rounded-lg bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 px-2 sm:px-2.5 py-1.5 text-xs font-semibold text-stone-800 dark:text-stone-200 transition-all hover:bg-stone-200 dark:hover:bg-stone-800 active:scale-95 whitespace-nowrap shadow-xs cursor-pointer"
-              title={lang === 'ru' ? 'Личный профиль' : 'Особистий профіль'}
+              title={lang === 'en' ? 'User Profile' : lang === 'ru' ? 'Личный профиль' : 'Особистий профіль'}
             >
               {currentUser?.avatarUrl ? (
                 <img
@@ -333,7 +349,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <UserCheck className="h-4 w-4 text-indigo-500 shrink-0" />
               )}
               <span className="hidden md:inline text-xs">
-                {currentUser?.name ? currentUser.name.split(' ')[0] : 'Профіль'}
+                {currentUser?.name ? currentUser.name.split(' ')[0] : lang === 'en' ? 'Profile' : lang === 'ru' ? 'Профиль' : 'Профіль'}
               </span>
             </button>
           )}

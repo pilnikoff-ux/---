@@ -118,7 +118,6 @@ export function saveUserProfile(profileData: {
   avatarUrl?: string;
   authProvider?: 'google' | 'local' | 'guest';
   id?: string;
-  pinOrPassword?: string;
   birthDate?: string;
   dateOfBirth?: string;
   fieldOfActivity?: string;
@@ -132,7 +131,6 @@ export function saveUserProfile(profileData: {
     email: profileData.email?.trim() || existing?.email,
     avatarUrl: profileData.avatarUrl || existing?.avatarUrl,
     authProvider: profileData.authProvider || existing?.authProvider || 'local',
-    pinOrPassword: profileData.pinOrPassword || existing?.pinOrPassword,
     birthDate: profileData.birthDate || profileData.dateOfBirth || existing?.birthDate,
     dateOfBirth: profileData.dateOfBirth || profileData.birthDate || existing?.dateOfBirth,
     fieldOfActivity: profileData.fieldOfActivity?.trim() || existing?.fieldOfActivity,
@@ -149,37 +147,13 @@ export function saveUserProfile(profileData: {
     console.error('Failed to save user profile', e);
   }
 
-  // Send registration to server and Google Sheets in background
-  try {
-    fetch('/api/telemetry/user-registration', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: profile.id,
-        login: profile.login,
-        name: profile.name,
-        fullName: profile.fullName || profile.name,
-        email: profile.email,
-        birthDate: profile.birthDate || profile.dateOfBirth,
-        fieldOfActivity: profile.fieldOfActivity,
-        authProvider: profile.authProvider,
-        registeredAt: profile.registeredAt,
-      }),
-    }).catch((e) => console.log('Telemetry sync notice:', e));
-  } catch (e) {
-    // Offline safe
-  }
-
-  // Log registration/login event
+  // Log registration/login event locally for user dashboard
   logUserActivity({
     tab: 'auth',
     toolName: existing ? 'Оновлення профілю' : profile.authProvider === 'google' ? 'Google Авторизація' : 'Реєстрація користувача',
-    querySummary: `Користувач ${profile.name} (${profile.login}) зареєструвався/увійшов у систему`,
+    querySummary: `Користувач ${profile.name} оновив профіль`,
     details: {
       authProvider: profile.authProvider,
-      email: profile.email,
-      fieldOfActivity: profile.fieldOfActivity,
-      birthDate: profile.birthDate,
     },
   });
 
@@ -237,21 +211,16 @@ export function logUserActivity(params: {
     console.error('Failed to append activity log', e);
   }
 
-  // Send activity log to server and Google Sheets in background
+  // Send anonymous usage metric only (Strict privacy: no user queries or PII transmitted)
   try {
     fetch('/api/telemetry/user-activity', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId: profile.id,
-        userName: profile.name,
-        userEmail: profile.email,
         tab: params.tab,
         toolName: params.toolName,
-        querySummary: params.querySummary,
-        category: params.category,
       }),
-    }).catch((e) => console.log('Activity sync notice:', e));
+    }).catch(() => {});
   } catch (e) {
     // Offline safe
   }

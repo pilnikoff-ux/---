@@ -289,4 +289,74 @@ export const translations: TranslationsDict = {
     ru: 'Пошаговый алгоритм выполнения практики',
     en: 'Step-by-step Execution Algorithm',
   },
+  reminders_btn: {
+    ua: 'Нагадування',
+    ru: 'Напоминания',
+    en: 'Reminders',
+  },
+  reminders_tooltip: {
+    ua: 'Налаштувати щоденні сповіщення та нагадування про практики',
+    ru: 'Настроить ежедневные уведомления и напоминания о практиках',
+    en: 'Configure daily practice notifications and reminders',
+  },
+  sos_grounding: {
+    ua: 'SOS Заземлення',
+    ru: 'SOS Заземление',
+    en: 'SOS Grounding',
+  },
+  sos_grounding_tooltip: {
+    ua: 'Швидка соматична стабілізація та дихальні вправи',
+    ru: 'Быстрая соматическая стабилизация и дыхательные упражнения',
+    en: 'Rapid somatic stabilization & mindful breathing',
+  },
+  theme_light: {
+    ua: 'Світла',
+    ru: 'Светлая',
+    en: 'Light',
+  },
+  theme_dark: {
+    ua: 'Темна',
+    ru: 'Темная',
+    en: 'Dark',
+  },
+  btn_saved: {
+    ua: 'Збережено!',
+    ru: 'Сохранено!',
+    en: 'Saved!',
+  },
+  btn_save_to_journal: {
+    ua: 'Зберегти в Журнал',
+    ru: 'Сохранить в Журнал',
+    en: 'Save to Journal',
+  },
+  btn_transfer_to_goals: {
+    ua: 'Передати в Goal Makers',
+    ru: 'Передать в Goal Makers',
+    en: 'Send to Goal Makers',
+  },
+  consilium_title: {
+    ua: 'Мультимодальний Психологічний Консиліум',
+    ru: 'Мультимодальный Психологический Консилиум',
+    en: 'Multimodal Psychological Consilium',
+  },
+  consilium_subtitle: {
+    ua: 'Інтегративна психотерапія, рівні Ділтса, юнгіанські архетипи та природний підхід Линецького',
+    ru: 'Интегративная психотерапия, уровни Дилтса, юнгианские архетипы и естественный подход Линецкого',
+    en: 'Integrative psychotherapy, Dilts logical levels, Jungian archetypes & Linetsky non-dual presence',
+  },
+  situation_label: {
+    ua: 'Опишіть вашу ситуацію, сумніви чи конфлікт',
+    ru: 'Опишите вашу ситуацию, сомнения или конфликт',
+    en: 'Describe your situation, doubt, or conflict',
+  },
+  linetsky_tension_title: {
+    ua: 'Напруга «Як є» vs «Як має бути»:',
+    ru: 'Напряжение «Как есть» vs «Как должно быть»:',
+    en: 'Tension "As It Is" vs "As It Should Be":',
+  },
+  effortless_awareness_title: {
+    ua: 'Невимушене усвідомлення:',
+    ru: 'Непринужденное осознавание:',
+    en: 'Effortless Awareness:',
+  },
 };

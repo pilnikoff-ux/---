@@ -32,64 +32,108 @@ interface NvcEqTrainerProps {
 const PRESETS = [
   {
     titleUk: 'Конфлікт із керівником щодо дедлайнів',
+    titleRu: 'Конфликт с руководителем по дедлайнам',
     titleEn: 'Conflict with manager over deadlines',
-    situation: 'Керівник призначив термінову задачу у п’ятницю ввечері і дорікає за повільність.',
-    raw: 'Ви вічно скидаєте на мене все в останній момент і ніколи не поважаєте мій особистий час!',
-    role: 'Керівник / Менеджер',
-    emotions: ['Гнів', 'Безсилля', 'Втома'],
-    need: 'Повага до меж і передбачуваність',
+    situationUk: 'Керівник призначив термінову задачу у п’ятницю ввечері і дорікає за повільність.',
+    situationRu: 'Руководитель поставил срочную задачу в пятницу вечером и упрекает за медлительность.',
+    situationEn: 'The manager assigned an urgent task on Friday evening and criticized me for being slow.',
+    rawUk: 'Ви вічно скидаєте на мене все в останній момент і ніколи не поважаєте мій особистий час!',
+    rawRu: 'Вы вечно сваливаете на меня все в последний момент и никогда не уважаете мое личное время!',
+    rawEn: 'You always dump everything on me at the last minute and never respect my personal time!',
+    roleUk: 'Керівник / Менеджер',
+    roleRu: 'Руководитель / Менеджер',
+    roleEn: 'Manager / Supervisor',
+    emotionsUk: ['Гнів / Лють', 'Безсилля', 'Втома / Виснаження'],
+    emotionsRu: ['Гнев / Ярость', 'Бессилие', 'Усталость / Истощение'],
+    emotionsEn: ['Anger / Rage', 'Powerlessness', 'Fatigue / Burnout'],
+    needUk: 'Повага та визнання',
+    needRu: 'Уважение и признание',
+    needEn: 'Respect & Recognition',
   },
   {
     titleUk: 'Партнер не допомагає у побуті',
+    titleRu: 'Партнер не помогает в быту',
     titleEn: 'Partner doesn’t help with chores',
-    situation: 'Після важкого робочого дня партнер сидить у телефоні, поки я прибираю та готую.',
-    raw: 'Тобі плювати на наш дім, ти просто паразитуєш на мені і нічого не робиш!',
-    role: 'Партнер / Чоловік / Дружина',
-    emotions: ['Образа', 'Самотність', 'Виснаження'],
-    need: 'Співучасть, турбота і справедливий розподіл зусиль',
+    situationUk: 'Після важкого робочого дня партнер сидить у телефоні, поки я прибираю та готую.',
+    situationRu: 'После тяжелого рабочего дня партнер сидит в телефоне, пока я убираю и готовлю.',
+    situationEn: 'After a hard workday, partner scrolls social media while I am cooking and cleaning.',
+    rawUk: 'Тобі плювати на наш дім, ти просто паразитуєш на мені і нічого не робиш!',
+    rawRu: 'Тебе плевать на наш дом, ты просто паразитируешь на мне и ничего не делаешь!',
+    rawEn: 'You do not care about our home; you just take advantage of me and do nothing!',
+    roleUk: 'Партнер / Чоловік / Дружина',
+    roleRu: 'Партнер / Супруг(а)',
+    roleEn: 'Partner / Spouse',
+    emotionsUk: ['Образа', 'Самотність', 'Втома / Виснаження'],
+    emotionsRu: ['Обида', 'Одиночество', 'Усталость / Истощение'],
+    emotionsEn: ['Resentment / Hurt', 'Loneliness', 'Fatigue / Burnout'],
+    needUk: 'Співпраця та підтримка',
+    needRu: 'Сотрудничество и поддержка',
+    needEn: 'Cooperation & Support',
   },
   {
     titleUk: 'Порушення особистих кордонів родичами',
+    titleRu: 'Нарушение личных границ родственниками',
     titleEn: 'Family members crossing boundaries',
-    situation: 'Батьки або родичі дають непрохані поради щодо виховання дітей, карʼєри чи грошей.',
-    raw: 'Перестаньте лізти у моє життя, ви самі нічого не тямите і тільки псуєте мені настрій!',
-    role: 'Батьки / Родичі',
-    emotions: ['Роздратування', 'Тиск', 'Сум'],
-    need: 'Автономія, довіра та визнання дорослості',
+    situationUk: 'Батьки або родичі дають непрохані поради щодо виховання дітей, карʼєри чи грошей.',
+    situationRu: 'Родители или родственники дают непрошеные советы по поводу детей, карьеры или финансов.',
+    situationEn: 'Parents or relatives offer unsolicited advice about parenting, career, or finances.',
+    rawUk: 'Перестаньте лізти у моє життя, ви самі нічого не тямите і тільки псуєте мені настрій!',
+    rawRu: 'Перестаньте лезть в мою жизнь, вы сами ничего не понимаете и только портите настроение!',
+    rawEn: 'Stop intruding into my life; you know nothing about it and only ruin my day!',
+    roleUk: 'Батьки / Родичі',
+    roleRu: 'Родители / Родственники',
+    roleEn: 'Parents / Relatives',
+    emotionsUk: ['Розгубленість', 'Гнів / Лють', 'Сум / Біль'],
+    emotionsRu: ['Растерянность', 'Гнев / Ярость', 'Грусть / Боль'],
+    emotionsEn: ['Confusion', 'Anger / Rage', 'Sadness / Pain'],
+    needUk: 'Особисті межі й автономія',
+    needRu: 'Личные границы и автономия',
+    needEn: 'Boundaries & Autonomy',
   },
   {
     titleUk: 'Колега ігнорує робочі домовленості',
+    titleRu: 'Коллега игнорирует рабочие договоренности',
     titleEn: 'Colleague ignoring project agreements',
-    situation: 'Колега затримує свою частину звіту, через що команда ризикує зірвати спільний реліз.',
-    raw: 'Через твою безвідповідальність ми всі провалимо проект! Скільки можна тягнути?!',
-    role: 'Колега по команді',
-    emotions: ['Тривога', 'Злість', 'Розгубленість'],
-    need: 'Надійність, командна взаємодія та ясність',
+    situationUk: 'Колега затримує свою частину звіту, через що команда ризикує зірвати спільний реліз.',
+    situationRu: 'Коллега задерживает свою часть отчета, из-за чего команда рискует сорвать релиз.',
+    situationEn: 'A teammate delays their portion of the report, putting the whole team release at risk.',
+    rawUk: 'Через твою безвідповідальність ми всі провалимо проект! Скільки можна тягнути?!',
+    rawRu: 'Из-за твоей безответственности мы все завалим проект! Сколько можно тянуть?!',
+    rawEn: 'Because of your irresponsibility, our entire launch is doomed! How long must we wait?!',
+    roleUk: 'Колега по команді',
+    roleRu: 'Коллега по команде',
+    roleEn: 'Teammate / Colleague',
+    emotionsUk: ['Тривога', 'Гнів / Лють', 'Розгубленість'],
+    emotionsRu: ['Тревога', 'Гнев / Ярость', 'Растерянность'],
+    emotionsEn: ['Anxiety', 'Anger / Rage', 'Confusion'],
+    needUk: 'Безпека та передбачуваність',
+    needRu: 'Безопасность и предсказуемость',
+    needEn: 'Safety & Predictability',
   },
 ];
 
-const EMOTIONS_LIST = [
-  'Гнів / Лють',
-  'Образа',
-  'Тривога',
-  'Безсилля',
-  'Втома / Виснаження',
-  'Самотність',
-  'Сум / Біль',
-  'Розгубленість',
-  'Сором',
-  'Знецінення',
+const EMOTIONS_CONFIG = [
+  { uk: 'Гнів / Лють', ru: 'Гнев / Ярость', en: 'Anger / Rage' },
+  { uk: 'Образа', ru: 'Обида', en: 'Resentment / Hurt' },
+  { uk: 'Тривога', ru: 'Тревога', en: 'Anxiety' },
+  { uk: 'Безсилля', ru: 'Бессилие', en: 'Powerlessness' },
+  { uk: 'Втома / Виснаження', ru: 'Усталость / Истощение', en: 'Fatigue / Burnout' },
+  { uk: 'Самотність', ru: 'Одиночество', en: 'Loneliness' },
+  { uk: 'Сум / Біль', ru: 'Грусть / Боль', en: 'Sadness / Pain' },
+  { uk: 'Розгубленість', ru: 'Растерянность', en: 'Confusion' },
+  { uk: 'Сором', ru: 'Стыд', en: 'Shame' },
+  { uk: 'Знецінення', ru: 'Обесценивание', en: 'Invalidation' },
 ];
 
-const NEEDS_LIST = [
-  'Повага та визнання',
-  'Безпека та передбачуваність',
-  'Співпраця та підтримка',
-  'Особисті межі й автономія',
-  'Відпочинок і відновлення',
-  'Ясність та чесність',
-  'Близькість і прийняття',
-  'Справедливість',
+const NEEDS_CONFIG = [
+  { uk: 'Повага та визнання', ru: 'Уважение и признание', en: 'Respect & Recognition' },
+  { uk: 'Безпека та передбачуваність', ru: 'Безопасность и предсказуемость', en: 'Safety & Predictability' },
+  { uk: 'Співпраця та підтримка', ru: 'Сотрудничество и поддержка', en: 'Cooperation & Support' },
+  { uk: 'Особисті межі й автономія', ru: 'Личные границы и автономия', en: 'Boundaries & Autonomy' },
+  { uk: 'Відпочинок і відновлення', ru: 'Отдых и восстановление', en: 'Rest & Recovery' },
+  { uk: 'Ясність та чесність', ru: 'Ясность и честность', en: 'Clarity & Honesty' },
+  { uk: 'Близькість і прийняття', ru: 'Близость и принятие', en: 'Closeness & Acceptance' },
+  { uk: 'Справедливість', ru: 'Справедливость', en: 'Fairness & Justice' },
 ];
 
 export const NvcEqTrainer: React.FC<NvcEqTrainerProps> = ({
@@ -120,11 +164,21 @@ export const NvcEqTrainer: React.FC<NvcEqTrainerProps> = ({
   };
 
   const handleApplyPreset = (preset: typeof PRESETS[0]) => {
-    setTriggerSituation(preset.situation);
-    setRawExpression(preset.raw);
-    setPartnerRole(preset.role);
-    setSelectedEmotions(preset.emotions);
-    setCurrentNeed(preset.need);
+    setTriggerSituation(
+      lang === 'en' ? preset.situationEn : lang === 'ru' ? preset.situationRu : preset.situationUk
+    );
+    setRawExpression(
+      lang === 'en' ? preset.rawEn : lang === 'ru' ? preset.rawRu : preset.rawUk
+    );
+    setPartnerRole(
+      lang === 'en' ? preset.roleEn : lang === 'ru' ? preset.roleRu : preset.roleUk
+    );
+    setSelectedEmotions(
+      lang === 'en' ? preset.emotionsEn : lang === 'ru' ? preset.emotionsRu : preset.emotionsUk
+    );
+    setCurrentNeed(
+      lang === 'en' ? preset.needEn : lang === 'ru' ? preset.needRu : preset.needUk
+    );
     setResult(null);
     setIsSaved(false);
   };
@@ -247,21 +301,25 @@ export const NvcEqTrainer: React.FC<NvcEqTrainerProps> = ({
           {lang === 'en' ? 'Quick Conflict Scenarios:' : 'Типові ситуації для швидкого аналізу:'}
         </span>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-          {PRESETS.map((preset, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => handleApplyPreset(preset)}
-              className="flex flex-col text-left rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-3 hover:border-violet-500/50 hover:bg-violet-50/30 dark:hover:bg-violet-950/20 transition-all cursor-pointer group shadow-2xs"
-            >
-              <span className="text-xs font-bold text-stone-800 dark:text-stone-200 group-hover:text-violet-600 dark:group-hover:text-violet-400 line-clamp-1">
-                {lang === 'en' ? preset.titleEn : preset.titleUk}
-              </span>
-              <span className="text-[11px] text-stone-500 dark:text-stone-400 line-clamp-2 mt-1">
-                «{preset.raw}»
-              </span>
-            </button>
-          ))}
+          {PRESETS.map((preset, idx) => {
+            const title = lang === 'en' ? preset.titleEn : lang === 'ru' ? preset.titleRu : preset.titleUk;
+            const raw = lang === 'en' ? preset.rawEn : lang === 'ru' ? preset.rawRu : preset.rawUk;
+            return (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handleApplyPreset(preset)}
+                className="flex flex-col text-left rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-3 hover:border-violet-500/50 hover:bg-violet-50/30 dark:hover:bg-violet-950/20 transition-all cursor-pointer group shadow-2xs"
+              >
+                <span className="text-xs font-bold text-stone-800 dark:text-stone-200 group-hover:text-violet-600 dark:group-hover:text-violet-400 line-clamp-1">
+                  {title}
+                </span>
+                <span className="text-[11px] text-stone-500 dark:text-stone-400 line-clamp-2 mt-1">
+                  «{raw}»
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -272,13 +330,24 @@ export const NvcEqTrainer: React.FC<NvcEqTrainerProps> = ({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold text-stone-700 dark:text-stone-300">
-                1. {lang === 'en' ? 'Trigger situation / context' : 'Опис тригерної ситуації (Що трапилося?)'}
+                1.{' '}
+                {lang === 'en'
+                  ? 'Trigger situation / context (What happened?)'
+                  : lang === 'ru'
+                  ? 'Описание триггерной ситуации (Что произошло?)'
+                  : 'Опис тригерної ситуації (Що трапилося?)'}
               </label>
               <VoiceInputButton
                 id="voice-input-nvc-situation"
                 currentValue={triggerSituation}
                 onTranscript={(text) => setTriggerSituation(text)}
-                fieldLabel={lang === 'en' ? 'Trigger situation' : 'Тригерна ситуація'}
+                fieldLabel={
+                  lang === 'en'
+                    ? 'Trigger situation'
+                    : lang === 'ru'
+                    ? 'Триггерная ситуация'
+                    : 'Тригерна ситуація'
+                }
               />
             </div>
             <textarea
@@ -288,6 +357,8 @@ export const NvcEqTrainer: React.FC<NvcEqTrainerProps> = ({
               placeholder={
                 lang === 'en'
                   ? 'Describe what happened objectively...'
+                  : lang === 'ru'
+                  ? 'Например: Руководитель написал в пятницу вечером, что отчет нужно переделать к утру...'
                   : 'Наприклад: Керівник написав у п’ятницю ввечері, що звіт треба переробити на завтра...'
               }
               className="w-full rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 p-3 text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:border-violet-500 focus:outline-hidden"
@@ -299,15 +370,28 @@ export const NvcEqTrainer: React.FC<NvcEqTrainerProps> = ({
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
                 <span>
-                  2. {lang === 'en' ? 'Initial raw thought / complaint (Jackal)' : 'Перша емоційна реакція / претензія (Мова Шакала)'}
+                  2.{' '}
+                  {lang === 'en'
+                    ? 'Initial raw thought / complaint (Jackal)'
+                    : lang === 'ru'
+                    ? 'Первая эмоциональная реакция / претензия (Язык Шакала)'
+                    : 'Перша емоційна реакція / претензія (Мова Шакала)'}
                 </span>
-                <span className="text-[10px] font-normal text-rose-500">Без цензури</span>
+                <span className="text-[10px] font-normal text-rose-500">
+                  {lang === 'en' ? 'Uncensored' : lang === 'ru' ? 'Без цензуры' : 'Без цензури'}
+                </span>
               </label>
               <VoiceInputButton
                 id="voice-input-nvc-raw"
                 currentValue={rawExpression}
                 onTranscript={(text) => setRawExpression(text)}
-                fieldLabel={lang === 'en' ? 'Raw complaint' : 'Емоційна претензія'}
+                fieldLabel={
+                  lang === 'en'
+                    ? 'Raw complaint'
+                    : lang === 'ru'
+                    ? 'Эмоциональная претензия'
+                    : 'Емоційна претензія'
+                }
               />
             </div>
             <textarea
@@ -317,6 +401,8 @@ export const NvcEqTrainer: React.FC<NvcEqTrainerProps> = ({
               placeholder={
                 lang === 'en'
                   ? 'What do you want to scream or blame? "You always...", "I hate when you..."'
+                  : lang === 'ru'
+                  ? 'Что хочется выкрикнуть или высказать? «Ты вечно все портишь!», «Вам на меня плевать...»'
                   : 'Що хочеться викрикнути або висловити? «Ти вічно все псуєш!», «Вам на мене начхати...»'
               }
               className="w-full rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 p-3 text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:border-rose-500 focus:outline-hidden"
@@ -329,20 +415,36 @@ export const NvcEqTrainer: React.FC<NvcEqTrainerProps> = ({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold text-stone-700 dark:text-stone-300">
-                {lang === 'en' ? 'Dialogue partner role:' : 'Кому адресовано (роль):'}
+                {lang === 'en'
+                  ? 'Dialogue partner role:'
+                  : lang === 'ru'
+                  ? 'Кому адресовано (роль):'
+                  : 'Кому адресовано (роль):'}
               </label>
               <VoiceInputButton
                 id="voice-input-nvc-role"
                 currentValue={partnerRole}
                 onTranscript={(text) => setPartnerRole(text)}
-                fieldLabel={lang === 'en' ? 'Partner role' : 'Роль співрозмовника'}
+                fieldLabel={
+                  lang === 'en'
+                    ? 'Partner role'
+                    : lang === 'ru'
+                    ? 'Роль собеседника'
+                    : 'Роль співрозмовника'
+                }
               />
             </div>
             <input
               type="text"
               value={partnerRole}
               onChange={(e) => setPartnerRole(e.target.value)}
-              placeholder="Партнер, Керівник, Колега, Батьки..."
+              placeholder={
+                lang === 'en'
+                  ? 'Partner, Manager, Teammate, Parents...'
+                  : lang === 'ru'
+                  ? 'Партнер, Руководитель, Коллега, Родители...'
+                  : 'Партнер, Керівник, Колега, Батьки...'
+              }
               className="w-full rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 px-3 py-2 text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:border-violet-500 focus:outline-hidden"
             />
           </div>
@@ -350,23 +452,35 @@ export const NvcEqTrainer: React.FC<NvcEqTrainerProps> = ({
           {/* Preset need */}
           <div className="sm:col-span-2 space-y-1.5">
             <label className="block text-xs font-bold text-stone-700 dark:text-stone-300">
-              {lang === 'en' ? 'Primary unmet need (optional hint):' : 'Головна незадоволена потреба (орієнтир):'}
+              {lang === 'en'
+                ? 'Primary unmet need (optional hint):'
+                : lang === 'ru'
+                ? 'Главная неудовлетворенная потребность (ориентир):'
+                : 'Головна незадоволена потреба (орієнтир):'}
             </label>
             <div className="flex flex-wrap gap-1.5">
-              {NEEDS_LIST.map((need) => (
-                <button
-                  key={need}
-                  type="button"
-                  onClick={() => setCurrentNeed(currentNeed === need ? '' : need)}
-                  className={`rounded-lg px-2.5 py-1 text-[11px] transition-all cursor-pointer ${
-                    currentNeed === need
-                      ? 'bg-violet-600 text-white font-medium shadow-xs'
-                      : 'border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 text-stone-600 dark:text-stone-400 hover:border-violet-400'
-                  }`}
-                >
-                  {need}
-                </button>
-              ))}
+              {NEEDS_CONFIG.map((item) => {
+                const label = lang === 'en' ? item.en : lang === 'ru' ? item.ru : item.uk;
+                const isSelected =
+                  currentNeed === label ||
+                  currentNeed === item.uk ||
+                  currentNeed === item.ru ||
+                  currentNeed === item.en;
+                return (
+                  <button
+                    key={item.en}
+                    type="button"
+                    onClick={() => setCurrentNeed(isSelected ? '' : label)}
+                    className={`rounded-lg px-2.5 py-1 text-[11px] transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-violet-600 text-white font-medium shadow-xs'
+                        : 'border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 text-stone-600 dark:text-stone-400 hover:border-violet-400'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -374,23 +488,32 @@ export const NvcEqTrainer: React.FC<NvcEqTrainerProps> = ({
         {/* Emotional tags picker */}
         <div className="space-y-1.5">
           <label className="block text-xs font-bold text-stone-700 dark:text-stone-300">
-            {lang === 'en' ? 'Emotional Intelligence (EQ) - Select current feelings:' : 'Емоційний інтелект (EQ) — Оберіть те, що відчуваєте:'}
+            {lang === 'en'
+              ? 'Emotional Intelligence (EQ) - Select current feelings:'
+              : lang === 'ru'
+              ? 'Эмоциональный интеллект (EQ) — Выберите то, что чувствуете:'
+              : 'Емоційний інтелект (EQ) — Оберіть те, що відчуваєте:'}
           </label>
           <div className="flex flex-wrap gap-1.5">
-            {EMOTIONS_LIST.map((emo) => {
-              const active = selectedEmotions.includes(emo);
+            {EMOTIONS_CONFIG.map((item) => {
+              const label = lang === 'en' ? item.en : lang === 'ru' ? item.ru : item.uk;
+              const active =
+                selectedEmotions.includes(label) ||
+                selectedEmotions.includes(item.uk) ||
+                selectedEmotions.includes(item.ru) ||
+                selectedEmotions.includes(item.en);
               return (
                 <button
-                  key={emo}
+                  key={item.en}
                   type="button"
-                  onClick={() => toggleEmotion(emo)}
+                  onClick={() => toggleEmotion(label)}
                   className={`rounded-lg px-2.5 py-1 text-[11px] transition-all cursor-pointer flex items-center gap-1 ${
                     active
                       ? 'bg-rose-500/20 border border-rose-500/50 text-rose-700 dark:text-rose-300 font-semibold'
                       : 'border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 text-stone-600 dark:text-stone-400 hover:border-rose-300'
                   }`}
                 >
-                  <span>{emo}</span>
+                  <span>{label}</span>
                 </button>
               );
             })}

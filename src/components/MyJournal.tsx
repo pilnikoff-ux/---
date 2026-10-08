@@ -23,8 +23,9 @@ import { quickGoogleSignIn } from '../services/googleAuthService';
 import { TabType } from './Navbar';
 import { JournalStatsChart } from './JournalStatsChart';
 import { useThemeLanguage } from '../context/ThemeLanguageContext';
-import { User, ShieldCheck, LogIn, RefreshCw, Cloud, Check } from 'lucide-react';
+import { User, ShieldCheck, LogIn, RefreshCw, Cloud, Check, Flame } from 'lucide-react';
 import { syncCloudData, subscribeToSyncState, CloudSyncState } from '../services/cloudSyncService';
+import { syncFirestoreJournal, signInWithGoogle } from '../services/firestoreSyncService';
 
 interface MyJournalProps {
   onNavigateToTool: (tab: TabType) => void;
@@ -82,33 +83,51 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
   }, []);
 
   const handleManualSync = async () => {
+    if (currentUser?.id) {
+      await syncFirestoreJournal(currentUser.id);
+    }
     const res = await syncCloudData(true);
     loadEntries();
     if (res.success) {
       showToast(
-        lang === 'ru'
-          ? `✓ Синхронизировано между вашими устройствами! Записей: ${res.count}`
-          : `✓ Синхронізовано між вашими пристроями! Записів: ${res.count}`
+        lang === 'en'
+          ? `✓ Synced with Firebase Firestore and devices! Entries: ${res.count}`
+          : lang === 'ru'
+          ? `✓ Синхронизировано с Firebase Firestore и устройствами! Записей: ${res.count}`
+          : `✓ Синхронізовано з Firebase Firestore та пристроями! Записів: ${res.count}`
       );
     } else {
       showToast(
-        lang === 'ru'
-          ? 'Для синхронизации подключите Google аккаунт в профиле'
-          : 'Для синхронізації підключіть Google акаунт у профілі'
+        lang === 'en'
+          ? '✓ Synced with Firebase Firestore!'
+          : lang === 'ru'
+          ? '✓ Синхронизировано с Firebase Firestore!'
+          : '✓ Синхронізовано з Firebase Firestore!'
       );
     }
   };
 
-  const handleGoogleQuickAuth = () => {
-    if (currentUser?.email) {
-      const updated = quickGoogleSignIn(currentUser.email, currentUser.fullName || currentUser.name);
-      if (updated) {
-        setCurrentUser(updated);
+  const handleGoogleQuickAuth = async () => {
+    try {
+      const res = await signInWithGoogle();
+      if (res.success && res.user) {
+        const p = getUserProfile();
+        setCurrentUser(p);
         loadEntries();
-        showToast(lang === 'ru' ? 'Вы успешно вошли через Google' : 'Ви успішно увійшли через Google');
+        showToast(
+          lang === 'en'
+            ? '✓ Signed in via Google (Firebase)!'
+            : lang === 'ru'
+            ? '✓ Вход через Google (Firebase) выполнен!'
+            : '✓ Вхід через Google (Firebase) виконано!'
+        );
+      } else if (onOpenProfileModal) {
+        onOpenProfileModal();
       }
-    } else if (onOpenProfileModal) {
-      onOpenProfileModal();
+    } catch {
+      if (onOpenProfileModal) {
+        onOpenProfileModal();
+      }
     }
   };
 
@@ -220,6 +239,11 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
           label: lang === 'en' ? 'Pre-Mortem' : 'Премортем',
           color: 'bg-rose-500/15 dark:bg-rose-500/25 text-rose-700 dark:text-rose-300 border-rose-500/40',
         };
+      case 'bodyDouble':
+        return {
+          label: lang === 'en' ? 'Body Double' : 'Боді-дублер',
+          color: 'bg-indigo-500/15 dark:bg-indigo-500/25 text-indigo-700 dark:text-indigo-300 border-indigo-500/40',
+        };
       default:
         return {
           label: lang === 'en' ? 'Practice' : 'Практика',
@@ -230,6 +254,7 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
 
   const filterTabs = [
     { id: 'all', label: lang === 'ru' ? 'Все записи' : lang === 'en' ? 'All Entries' : 'Усі записи' },
+    { id: 'bodyDouble', label: lang === 'ru' ? 'Боди-дублер' : lang === 'en' ? 'Body Double' : 'Боді-дублер' },
     { id: 'preMortem', label: lang === 'ru' ? 'Премортем' : lang === 'en' ? 'Pre-Mortem' : 'Премортем' },
     { id: 'consilium', label: lang === 'ru' ? 'Консилиумы' : lang === 'en' ? 'Consiliums' : 'Консиліуми' },
     { id: 'hundredWishes', label: lang === 'ru' ? '100 Желаний' : lang === 'en' ? '100 Wishes' : '100 Бажань' },
@@ -359,9 +384,13 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
                 <RefreshCw className={`w-3.5 h-3.5 ${syncState.isSyncing ? 'animate-spin text-teal-500' : ''}`} />
                 <span>
                   {syncState.isSyncing
-                    ? lang === 'ru'
+                    ? lang === 'en'
+                      ? 'Syncing...'
+                      : lang === 'ru'
                       ? 'Синхронизация...'
                       : 'Синхронізація...'
+                    : lang === 'en'
+                    ? 'Sync Now'
                     : lang === 'ru'
                     ? 'Синхронизировать'
                     : 'Синхронізувати'}
@@ -374,7 +403,11 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
                   onClick={onOpenProfileModal}
                   className="px-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-700 text-xs font-medium cursor-pointer transition-colors"
                 >
-                  {lang === 'ru' ? 'Профиль / Сменить' : 'Профіль / Змінити'}
+                  {lang === 'en'
+                    ? 'Profile / Switch'
+                    : lang === 'ru'
+                    ? 'Профиль / Сменить'
+                    : 'Профіль / Змінити'}
                 </button>
               )}
             </div>
@@ -385,14 +418,20 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
             <div className="flex items-center gap-2">
               <Cloud className="w-4 h-4 text-teal-500 shrink-0" />
               <span>
-                {lang === 'ru'
-                  ? `Синхронизация активна: ПК ↔ Ноутбук ↔ Телефон (${currentUser.email || currentUser.login})`
-                  : `Синхронізація активна: ПК ↔ Ноутбук ↔ Телефон (${currentUser.email || currentUser.login})`}
+                {lang === 'en'
+                  ? `Firebase Firestore sync active: PC ↔ Laptop ↔ Mobile (${currentUser.email || currentUser.login})`
+                  : lang === 'ru'
+                  ? `Синхронизация Firebase Firestore активна: ПК ↔ Ноутбук ↔ Телефон (${currentUser.email || currentUser.login})`
+                  : `Синхронізація Firebase Firestore активна: ПК ↔ Ноутбук ↔ Телефон (${currentUser.email || currentUser.login})`}
               </span>
             </div>
             {syncState.lastSyncedAt && (
               <span className="text-[11px] text-stone-500 dark:text-stone-400">
-                {lang === 'ru' ? 'Хмара оновлена: ' : 'Хмару оновлено: '}
+                {lang === 'en'
+                  ? 'Firestore Cloud updated: '
+                  : lang === 'ru'
+                  ? 'Хмара Firestore оновлена: '
+                  : 'Хмару Firestore оновлено: '}
                 {new Date(syncState.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             )}
@@ -418,7 +457,9 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
                   : 'Авторизуйтесь через Google, щоб вести власний приватний журнал'}
               </h4>
               <p className="text-[11px] text-stone-600 dark:text-stone-400">
-                {lang === 'ru'
+                {lang === 'en'
+                  ? 'Each user keeps their own secure private journal without mixing entries'
+                  : lang === 'ru'
                   ? 'Каждый пользователь ведет свой отдельный защищенный журнал без смешивания записей'
                   : 'Кожен користувач веде свій окремий захищений журнал без змішування записів'}
               </p>
@@ -756,7 +797,7 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
                     <div className="flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-50/40 dark:bg-amber-950/20 p-3.5">
                       <div>
                         <span className="text-[10px] font-bold uppercase text-amber-700 dark:text-amber-300">
-                          {lang === 'ru' ? 'Всего желаний:' : 'Всього бажань:'}
+                          {lang === 'en' ? 'Total wishes:' : lang === 'ru' ? 'Всего желаний:' : 'Всього бажань:'}
                         </span>
                         <h4 className="text-lg font-bold text-amber-900 dark:text-amber-100">
                           {selectedEntry.data.wishes?.length || 0} / 100
@@ -764,7 +805,7 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
                       </div>
                       <div className="text-right">
                         <span className="text-[10px] font-bold uppercase text-emerald-700 dark:text-emerald-300">
-                          {lang === 'ru' ? 'Исполнено:' : 'Здійснено:'}
+                          {lang === 'en' ? 'Fulfilled:' : lang === 'ru' ? 'Исполнено:' : 'Здійснено:'}
                         </span>
                         <span className="block text-sm font-bold text-emerald-600 dark:text-emerald-400">
                           {selectedEntry.data.wishes?.filter((w: any) => w.status === 'completed').length || 0}
@@ -775,7 +816,11 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
                     {selectedEntry.data.aiAnalysis?.summary && (
                       <div className="rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 p-3.5 space-y-1">
                         <strong className="text-stone-800 dark:text-stone-200 block text-xs">
-                          {lang === 'ru' ? 'ШИ-Анализ структуры желаний:' : 'ШІ-Аналіз структури бажань:'}
+                          {lang === 'en'
+                            ? 'AI analysis of wishes structure:'
+                            : lang === 'ru'
+                            ? 'ШИ-Анализ структуры желаний:'
+                            : 'ШІ-Аналіз структури бажань:'}
                         </strong>
                         <p className="text-stone-700 dark:text-stone-300 leading-relaxed text-xs">
                           {selectedEntry.data.aiAnalysis.summary}
@@ -785,7 +830,7 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
 
                     <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
                       <strong className="text-stone-700 dark:text-stone-300 block text-[11px] uppercase">
-                        {lang === 'ru' ? 'Список записанных желаний:' : 'Список записаних бажань:'}
+                        {lang === 'en' ? 'List of recorded wishes:' : lang === 'ru' ? 'Список записанных желаний:' : 'Список записаних бажань:'}
                       </strong>
                       {selectedEntry.data.wishes?.map((w: any) => (
                         <div
@@ -810,7 +855,7 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
                     <div className="flex items-center justify-between rounded-xl border border-teal-500/30 bg-teal-50/40 dark:bg-teal-950/20 p-3.5">
                       <div>
                         <span className="text-[10px] font-bold uppercase text-teal-700 dark:text-teal-300">
-                          {lang === 'ru' ? 'Энергия & Настроение:' : 'Енергія & Настрій:'}
+                          {lang === 'en' ? 'Energy & Mood:' : lang === 'ru' ? 'Энергия & Настроение:' : 'Енергія & Настрій:'}
                         </span>
                         <h4 className="text-sm font-bold text-teal-900 dark:text-teal-100">
                           {selectedEntry.data.energyScore}/10 ⚡ | {selectedEntry.data.moodScore}/10 ✨
@@ -818,7 +863,7 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
                       </div>
                       <div className="text-right">
                         <span className="text-[10px] font-bold uppercase text-stone-500">
-                          {lang === 'ru' ? 'Эмоции:' : 'Емоції:'}
+                          {lang === 'en' ? 'Emotions:' : lang === 'ru' ? 'Эмоции:' : 'Емоції:'}
                         </span>
                         <span className="block text-xs font-semibold text-stone-700 dark:text-stone-300">
                           {selectedEntry.data.primaryEmotions?.join(', ')}
@@ -829,10 +874,70 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
                     {selectedEntry.data.aiSupervisorFeedback?.summary && (
                       <div className="rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 p-3.5 space-y-1">
                         <strong className="text-teal-700 dark:text-teal-400 block text-xs">
-                          {lang === 'ru' ? 'Отклик супервизора:' : 'Відгук супервізора:'}
+                          {lang === 'en' ? 'Supervisor feedback:' : lang === 'ru' ? 'Отклик супервизора:' : 'Відгук супервізора:'}
                         </strong>
                         <p className="text-stone-700 dark:text-stone-300 leading-relaxed text-xs">
                           {selectedEntry.data.aiSupervisorFeedback.summary}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {selectedEntry.type === 'bodyDouble' && selectedEntry.data && (
+                  <div className="space-y-3 text-xs">
+                    <div className="flex items-center justify-between rounded-xl border border-indigo-500/30 bg-indigo-50/50 dark:bg-indigo-950/20 p-3.5">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-indigo-700 dark:text-indigo-300">
+                          {lang === 'en' ? 'Partner & Duration:' : lang === 'ru' ? 'Напарник & Время:' : 'Напарник & Час:'}
+                        </span>
+                        <h4 className="text-sm font-bold text-indigo-950 dark:text-indigo-100 flex items-center gap-1.5">
+                          <span>🤝 {selectedEntry.data.personaName}</span>
+                          <span className="text-xs text-stone-500 font-normal">
+                            ({selectedEntry.data.actualDurationMinutes || selectedEntry.data.durationMinutes} {lang === 'en' ? 'min' : 'хв'})
+                          </span>
+                        </h4>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] font-bold uppercase text-stone-500">
+                          {lang === 'en' ? 'Completed steps:' : lang === 'ru' ? 'Выполнено шагов:' : 'Виконано кроків:'}
+                        </span>
+                        <span className="block text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                          {selectedEntry.data.completedStepsCount} / {selectedEntry.data.totalStepsCount}
+                        </span>
+                      </div>
+                    </div>
+
+                    {selectedEntry.data.microSteps && selectedEntry.data.microSteps.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-bold uppercase text-stone-500 block">
+                          {lang === 'en' ? 'Session micro-steps:' : lang === 'ru' ? 'Микро-шаги сессии:' : 'Мікро-кроки сесії:'}
+                        </span>
+                        <div className="space-y-1">
+                          {selectedEntry.data.microSteps.map((s: any, idx: number) => (
+                            <div
+                              key={idx}
+                              className={`p-2 rounded-lg border text-xs flex items-center gap-2 ${
+                                s.completed
+                                  ? 'border-emerald-500/30 bg-emerald-50/40 dark:bg-emerald-950/20 text-stone-700 dark:text-stone-300 line-through'
+                                  : 'border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 text-stone-600 dark:text-stone-400'
+                              }`}
+                            >
+                              <span className="text-emerald-500 font-bold">{s.completed ? '✓' : '○'}</span>
+                              <span className="flex-1">{s.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {selectedEntry.data.selfReflectionNotes && (
+                      <div className="rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 p-3.5 space-y-1">
+                        <strong className="text-indigo-700 dark:text-indigo-400 block text-xs">
+                          {lang === 'en' ? 'Self-reflection notes:' : lang === 'ru' ? 'Заметки саморефлексии:' : 'Нотатки саморефлексії:'}
+                        </strong>
+                        <p className="text-stone-700 dark:text-stone-300 leading-relaxed text-xs">
+                          {selectedEntry.data.selfReflectionNotes}
                         </p>
                       </div>
                     )}
@@ -844,7 +949,7 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
                     <div className="flex items-center justify-between rounded-xl border border-rose-500/30 bg-rose-50/40 dark:bg-rose-950/20 p-3.5">
                       <div>
                         <span className="text-[10px] font-bold uppercase text-rose-700 dark:text-rose-300">
-                          {lang === 'ru' ? 'Категория цели:' : 'Категорія цілі:'}
+                          {lang === 'en' ? 'Goal category:' : lang === 'ru' ? 'Категория цели:' : 'Категорія цілі:'}
                         </span>
                         <h4 className="text-sm font-bold text-rose-900 dark:text-rose-100">
                           {selectedEntry.data.title}
@@ -853,7 +958,7 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
                       {selectedEntry.data.deadline && (
                         <div className="text-right">
                           <span className="text-[10px] font-bold uppercase text-stone-500">
-                            {lang === 'ru' ? 'Дедлайн:' : 'Дедлайн:'}
+                            {lang === 'en' ? 'Deadline:' : lang === 'ru' ? 'Дедлайн:' : 'Дедлайн:'}
                           </span>
                           <span className="block text-xs font-bold text-rose-600 dark:text-rose-400">
                             {selectedEntry.data.deadline}
@@ -864,11 +969,11 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <div className="rounded-lg bg-stone-50 dark:bg-stone-950 p-2.5 border border-stone-200 dark:border-stone-800">
-                        <strong className="text-stone-700 dark:text-stone-300 block text-[10px] uppercase">S (Конкретика):</strong>
+                        <strong className="text-stone-700 dark:text-stone-300 block text-[10px] uppercase">S ({lang === 'en' ? 'Specific' : 'Конкретика'}):</strong>
                         <p className="text-stone-600 dark:text-stone-400">{selectedEntry.data.specific || '—'}</p>
                       </div>
                       <div className="rounded-lg bg-stone-50 dark:bg-stone-950 p-2.5 border border-stone-200 dark:border-stone-800">
-                        <strong className="text-stone-700 dark:text-stone-300 block text-[10px] uppercase">M (Метрики):</strong>
+                        <strong className="text-stone-700 dark:text-stone-300 block text-[10px] uppercase">M ({lang === 'en' ? 'Measurable' : 'Метрики'}):</strong>
                         <p className="text-stone-600 dark:text-stone-400">{selectedEntry.data.measurable || '—'}</p>
                       </div>
                     </div>
@@ -876,7 +981,7 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
                     {selectedEntry.data.first72hStep && (
                       <div className="rounded-lg border border-emerald-500/30 bg-emerald-50/30 dark:bg-emerald-950/20 p-2.5">
                         <strong className="text-emerald-700 dark:text-emerald-300 block text-[10px] uppercase">
-                          {lang === 'ru' ? 'Первый шаг (72ч):' : 'Перший мікрокрок (72 год):'}
+                          {lang === 'en' ? 'First step (72h):' : lang === 'ru' ? 'Первый шаг (72ч):' : 'Перший мікрокрок (72 год):'}
                         </strong>
                         <p className="text-stone-800 dark:text-stone-200 font-medium">{selectedEntry.data.first72hStep}</p>
                       </div>
@@ -962,6 +1067,93 @@ export const MyJournal: React.FC<MyJournalProps> = ({ onNavigateToTool, onOpenPr
                         className="w-full py-2 rounded-xl bg-rose-600/15 hover:bg-rose-600/25 border border-rose-500/30 text-rose-700 dark:text-rose-300 font-bold text-xs transition-all"
                       >
                         Перейти до практики Премортем →
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Body Doubling Practice Details */}
+                {selectedEntry.type === 'bodyDouble' && selectedEntry.data && (
+                  <div className="space-y-4 text-xs">
+                    <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/40">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">{selectedEntry.data.personaAvatar || '🤝'}</span>
+                        <div>
+                          <div className="font-bold text-indigo-900 dark:text-indigo-200">
+                            {selectedEntry.data.persona || 'Боді-дублер'}
+                          </div>
+                          <div className="text-[11px] text-stone-500">
+                            Тривалість сесії: {selectedEntry.data.durationMinutes || 25} хв
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                          {selectedEntry.data.completedStepsCount || 0} / {selectedEntry.data.totalStepsCount || 0} кроків
+                        </div>
+                        <div className="text-[10px] text-stone-400">успішно завершено</div>
+                      </div>
+                    </div>
+
+                    {/* Micro steps */}
+                    {selectedEntry.data.microSteps && selectedEntry.data.microSteps.length > 0 && (
+                      <div className="space-y-2">
+                        <strong className="text-stone-700 dark:text-stone-300 block text-[11px] uppercase font-bold">
+                          📋 Мікро-кроки задачі:
+                        </strong>
+                        <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                          {selectedEntry.data.microSteps.map((st: any, idx: number) => (
+                            <div
+                              key={st.id || idx}
+                              className={`p-2.5 rounded-lg border text-xs flex items-center gap-2.5 ${
+                                st.completed
+                                  ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800 text-stone-800 dark:text-stone-200'
+                                  : 'bg-stone-50 dark:bg-stone-950 border-stone-200 dark:border-stone-800 text-stone-500'
+                              }`}
+                            >
+                              <span className="text-sm shrink-0">{st.completed ? '✅' : '⚪'}</span>
+                              <span className={st.completed ? 'font-medium' : ''}>{st.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Reflections */}
+                    {selectedEntry.data.reflectionQuestions && selectedEntry.data.userReflections && (
+                      <div className="space-y-2">
+                        <strong className="text-stone-700 dark:text-stone-300 block text-[11px] uppercase font-bold">
+                          🧠 Саморефлексія після сесії:
+                        </strong>
+                        <div className="space-y-2">
+                          {selectedEntry.data.reflectionQuestions.map((q: string, idx: number) => {
+                            const ans = selectedEntry.data.userReflections[idx];
+                            if (!ans) return null;
+                            return (
+                              <div
+                                key={idx}
+                                className="p-3 rounded-xl bg-stone-50 dark:bg-stone-950 border border-stone-200 dark:border-stone-800 space-y-1"
+                              >
+                                <div className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-400">
+                                  {q}
+                                </div>
+                                <p className="text-stone-700 dark:text-stone-300 leading-relaxed text-xs">
+                                  {ans}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => onNavigateToTool('bodyDouble')}
+                        className="w-full py-2 rounded-xl bg-indigo-600/15 hover:bg-indigo-600/25 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 font-bold text-xs transition-all"
+                      >
+                        Запустити нову сесію Боді-дублера →
                       </button>
                     </div>
                   </div>

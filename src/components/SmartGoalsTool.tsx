@@ -68,6 +68,7 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
 
   const [showGuide, setShowGuide] = useState(false);
   const [isAuditing, setIsAuditing] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [aiAudit, setAiAudit] = useState<SmartGoalData['aiAudit'] | null>(null);
   const [isSaved, setIsSaved] = useState(false);
 
@@ -156,13 +157,16 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
 
   const handleRunAiAudit = async () => {
     if (!title.trim() && !specific.trim()) {
-      alert(
-        lang === 'ru'
+      setFormError(
+        lang === 'en'
+          ? 'Please enter the goal title and at least the Specific (S) parameter.'
+          : lang === 'ru'
           ? 'Пожалуйста, введите название цели и хотя бы параметр Конкретности (S).'
           : 'Будь ласка, вкажіть назву цілі та хоча б параметр Конкретності (S).'
       );
       return;
     }
+    setFormError(null);
 
     setIsAuditing(true);
     try {
@@ -191,7 +195,13 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
 
   const handleSaveGoal = () => {
     if (!title.trim()) {
-      alert(lang === 'ru' ? 'Введите название цели' : 'Вкажіть назву цілі');
+      setFormError(
+        lang === 'en'
+          ? 'Please enter the goal title'
+          : lang === 'ru'
+          ? 'Введите название цели'
+          : 'Вкажіть назву цілі'
+      );
       return;
     }
 
@@ -285,7 +295,13 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
               className="flex items-center gap-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white/80 dark:bg-stone-800/80 px-3 py-2 text-xs font-semibold text-stone-800 dark:text-stone-200 transition hover:bg-stone-100 dark:hover:bg-stone-700 shadow-xs cursor-pointer"
             >
               <BookOpen className="h-4 w-4 text-teal-600 dark:text-teal-400" />
-              <span>{lang === 'ru' ? 'Рекомендации к заполнению' : 'Рекомендації до заповнення'}</span>
+              <span>
+                {lang === 'en'
+                  ? 'Guidelines & Tips'
+                  : lang === 'ru'
+                  ? 'Рекомендации к заполнению'
+                  : 'Рекомендації до заповнення'}
+              </span>
               {showGuide ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
             </button>
 
@@ -296,7 +312,19 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
               className="flex items-center gap-1.5 rounded-xl bg-teal-600 dark:bg-teal-500 hover:bg-teal-700 disabled:opacity-50 px-3.5 py-2 text-xs font-bold text-white dark:text-stone-950 transition shadow-xs cursor-pointer active:scale-95"
             >
               <BookmarkCheck className="h-4 w-4" />
-              <span>{isSaved ? (lang === 'ru' ? 'Сохранено!' : 'Збережено!') : (lang === 'ru' ? 'Сохранить цель' : 'Зберегти ціль')}</span>
+              <span>
+                {isSaved
+                  ? lang === 'en'
+                    ? 'Saved!'
+                    : lang === 'ru'
+                    ? 'Сохранено!'
+                    : 'Збережено!'
+                  : lang === 'en'
+                  ? 'Save Goal'
+                  : lang === 'ru'
+                  ? 'Сохранить цель'
+                  : 'Зберегти ціль'}
+              </span>
             </button>
           </div>
         </div>
@@ -306,7 +334,11 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
           <div className="flex items-center justify-between text-xs mb-1.5 font-bold">
             <span className="text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
               <Zap className="h-3.5 w-3.5 text-amber-500" />
-              {lang === 'ru' ? 'Индекс проработки SMART-формулировки:' : 'Індекс пропрацьованості SMART-формулювання:'}
+              {lang === 'en'
+                ? 'SMART Formula Quality Index:'
+                : lang === 'ru'
+                ? 'Индекс проработки SMART-формулировки:'
+                : 'Індекс пропрацьованості SMART-формулювання:'}
             </span>
             <span
               className={`font-mono text-sm font-extrabold ${
@@ -332,7 +364,9 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
             <div className="flex items-center gap-2 font-bold text-teal-800 dark:text-teal-300 text-sm">
               <Lightbulb className="h-4 w-4" />
               <span>
-                {lang === 'ru'
+                {lang === 'en'
+                  ? 'Goal Setting Masterclass: SMART + WOOP'
+                  : lang === 'ru'
                   ? 'Гайд по идеальной постановке целей: SMART + WOOP'
                   : 'Гайд з ідеальної постановки цілей: SMART + WOOP'}
               </span>
@@ -340,46 +374,102 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs leading-relaxed">
               <div className="rounded-lg bg-white/70 dark:bg-stone-900/70 p-3 border border-stone-200/70 dark:border-stone-800 space-y-1">
-                <h5 className="font-bold text-teal-700 dark:text-teal-400">S — Конкретна (Specific)</h5>
+                <h5 className="font-bold text-teal-700 dark:text-teal-400">
+                  {lang === 'en' ? 'S — Specific' : lang === 'ru' ? 'S — Конкретная' : 'S — Конкретна'}
+                </h5>
                 <p className="text-stone-600 dark:text-stone-400">
-                  <span className="text-rose-500 font-semibold">Погано:</span> «Хочу краще виглядати».<br />
-                  <span className="text-emerald-600 font-semibold">Добре:</span> «Знизити жирову масу на 4 кг і мати стабільну енергію протягом дня».
+                  {lang === 'en' ? (
+                    <>
+                      <span className="text-rose-500 font-semibold">Vague:</span> “Look better”.<br />
+                      <span className="text-emerald-600 font-semibold">Crisp:</span> “Reduce body fat by 4 kg and maintain steady energy throughout the day”.
+                    </>
+                  ) : lang === 'ru' ? (
+                    <>
+                      <span className="text-rose-500 font-semibold">Плохо:</span> «Хочу лучше выглядеть».<br />
+                      <span className="text-emerald-600 font-semibold">Хорошо:</span> «Снизить жировую массу на 4 кг и иметь стабильную энергию в течение дня».
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-rose-500 font-semibold">Погано:</span> «Хочу краще виглядати».<br />
+                      <span className="text-emerald-600 font-semibold">Добре:</span> «Знизити жирову масу на 4 кг і мати стабільну енергію протягом дня».
+                    </>
+                  )}
                 </p>
               </div>
 
               <div className="rounded-lg bg-white/70 dark:bg-stone-900/70 p-3 border border-stone-200/70 dark:border-stone-800 space-y-1">
-                <h5 className="font-bold text-teal-700 dark:text-teal-400">M — Вимірювана (Measurable)</h5>
+                <h5 className="font-bold text-teal-700 dark:text-teal-400">
+                  {lang === 'en' ? 'M — Measurable' : lang === 'ru' ? 'M — Измеримая' : 'M — Вимірювана'}
+                </h5>
                 <p className="text-stone-600 dark:text-stone-400">
-                  <span className="text-rose-500 font-semibold">Погано:</span> «Заробляти багато».<br />
-                  <span className="text-emerald-600 font-semibold">Добре:</span> «Вийти на щомісячний дохід $3000 чистими за рахунок 3 нових клієнтів».
+                  {lang === 'en' ? (
+                    <>
+                      <span className="text-rose-500 font-semibold">Vague:</span> “Earn a lot”.<br />
+                      <span className="text-emerald-600 font-semibold">Crisp:</span> “Reach $3,000 monthly net profit through 3 new retainers”.
+                    </>
+                  ) : lang === 'ru' ? (
+                    <>
+                      <span className="text-rose-500 font-semibold">Плохо:</span> «Зарабатывать много».<br />
+                      <span className="text-emerald-600 font-semibold">Хорошо:</span> «Выйти на чистый ежемесячный доход $3000 за счет 3 новых клиентов».
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-rose-500 font-semibold">Погано:</span> «Заробляти багато».<br />
+                      <span className="text-emerald-600 font-semibold">Добре:</span> «Вийти на щомісячний дохід $3000 чистими за рахунок 3 нових клієнтів».
+                    </>
+                  )}
                 </p>
               </div>
 
               <div className="rounded-lg bg-white/70 dark:bg-stone-900/70 p-3 border border-stone-200/70 dark:border-stone-800 space-y-1">
-                <h5 className="font-bold text-teal-700 dark:text-teal-400">A — Досяжна (Achievable)</h5>
+                <h5 className="font-bold text-teal-700 dark:text-teal-400">
+                  {lang === 'en' ? 'A — Achievable' : lang === 'ru' ? 'A — Достижимая' : 'A — Досяжна'}
+                </h5>
                 <p className="text-stone-600 dark:text-stone-400">
-                  Чи є у вас час і здоровʼя? Ціль має кидати виклик на 7-8 балів з 10, але не викликати паралізуючий жах та вигорання.
+                  {lang === 'en'
+                    ? 'Do you have the necessary time and health? A goal should challenge you at a 7-8 out of 10, but not trigger paralysis and burnout.'
+                    : lang === 'ru'
+                    ? 'Есть ли у вас время и здоровье? Цель должна бросать вызов на 7-8 из 10, но не вызывать паралич и выгорание.'
+                    : 'Чи є у вас час і здоровʼя? Ціль має кидати виклик на 7-8 балів з 10, але не викликати паралізуючий жах та вигорання.'}
                 </p>
               </div>
 
               <div className="rounded-lg bg-white/70 dark:bg-stone-900/70 p-3 border border-stone-200/70 dark:border-stone-800 space-y-1">
-                <h5 className="font-bold text-teal-700 dark:text-teal-400">R — Релевантна (Relevant)</h5>
+                <h5 className="font-bold text-teal-700 dark:text-teal-400">
+                  {lang === 'en' ? 'R — Relevant' : lang === 'ru' ? 'R — Релевантная' : 'R — Релевантна'}
+                </h5>
                 <p className="text-stone-600 dark:text-stone-400">
-                  Чому це важливо саме для ВАС, а не для очікувань суспільства? Яка глибинна цінність (свобода, безпека, любов) живиться цією метою?
+                  {lang === 'en'
+                    ? 'Why does this matter to YOU rather than external pressure? What core value (freedom, security, love) is nourished by this goal?'
+                    : lang === 'ru'
+                    ? 'Почему это важно именно для ВАС, а не для чужих ожиданий? Какая глубинная ценность (свобода, безопасность, любовь) питается этой целью?'
+                    : 'Чому це важливо саме для ВАС, а не для очікувань суспільства? Яка глибинна цінність (свобода, безпека, любов) живиться цією метою?'}
                 </p>
               </div>
 
               <div className="rounded-lg bg-white/70 dark:bg-stone-900/70 p-3 border border-stone-200/70 dark:border-stone-800 space-y-1">
-                <h5 className="font-bold text-teal-700 dark:text-teal-400">T — Обмежена в часі (Time-bound)</h5>
+                <h5 className="font-bold text-teal-700 dark:text-teal-400">
+                  {lang === 'en' ? 'T — Time-bound' : lang === 'ru' ? 'T — Ограниченная во времени' : 'T — Обмежена в часі'}
+                </h5>
                 <p className="text-stone-600 dark:text-stone-400">
-                  Точна дата (день, місяць, рік). Без дедлайну мозок сприймає мету як необовʼязкову фантазію на пенсію.
+                  {lang === 'en'
+                    ? 'Exact calendar date. Without a deadline, the brain classifies a goal as an optional daydream.'
+                    : lang === 'ru'
+                    ? 'Точная дата (день, месяц, год). Без дедлайна мозг воспринимает цель как необязательную фантазию.'
+                    : 'Точна дата (день, місяць, рік). Без дедлайну мозок сприймає мету як необовʼязкову фантазію на пенсію.'}
                 </p>
               </div>
 
               <div className="rounded-lg bg-white/70 dark:bg-stone-900/70 p-3 border border-stone-200/70 dark:border-stone-800 space-y-1">
-                <h5 className="font-bold text-amber-700 dark:text-amber-400">WOOP & Правило 72 годин</h5>
+                <h5 className="font-bold text-amber-700 dark:text-amber-400">
+                  {lang === 'en' ? 'WOOP & 72-Hour Rule' : lang === 'ru' ? 'WOOP и Правило 72 часов' : 'WOOP & Правило 72 годин'}
+                </h5>
                 <p className="text-stone-600 dark:text-stone-400">
-                  Передбачте свого внутрішнього саботера заздалегідь: «ЯКЩО виникне лінь, ТО я зроблю 5 хвилин роботи за таймером».
+                  {lang === 'en'
+                    ? 'Pre-empt inner sabotage: “IF laziness or fear arises, THEN I will take 5 minutes of focused action using a timer”.'
+                    : lang === 'ru'
+                    ? 'Предвосхитите внутреннего саботера: «ЕСЛИ возникнет лень, ТО я сделаю 5 минут работы по таймеру».'
+                    : 'Передбачте свого внутрішнього саботера заздалегідь: «ЯКЩО виникне лінь, ТО я зроблю 5 хвилин роботи за таймером».'}
                 </p>
               </div>
             </div>
@@ -400,7 +490,7 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
             }`}
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>{lang === 'ru' ? '+ Новая цель' : '+ Нова ціль'}</span>
+            <span>{lang === 'en' ? '+ New Goal' : lang === 'ru' ? '+ Новая цель' : '+ Нова ціль'}</span>
           </button>
 
           {goals.map((g) => (
@@ -438,21 +528,27 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2 space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 flex items-center justify-between">
-              <span>{lang === 'ru' ? 'Название цели' : 'Назва цілі'} *</span>
+              <span>{lang === 'en' ? 'Goal Title' : lang === 'ru' ? 'Название цели' : 'Назва цілі'} *</span>
               <VoiceInputButton onTranscript={(txt) => setTitle((p) => (p ? `${p} ${txt}` : txt))} />
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Наприклад: Пробігти півмарафон 21 км у вересні"
+              placeholder={
+                lang === 'en'
+                  ? 'e.g. Complete a 21km half marathon in September'
+                  : lang === 'ru'
+                  ? 'Например: Пробежать полумарафон 21 км в сентябре'
+                  : 'Наприклад: Пробігти півмарафон 21 км у вересні'
+              }
               className="w-full rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 px-3.5 py-2.5 text-sm text-stone-900 dark:text-stone-100 font-semibold focus:border-teal-500 focus:outline-hidden"
             />
           </div>
 
           <div className="space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300">
-              {lang === 'ru' ? 'Дедлайн реализации' : 'Дедлайн реалізації'}
+              {lang === 'en' ? 'Target Deadline' : lang === 'ru' ? 'Дедлайн реализации' : 'Дедлайн реалізації'}
             </label>
             <input
               type="date"
@@ -467,20 +563,36 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
         <div className="space-y-4 pt-2 border-t border-stone-100 dark:border-stone-800">
           <h3 className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400 flex items-center gap-1.5">
             <Target className="h-4 w-4" />
-            {lang === 'ru' ? '5 опор формулировки SMART:' : '5 опор формулювання SMART:'}
+            {lang === 'en'
+              ? '5 SMART Criteria Pillars:'
+              : lang === 'ru'
+              ? '5 опор формулировки SMART:'
+              : '5 опор формулювання SMART:'}
           </h3>
 
           {/* S - Specific */}
           <div className="space-y-1">
             <label className="text-xs font-bold text-stone-800 dark:text-stone-200 flex items-center justify-between">
-              <span>S — Specific (Конкретна): Що саме має відбутися у фізичному світі?</span>
+              <span>
+                {lang === 'en'
+                  ? 'S — Specific: What exactly happens in the physical world?'
+                  : lang === 'ru'
+                  ? 'S — Specific (Конкретная): Что именно должно произойти в физическом мире?'
+                  : 'S — Specific (Конкретна): Що саме має відбутися у фізичному світі?'}
+              </span>
               <VoiceInputButton onTranscript={(txt) => setSpecific((p) => (p ? `${p} ${txt}` : txt))} />
             </label>
             <textarea
               value={specific}
               onChange={(e) => setSpecific(e.target.value)}
               rows={2}
-              placeholder="Чіткий опис кінцевого результату: хто, що, де, у якому форматі..."
+              placeholder={
+                lang === 'en'
+                  ? 'Crystal-clear end state: who, what, where, in what exact format...'
+                  : lang === 'ru'
+                  ? 'Четкое описание конечного результата: кто, что, где, в каком формате...'
+                  : 'Чіткий опис кінцевого результату: хто, що, де, у якому форматі...'
+              }
               className="w-full rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 p-2.5 text-xs sm:text-sm text-stone-900 dark:text-stone-100 focus:border-teal-500 focus:outline-hidden"
             />
           </div>
@@ -488,14 +600,26 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
           {/* M - Measurable */}
           <div className="space-y-1">
             <label className="text-xs font-bold text-stone-800 dark:text-stone-200 flex items-center justify-between">
-              <span>M — Measurable (Вимірювана): Які конкретні метрики свідчитимуть про 100% готовність?</span>
+              <span>
+                {lang === 'en'
+                  ? 'M — Measurable: Which tangible metrics prove 100% completion?'
+                  : lang === 'ru'
+                  ? 'M — Measurable (Измеримая): Какие метрики подтвердят 100% готовность?'
+                  : 'M — Measurable (Вимірювана): Які конкретні метрики свідчитимуть про 100% готовність?'}
+              </span>
               <VoiceInputButton onTranscript={(txt) => setMeasurable((p) => (p ? `${p} ${txt}` : txt))} />
             </label>
             <textarea
               value={measurable}
               onChange={(e) => setMeasurable(e.target.value)}
               rows={2}
-              placeholder="Числа, відсотки, час забігу, сума в чеку, підписаний договір..."
+              placeholder={
+                lang === 'en'
+                  ? 'Numbers, percentages, time duration, invoice amount, signed contract...'
+                  : lang === 'ru'
+                  ? 'Числа, проценты, время забега, сумма в чеке, подписанный контракт...'
+                  : 'Числа, відсотки, час забігу, сума в чеку, підписаний договір...'
+              }
               className="w-full rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 p-2.5 text-xs sm:text-sm text-stone-900 dark:text-stone-100 focus:border-teal-500 focus:outline-hidden"
             />
           </div>
@@ -504,28 +628,52 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-stone-800 dark:text-stone-200 flex items-center justify-between">
-                <span>A — Achievable (Досяжна & Екологічна):</span>
+                <span>
+                  {lang === 'en'
+                    ? 'A — Achievable & Eco-friendly:'
+                    : lang === 'ru'
+                    ? 'A — Achievable (Достижимая & Экологичная):'
+                    : 'A — Achievable (Досяжна & Екологічна):'}
+                </span>
                 <VoiceInputButton onTranscript={(txt) => setAchievable((p) => (p ? `${p} ${txt}` : txt))} />
               </label>
               <textarea
                 value={achievable}
                 onChange={(e) => setAchievable(e.target.value)}
                 rows={2}
-                placeholder="Які ресурси, знання, навички вже є? Що потрібно підтягнути?"
+                placeholder={
+                  lang === 'en'
+                    ? 'What skills, budget, and resources exist? What needs tuning?'
+                    : lang === 'ru'
+                    ? 'Какие ресурсы, знания, навыки уже есть? Что нужно подтянуть?'
+                    : 'Які ресурси, знання, навички вже є? Що потрібно підтягнути?'
+                }
                 className="w-full rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 p-2.5 text-xs sm:text-sm text-stone-900 dark:text-stone-100 focus:border-teal-500 focus:outline-hidden"
               />
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-stone-800 dark:text-stone-200 flex items-center justify-between">
-                <span>R — Relevant (Релевантна): Чому це важливо зараз?</span>
+                <span>
+                  {lang === 'en'
+                    ? 'R — Relevant: Why does this matter now?'
+                    : lang === 'ru'
+                    ? 'R — Relevant (Релевантная): Почему это важно сейчас?'
+                    : 'R — Relevant (Релевантна): Чому це важливо зараз?'}
+                </span>
                 <VoiceInputButton onTranscript={(txt) => setRelevant((p) => (p ? `${p} ${txt}` : txt))} />
               </label>
               <textarea
                 value={relevant}
                 onChange={(e) => setRelevant(e.target.value)}
                 rows={2}
-                placeholder="З якими моїми глибинними цінностями узгоджується ця мета?"
+                placeholder={
+                  lang === 'en'
+                    ? 'Which deep core values does this goal genuinely support?'
+                    : lang === 'ru'
+                    ? 'С какими моими глубинными ценностями согласуется эта цель?'
+                    : 'З якими моїми глибинними цінностями узгоджується ця мета?'
+                }
                 className="w-full rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 p-2.5 text-xs sm:text-sm text-stone-900 dark:text-stone-100 focus:border-teal-500 focus:outline-hidden"
               />
             </div>
@@ -534,14 +682,26 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
           {/* T - Time Bound */}
           <div className="space-y-1">
             <label className="text-xs font-bold text-stone-800 dark:text-stone-200 flex items-center justify-between">
-              <span>T — Time-bound (Проміжні чекпоїнти та час):</span>
+              <span>
+                {lang === 'en'
+                  ? 'T — Time-bound: Milestones & target timing:'
+                  : lang === 'ru'
+                  ? 'T — Time-bound (Промежуточные чекпоинты и сроки):'
+                  : 'T — Time-bound (Проміжні чекпоїнти та час):'}
+              </span>
               <VoiceInputButton onTranscript={(txt) => setTimeBound((p) => (p ? `${p} ${txt}` : txt))} />
             </label>
             <input
               type="text"
               value={timeBound}
               onChange={(e) => setTimeBound(e.target.value)}
-              placeholder="Наприклад: 1-й чекпоїнт — 15 травня (10 км), фінал — 20 вересня (21 км)"
+              placeholder={
+                lang === 'en'
+                  ? 'e.g. Checkpoint 1 — May 15 (10 km), Final — Sept 20 (21 km)'
+                  : lang === 'ru'
+                  ? 'Например: 1-й чекпоинт — 15 мая (10 км), финал — 20 сентября (21 км)'
+                  : 'Наприклад: 1-й чекпоїнт — 15 травня (10 км), фінал — 20 вересня (21 км)'
+              }
               className="w-full rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 px-3 py-2 text-xs sm:text-sm text-stone-900 dark:text-stone-100 focus:border-teal-500 focus:outline-hidden"
             />
           </div>
@@ -552,36 +712,60 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
               <ShieldCheck className="h-4 w-4" />
-              {lang === 'ru'
+              {lang === 'en'
+                ? 'WOOP: Inner Saboteur Defense'
+                : lang === 'ru'
                 ? 'WOOP: Защита от внутреннего саботера'
                 : 'WOOP: Захист від внутрішнього саботера'}
             </h3>
-            <span className="text-[11px] text-stone-500 font-medium">Габріель Еттінген (NYU)</span>
+            <span className="text-[11px] text-stone-500 font-medium">
+              {lang === 'en' ? 'Gabriele Oettingen (NYU)' : 'Габріель Еттінген (NYU)'}
+            </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-stone-800 dark:text-stone-200">
-                Внутрішня перепона (Obstacle):
+                {lang === 'en'
+                  ? 'Internal Obstacle (Obstacle):'
+                  : lang === 'ru'
+                  ? 'Внутреннее препятствие (Obstacle):'
+                  : 'Внутрішня перепона (Obstacle):'}
               </label>
               <textarea
                 value={woopObstacle}
                 onChange={(e) => setWoopObstacle(e.target.value)}
                 rows={2}
-                placeholder="Що всередині мене може завадити? (страх критики, втома ввечері, звичка відкладати)..."
+                placeholder={
+                  lang === 'en'
+                    ? 'What inside me might get in the way? (fear of judgment, evening exhaustion, procrastination habits)...'
+                    : lang === 'ru'
+                    ? 'Что внутри меня может помешать? (страх критики, усталость вечером, привычка откладывать)...'
+                    : 'Що всередині мене може завадити? (страх критики, втома ввечері, звичка відкладати)...'
+                }
                 className="w-full rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 p-2.5 text-xs sm:text-sm text-stone-900 dark:text-stone-100 focus:border-teal-500 focus:outline-hidden"
               />
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                Імплементаційний намір: «ЯКЩО..., ТО...»
+                {lang === 'en'
+                  ? 'Implementation Intention: “IF..., THEN...”'
+                  : lang === 'ru'
+                  ? 'Имплементационное намерение: «ЕСЛИ..., ТО...»'
+                  : 'Імплементаційний намір: «ЯКЩО..., ТО...»'}
               </label>
               <textarea
                 value={woopPlanIfThen}
                 onChange={(e) => setWoopPlanIfThen(e.target.value)}
                 rows={2}
-                placeholder="Якщо мені буде ліньки бігти вранці, то я просто взую кросівки і вийду на 5-хвилинну ходьбу..."
+                placeholder={
+                  lang === 'en'
+                    ? 'IF I feel lazy to run in the morning, THEN I will put on my sneakers and take a 5-minute brisk walk...'
+                    : lang === 'ru'
+                    ? 'ЕСЛИ мне будет лень бежать утром, ТО я просто надену кроссовки и выйду на 5 минутную прогулку...'
+                    : 'Якщо мені буде ліньки бігти вранці, то я просто взую кросівки і вийду на 5-хвилинну ходьбу...'
+                }
                 className="w-full rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 p-2.5 text-xs sm:text-sm text-stone-900 dark:text-stone-100 focus:border-teal-500 focus:outline-hidden"
               />
             </div>
@@ -592,28 +776,50 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
             <label className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <Flame className="h-4 w-4 text-emerald-600" />
-                {lang === 'ru' ? 'Правило 72 часов: Первое микро-действие' : 'Правило 72 годин: Перша найпростіша мікро-дія'}
+                {lang === 'en'
+                  ? '72-Hour Rule: First Immediate Micro-Action'
+                  : lang === 'ru'
+                  ? 'Правило 72 часов: Первое микро-действие'
+                  : 'Правило 72 годин: Перша найпростіша мікро-дія'}
               </span>
               <VoiceInputButton onTranscript={(txt) => setFirst72hStep((p) => (p ? `${p} ${txt}` : txt))} />
             </label>
             <p className="text-[11px] text-stone-500">
-              Дія, яку ви зробите протягом 3 діб, щоб запустити нейронну інерцію успіху.
+              {lang === 'en'
+                ? 'An action you commit to executing within 3 days to ignite neurological momentum and commitment.'
+                : lang === 'ru'
+                ? 'Действие, которое вы совершите в течение 3 суток, чтобы запустить нейронную инерцию успеха.'
+                : 'Дія, яку ви зробите протягом 3 діб, щоб запустити нейронну інерцію успіху.'}
             </p>
             <input
               type="text"
               value={first72hStep}
               onChange={(e) => setFirst72hStep(e.target.value)}
-              placeholder="Наприклад: Купити пульсометр або зареєструватися на забіг сьогодні до 20:00"
+              placeholder={
+                lang === 'en'
+                  ? 'e.g. Order heart rate monitor or register for the run today before 20:00'
+                  : lang === 'ru'
+                  ? 'Например: Купить пульсометр или зарегистрироваться на забег сегодня до 20:00'
+                  : 'Наприклад: Купити пульсометр або зареєструватися на забіг сьогодні до 20:00'
+              }
               className="w-full rounded-lg border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-3 py-2 text-xs sm:text-sm text-stone-900 dark:text-stone-100 focus:border-teal-500 focus:outline-hidden"
             />
           </div>
         </div>
 
+        {formError && (
+          <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-500">
+            {formError}
+          </div>
+        )}
+
         {/* AI Audit Action */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-stone-100 dark:border-stone-800">
           <span className="text-xs text-stone-500">
-            {lang === 'ru'
-              ? 'ШИ-аудитор оценит формулировку на скрытые риски и задаст 3 продвигающих вопроса'
+            {lang === 'en'
+              ? 'AI Auditor spots cognitive blindspots, vulnerability to sabotage, and offers 3 ICF coaching prompts'
+              : lang === 'ru'
+              ? 'ИИ-аудитор оценит формулировку на скрытые риски и задаст 3 продвигающих вопроса'
               : 'ШІ-аудитор перевірить ціль на вразливості, саботаж та запропонує коучингові підсилення'}
           </span>
 
@@ -630,8 +836,16 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
             )}
             <span>
               {isAuditing
-                ? (lang === 'ru' ? 'Аудит проводится...' : 'Аудит триває...')
-                : (lang === 'ru' ? 'ШИ-Аудит цели' : 'ШІ-Аудит цілі')}
+                ? lang === 'en'
+                  ? 'Auditing goal...'
+                  : lang === 'ru'
+                  ? 'Аудит проводится...'
+                  : 'Аудит триває...'
+                : lang === 'en'
+                ? 'Run AI Goal Audit'
+                : lang === 'ru'
+                ? 'ИИ-Аудит цели'
+                : 'ШІ-Аудит цілі'}
             </span>
           </button>
         </div>
@@ -644,11 +858,17 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-teal-600 dark:text-teal-400" />
               <h3 className="font-serif text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100">
-                {lang === 'ru' ? 'Результаты ШИ-Аудита по стандартам SMART & ICF' : 'Результати ШІ-Аудиту за стандартами SMART & ICF'}
+                {lang === 'en'
+                  ? 'SMART & ICF Standards AI Audit Results'
+                  : lang === 'ru'
+                  ? 'Результаты ИИ-Аудита по стандартам SMART & ICF'
+                  : 'Результати ШІ-Аудиту за стандартами SMART & ICF'}
               </h3>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-stone-500">SMART-оцінка:</span>
+              <span className="text-xs font-semibold text-stone-500">
+                {lang === 'en' ? 'SMART Score:' : lang === 'ru' ? 'SMART-оценка:' : 'SMART-оцінка:'}
+              </span>
               <span className="text-sm font-extrabold font-mono px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-700 dark:text-teal-300">
                 {aiAudit.smartScore} / 100
               </span>
@@ -660,7 +880,11 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
             <div className="rounded-xl border border-emerald-500/30 bg-emerald-50/30 dark:bg-emerald-950/20 p-4 space-y-2">
               <h4 className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                {lang === 'ru' ? 'Сильные стороны формулировки:' : 'Сильні сторони формулювання:'}
+                {lang === 'en'
+                  ? 'Formulation Strengths:'
+                  : lang === 'ru'
+                  ? 'Сильные стороны формулировки:'
+                  : 'Сильні сторони формулювання:'}
               </h4>
               <ul className="list-disc list-inside text-xs text-stone-700 dark:text-stone-300 space-y-1">
                 {aiAudit.strengths.map((str, idx) => (
@@ -673,7 +897,11 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
             <div className="rounded-xl border border-amber-500/30 bg-amber-50/30 dark:bg-amber-950/20 p-4 space-y-2">
               <h4 className="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
                 <AlertTriangle className="h-4 w-4 text-amber-600" />
-                {lang === 'ru' ? 'Уязвимости и риски саботажа:' : 'Вразливості та ризики саботажу:'}
+                {lang === 'en'
+                  ? 'Vulnerabilities & Sabotage Risks:'
+                  : lang === 'ru'
+                  ? 'Уязвимости и риски саботажа:'
+                  : 'Вразливості та ризики саботажу:'}
               </h4>
               <ul className="list-disc list-inside text-xs text-stone-700 dark:text-stone-300 space-y-1">
                 {aiAudit.vulnerabilities.map((v, idx) => (
@@ -687,7 +915,11 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
           <div className="rounded-xl border border-indigo-500/30 bg-indigo-50/30 dark:bg-indigo-950/20 p-4 space-y-2">
             <h4 className="text-xs font-bold text-indigo-800 dark:text-indigo-300 flex items-center gap-1.5">
               <HelpCircle className="h-4 w-4 text-indigo-600" />
-              {lang === 'ru' ? 'Коучинговые вопросы для калибровки цели:' : '3 коучингові питання для калібрування мети:'}
+              {lang === 'en'
+                ? 'Coaching Prompts for Goal Calibration:'
+                : lang === 'ru'
+                ? 'Коучинговые вопросы для калибровки цели:'
+                : '3 коучингові питання для калібрування мети:'}
             </h4>
             <ul className="list-disc list-inside text-xs text-stone-700 dark:text-stone-300 space-y-1">
               {aiAudit.coachQuestions.map((q, idx) => (
@@ -700,7 +932,11 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
           <div className="rounded-xl border border-teal-500/30 bg-teal-50/30 dark:bg-teal-950/20 p-4 space-y-1">
             <h4 className="text-xs font-bold text-teal-800 dark:text-teal-300 flex items-center gap-1.5">
               <Zap className="h-4 w-4 text-teal-600" />
-              {lang === 'ru' ? 'Рекомендация по усилению:' : 'Рекомендація з підсилення імпульсу:'}
+              {lang === 'en'
+                ? 'Momentum Boost Recommendation:'
+                : lang === 'ru'
+                ? 'Рекомендация по усилению:'
+                : 'Рекомендація з підсилення імпульсу:'}
             </h4>
             <p className="text-xs text-stone-700 dark:text-stone-300 leading-relaxed">
               {aiAudit.boostRecommendation}

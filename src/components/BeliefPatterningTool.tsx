@@ -25,8 +25,10 @@ interface PresetBelief {
   sphere: string;
   sphereUk: string;
   sphereRu: string;
+  sphereEn: string;
   beliefUk: string;
   beliefRu: string;
+  beliefEn: string;
 }
 
 const PRESET_BELIEFS: PresetBelief[] = [
@@ -34,36 +36,46 @@ const PRESET_BELIEFS: PresetBelief[] = [
     sphere: 'money',
     sphereUk: 'Гроші та бізнес',
     sphereRu: 'Деньги и бизнес',
+    sphereEn: 'Money & Wealth',
     beliefUk: 'Великі гроші чесно заробити неможливо, для цього потрібні лише звʼязки.',
     beliefRu: 'Большие деньги честно заработать невозможно, для этого нужны только связи.',
+    beliefEn: 'Substantial money cannot be made honestly; it always requires shady connections.',
   },
   {
     sphere: 'impostor',
     sphereUk: 'Самооцінка та карʼєра',
     sphereRu: 'Самооценка и карьера',
+    sphereEn: 'Self-Worth & Career',
     beliefUk: 'Я ще недостатньо знаю і не маю права заявляти про себе як експерт.',
     beliefRu: 'Я еще недостаточно знаю и не имею права заявлять о себе как эксперт.',
+    beliefEn: 'I do not know enough yet and have no right to position myself as an expert.',
   },
   {
     sphere: 'relationships',
     sphereUk: 'Стосунки та любов',
     sphereRu: 'Отношения и любовь',
+    sphereEn: 'Relationships & Love',
     beliefUk: 'Якщо відкритися іншій людині, вона обовʼязково цим скористається і завдасть болю.',
     beliefRu: 'Если открыться другому человеку, он обязательно этим воспользуется и причинит боль.',
+    beliefEn: 'If I open up to someone, they will inevitably exploit it and cause deep pain.',
   },
   {
     sphere: 'perfectionism',
     sphereUk: 'Дії та прокрастинація',
     sphereRu: 'Действия и прокрастинация',
+    sphereEn: 'Action & Procrastination',
     beliefUk: 'Якщо я не можу зробити все бездоганно з першого разу, краще взагалі не починати.',
     beliefRu: 'Если я не могу сделать все безупречно с первого раза, лучше вообще не начинать.',
+    beliefEn: 'If I cannot execute flawlessly on the first try, it is better not to begin at all.',
   },
   {
     sphere: 'age_change',
     sphereUk: 'Вік та зміни',
     sphereRu: 'Возраст и перемены',
+    sphereEn: 'Age & Transformation',
     beliefUk: 'Вже запізно кардинально змінювати професію чи починати щось з нуля.',
     beliefRu: 'Уже слишком поздно кардинально менять профессию или начинать что-то с нуля.',
+    beliefEn: 'It is far too late to pivot careers or start a whole new path from scratch.',
   },
 ];
 
@@ -76,7 +88,11 @@ export const BeliefPatterningTool: React.FC<BeliefPatterningToolProps> = ({ onSa
 
   const [selectedSphere, setSelectedSphere] = useState('impostor');
   const [limitingBelief, setLimitingBelief] = useState(
-    'Я ще недостатньо знаю і не маю права заявляти про себе як експерт.'
+    lang === 'en'
+      ? 'I do not know enough yet and have no right to position myself as an expert.'
+      : lang === 'ru'
+      ? 'Я еще недостаточно знаю и не имею права заявлять о себе как эксперт.'
+      : 'Я ще недостатньо знаю і не маю права заявляти про себе як експерт.'
   );
   const [context, setContext] = useState('');
   const [analyzingAi, setAnalyzingAi] = useState(false);
@@ -85,7 +101,9 @@ export const BeliefPatterningTool: React.FC<BeliefPatterningToolProps> = ({ onSa
 
   const handleSelectPreset = (preset: PresetBelief) => {
     setSelectedSphere(preset.sphere);
-    setLimitingBelief(lang === 'ru' ? preset.beliefRu : preset.beliefUk);
+    setLimitingBelief(
+      lang === 'en' ? preset.beliefEn : lang === 'ru' ? preset.beliefRu : preset.beliefUk
+    );
   };
 
   const handleTransform = async () => {
@@ -264,7 +282,9 @@ export const BeliefPatterningTool: React.FC<BeliefPatterningToolProps> = ({ onSa
                   : 'Патеринг переконань & 14 Фокусів мови Роберта Ділтса'}
               </h1>
               <p className="text-amber-200/80 text-sm mt-1">
-                {lang === 'ru'
+                {lang === 'en'
+                  ? 'Uncover limiting cognitive frames and deconstruct them via Dilts’ 14 Sleight of Mouth reframing engines'
+                  : lang === 'ru'
                   ? 'Выявление ограничивающих ментальных установок и их деконструкция через Sleight of Mouth'
                   : 'Виявлення обмежуючих ментальних установок та їхня деконструкція через Sleight of Mouth'}
               </p>
@@ -276,7 +296,11 @@ export const BeliefPatterningTool: React.FC<BeliefPatterningToolProps> = ({ onSa
       {/* Preset Pills */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-lg space-y-3">
         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-          {lang === 'ru' ? 'Типичные паттерны ограничивающих убеждений:' : 'Типові патерни обмежуючих переконань:'}
+          {lang === 'en'
+            ? 'Typical Limiting Belief Patterns:'
+            : lang === 'ru'
+            ? 'Типичные паттерны ограничивающих убеждений:'
+            : 'Типові патерни обмежуючих переконань:'}
         </span>
         <div className="flex flex-wrap gap-2">
           {PRESET_BELIEFS.map((preset) => (
@@ -289,7 +313,7 @@ export const BeliefPatterningTool: React.FC<BeliefPatterningToolProps> = ({ onSa
                   : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:bg-slate-700'
               }`}
             >
-              {lang === 'ru' ? preset.sphereRu : preset.sphereUk}
+              {lang === 'en' ? preset.sphereEn : lang === 'ru' ? preset.sphereRu : preset.sphereUk}
             </button>
           ))}
         </div>
@@ -300,7 +324,11 @@ export const BeliefPatterningTool: React.FC<BeliefPatterningToolProps> = ({ onSa
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-xs font-semibold text-slate-200">
-              {lang === 'ru' ? 'Ограничивающее убеждение для разбора:' : 'Обмежуюче переконання для розбору:'}
+              {lang === 'en'
+                ? 'Limiting belief to deconstruct:'
+                : lang === 'ru'
+                ? 'Ограничивающее убеждение для разбора:'
+                : 'Обмежуюче переконання для розбору:'}
             </label>
             <VoiceInputButton
               onTranscript={(text) => setLimitingBelief(text)}

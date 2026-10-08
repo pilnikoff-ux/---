@@ -60,11 +60,21 @@ export function saveJournalEntry(
     localStorage.setItem(key, JSON.stringify(entries));
     // Trigger background cloud synchronization across devices
     import('./cloudSyncService').then((m) => m.syncCloudData()).catch(() => {});
+    import('./firestoreSyncService').then((m) => m.saveEntryToFirestore(newEntry)).catch(() => {});
   } catch (e) {
     console.error('Failed to save journal entry', e);
   }
 
   return newEntry;
+}
+
+export function saveJournalEntriesDirectly(entries: JournalEntry[], userId?: string): void {
+  try {
+    const key = getUserStorageKey(userId);
+    localStorage.setItem(key, JSON.stringify(entries));
+  } catch (e) {
+    console.error('Failed to save entries directly', e);
+  }
 }
 
 export function deleteJournalEntry(id: string, userId?: string): void {
@@ -74,6 +84,7 @@ export function deleteJournalEntry(id: string, userId?: string): void {
     localStorage.setItem(key, JSON.stringify(entries));
     // Trigger background cloud synchronization across devices
     import('./cloudSyncService').then((m) => m.syncCloudData()).catch(() => {});
+    import('./firestoreSyncService').then((m) => m.deleteEntryFromFirestore(id)).catch(() => {});
   } catch (e) {
     console.error('Failed to delete journal entry', e);
   }

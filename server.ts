@@ -9,11 +9,12 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
-app.use(express.json({ limit: '10mb' }));
+// Security hardening: restrict request payload to 256kb to prevent DoS attacks
+app.use(express.json({ limit: '256kb' }));
 
 // Health check endpoint for Cloud Run and platform deployment health probes
 app.get('/api/health', (req: Request, res: Response) => {
-  res.json({ status: 'ok', version: '1.0.2', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', version: '1.0.3', timestamp: new Date().toISOString() });
 });
 
 // Lazy initialize Google GenAI so startup is resilient
@@ -32,19 +33,23 @@ function getAiClient(): GoogleGenAI {
   return aiClient;
 }
 
-// Clean error message helper
+// Clean and safe error message helper (prevents internal API quota/model leak)
 function cleanErrorMessage(error: any): string {
-  if (!error) return 'Internal server error';
-  let msg = error?.message || String(error);
-  try {
-    const parsed = typeof msg === 'string' && msg.trim().startsWith('{') ? JSON.parse(msg) : null;
-    if (parsed?.error?.message) {
-      msg = parsed.error.message;
-    }
-  } catch {
-    // Keep original msg
+  if (!error) return 'Сервіс тимчасово недоступний. Будь ласка, спробуйте пізніше.';
+  const raw = error?.message || String(error);
+  if (
+    raw.includes('quota') ||
+    raw.includes('Quota') ||
+    raw.includes('RESOURCE_EXHAUSTED') ||
+    raw.includes('resource_exhausted') ||
+    raw.includes('429') ||
+    raw.includes('503') ||
+    raw.includes('UNAVAILABLE') ||
+    raw.includes('high demand')
+  ) {
+    return 'ШІ-сервер зараз відчуває тимчасове навантаження на запити. Зачекайте декілька секунд і спробуйте знову.';
   }
-  return msg;
+  return 'Виникла тимчасова помилка обробки запиту. Будь ласка, спробуйте ще раз.';
 }
 
 // Helper for resilient Gemini API calls with auto-retry and multi-model fallback
@@ -760,13 +765,19 @@ app.post('/api/gemini/interpret-associations', async (req: Request, res: Respons
 Проаналізуй заповнену піраміду, розкрий прихований зміст кожного рівня, поясни, як підсвідомість привела до фінального слова-ключа, і дай глибоку трансформаційну рекомендацію.
 Формат відповіді — строго JSON. Мова — українська.`;
 
+    const l1 = Array.isArray(layer1) ? layer1.join(', ') : String(layer1 || '');
+    const l2 = Array.isArray(layer2) ? layer2.join(', ') : String(layer2 || '');
+    const l3 = Array.isArray(layer3) ? layer3.join(', ') : String(layer3 || '');
+    const l4 = Array.isArray(layer4) ? layer4.join(', ') : String(layer4 || '');
+    const l5 = String(layer5 || '');
+
     const prompt = `Проаналізуй піраміду 16 асоціацій:
-Запит/Проблема: ${problemStatement}
-Рівень 1 (16 слів): ${layer1.join(', ')}
-Рівень 2 (8 слів розуму): ${layer2.join(', ')}
-Рівень 3 (4 слова почуттів): ${layer3.join(', ')}
-Рівень 4 (2 слова кореня): ${layer4.join(', ')}
-Рівень 5 (Фінальне слово-ключ): ${layer5}`;
+Запит/Проблема: ${String(problemStatement || '').slice(0, 2000)}
+Рівень 1 (16 слів): ${l1}
+Рівень 2 (8 слів розуму): ${l2}
+Рівень 3 (4 слова почуттів): ${l3}
+Рівень 4 (2 слова кореня): ${l4}
+Рівень 5 (Фінальне слово-ключ): ${l5}`;
 
     const response = await generateWithRetryAndFallback({
       preferredModel: 'gemini-3.7-flash',
@@ -1819,415 +1830,207 @@ ${situation ? `Контекст життєвої ситуації користу
 });
 
 // ==========================================
-// TELEMETRY & GOOGLE SHEETS SYNC SYSTEM
-// (Protected for owner pilnikoff@gmail.com)
+// BODY DOUBLING (ТІЛО-ДУБЛЕР) AI ENDPOINTS
 // ==========================================
 
-interface TelemetryUser {
-  id: string;
-  login: string;
-  name: string;
-  fullName: string;
-  email?: string;
-  birthDate?: string;
-  fieldOfActivity?: string;
-  authProvider: string;
-  registeredAt: string;
-  lastLoginAt: string;
-  ip?: string;
-  userAgent?: string;
-}
+// 1. Task Decompose into dopamine-friendly micro-steps
+app.post('/api/gemini/body-double-decompose', async (req: Request, res: Response) => {
+  try {
+    const { taskTitle, context, durationMinutes, personaName, lang = 'uk' } = req.body;
+    if (!taskTitle) {
+      return res.status(400).json({ error: 'Назва задачі обовʼязкова' });
+    }
 
-interface TelemetryActivity {
+    const systemInstruction = `Ти — експертний коуч з техніки Body Doubling (Тіло-дублер), тайм-менеджменту та подолання прокрастинації/СДУГ (ADHD).
+Твоє завдання: взяти задачу або намір користувача і розбити його на 2-4 крихітні, легкі для початку мікро-дії («дофамінові кроки»). Перший крок має бути настільки простим, щоб внутрішній опір зник (наприклад: «Відкрити порожній документ і написати заголовок»).
+Також сформулюй тепле, заспокійливе вітальне слово від Боді-напарника ${personaName || 'Алекса'}, яке підтверджує присутність («Я поруч, просто роби свій перший крок, я паралельно працюю над своїм»).
+Мова виводу: ${lang === 'ru' ? 'російська' : lang === 'en' ? 'англійська' : 'українська'}.`;
+
+    const prompt = `Задача користувача: "${taskTitle}"
+Контекст ситуації з Навігатора: "${context || 'Самостійна фокус-сесія'}"
+Запланована тривалість: ${durationMinutes || 25} хвилин.
+Імʼя напарника-дублера: ${personaName || 'Алекс'}`;
+
+    const response = await generateWithRetryAndFallback({
+      preferredModel: 'gemini-3.7-flash',
+      fallbackModels: ['gemini-flash-latest', 'gemini-3.1-flash-lite'],
+      contents: prompt,
+      config: {
+        systemInstruction,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            welcomingNote: { type: Type.STRING },
+            dopamineMicroSteps: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+            },
+            focusAnchorTip: { type: Type.STRING },
+          },
+          required: ['welcomingNote', 'dopamineMicroSteps', 'focusAnchorTip'],
+        },
+      },
+    });
+
+    const parsed = JSON.parse(response.text || '{}');
+    res.json(parsed);
+  } catch (error: any) {
+    console.error('Error in body-double-decompose:', error);
+    res.status(500).json({ error: cleanErrorMessage(error) });
+  }
+});
+
+// 2. SOS: Anti-distraction & task paralysis rescue
+app.post('/api/gemini/body-double-sos', async (req: Request, res: Response) => {
+  try {
+    const { taskTitle, currentStep, issueType, personaName, lang = 'uk' } = req.body;
+
+    const systemInstruction = `Ти — теплий, не осуджуючий Боді-дублер (${personaName || 'напарник'}).
+Користувач зараз під час сесії відчув ступор, напад перфекціонізму, тривогу або відволікся.
+Дай швидку, підтримуючу відповідь у 2-3 речення:
+1. Валідація без провини («Це нормально, мозок просто шукає захисту/дофаміну»).
+2. Заземлення/соматичний мікро-видих («Зроби один глибокий видих, розслаб плечі»).
+3. Один ультра-простий рух для відновлення фокусу на 60 секунд.
+Мова: ${lang === 'ru' ? 'російська' : lang === 'en' ? 'англійська' : 'українська'}.`;
+
+    const prompt = `Задача: "${taskTitle || ''}".
+Поточний крок: "${currentStep || ''}".
+Що трапилося: ${issueType || 'Втратив концентрацію і завис'}`;
+
+    const response = await generateWithRetryAndFallback({
+      preferredModel: 'gemini-3.7-flash',
+      fallbackModels: ['gemini-flash-latest', 'gemini-3.1-flash-lite'],
+      contents: prompt,
+      config: {
+        systemInstruction,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            reassuringMessage: { type: Type.STRING },
+            groundingAction: { type: Type.STRING },
+            next60SecondsFocus: { type: Type.STRING },
+          },
+          required: ['reassuringMessage', 'groundingAction', 'next60SecondsFocus'],
+        },
+      },
+    });
+
+    const parsed = JSON.parse(response.text || '{}');
+    res.json(parsed);
+  } catch (error: any) {
+    console.error('Error in body-double-sos:', error);
+    res.status(500).json({ error: cleanErrorMessage(error) });
+  }
+});
+
+// 3. Post-session self-reflection prompts on request
+app.post('/api/gemini/body-double-reflection', async (req: Request, res: Response) => {
+  try {
+    const { taskTitle, completedStepsCount, totalStepsCount, durationMinutes, userFeedback, lang = 'uk' } = req.body;
+
+    const systemInstruction = `Ти — фасилітатор глибокої саморефлексії після сесії з техніки Body Doubling.
+Користувач щойно завершив (або призупинив) роботу над задачею разом із тілом-дублером.
+Твоє завдання — сформувати 3-4 сильних, добрих і точних запитання для саморефлексії, які:
+- Фіксують успіх та цінність будь-якого зробленого кроку (профілактика знецінення);
+- Досліджують, де виникав внутрішній опір або критик;
+- Відзначають фізичний стан тіла після роботи;
+- Надихають на м'яке завершення або наступний крок.
+Також напиши тепле підсумкове резюме-похвалу.
+Мова: ${lang === 'ru' ? 'російська' : lang === 'en' ? 'англійська' : 'українська'}.`;
+
+    const prompt = `Задача: "${taskTitle}".
+Виконано мікро-кроків: ${completedStepsCount} з ${totalStepsCount}.
+Тривалість фокусу: ${durationMinutes} хв.
+Коментар користувача: "${userFeedback || ''}"`;
+
+    const response = await generateWithRetryAndFallback({
+      preferredModel: 'gemini-3.7-flash',
+      fallbackModels: ['gemini-flash-latest', 'gemini-3.1-flash-lite'],
+      contents: prompt,
+      config: {
+        systemInstruction,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            coachingSummary: { type: Type.STRING },
+            reflectionQuestions: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+            },
+            closingDopamineAffirmation: { type: Type.STRING },
+          },
+          required: ['coachingSummary', 'reflectionQuestions', 'closingDopamineAffirmation'],
+        },
+      },
+    });
+
+    const parsed = JSON.parse(response.text || '{}');
+    res.json(parsed);
+  } catch (error: any) {
+    console.error('Error in body-double-reflection:', error);
+    res.status(500).json({ error: cleanErrorMessage(error) });
+  }
+});
+
+// ==========================================
+// PRIVACY-FIRST ANONYMOUS USAGE METRICS
+// (Strict GDPR compliance: no user query texts, no sensitive health data)
+// ==========================================
+
+interface ActivityMetric {
   id: string;
   timestamp: string;
-  userId?: string;
-  userName?: string;
-  userEmail?: string;
   tab: string;
   toolName: string;
-  querySummary: string;
-  category?: string;
-}
-
-interface TelemetryStore {
-  googleSheetsWebhookUrl: string;
-  googleSheetViewUrl: string;
-  users: TelemetryUser[];
-  activities: TelemetryActivity[];
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'telemetry.json');
 
-let telemetryStore: TelemetryStore = {
-  googleSheetsWebhookUrl: process.env.GOOGLE_SHEETS_WEBHOOK_URL || '',
-  googleSheetViewUrl: '',
-  users: [],
-  activities: [],
-};
+// Lightweight in-memory aggregator (no PII, no sensitive query content)
+let anonymousActivityCount = 0;
+const toolUsageCounts: Record<string, number> = {};
 
-// Load saved data if exists
-try {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (fs.existsSync(DATA_FILE)) {
-    const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-    const parsed = JSON.parse(raw);
-    telemetryStore = {
-      ...telemetryStore,
-      ...parsed,
-      users: Array.isArray(parsed.users) ? parsed.users : [],
-      activities: Array.isArray(parsed.activities) ? parsed.activities : [],
-    };
-  }
-} catch (e) {
-  console.warn('[Telemetry] Error initializing data file:', e);
-}
-
-function saveTelemetryStore() {
+// Clean user activity counter (strictly anonymous: tool & tab only)
+app.post('/api/telemetry/user-activity', (req: Request, res: Response) => {
   try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    fs.writeFileSync(DATA_FILE, JSON.stringify(telemetryStore, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('[Telemetry] Error saving data file:', e);
-  }
-}
+    const { tab, toolName } = req.body || {};
+    const safeTab = String(tab || 'general').slice(0, 50);
+    const safeTool = String(toolName || 'action').slice(0, 50);
 
-// Forward data to Google Sheets Webhook asynchronously
-async function forwardToGoogleSheets(payload: any) {
-  const webhook = telemetryStore.googleSheetsWebhookUrl;
-  if (!webhook || !webhook.trim().startsWith('http')) {
-    return;
-  }
-  try {
-    const res = await fetch(webhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    console.log(`[Google Sheets Webhook] Synced payload (${payload.type}), response status: ${res.status}`);
-  } catch (err) {
-    console.warn('[Google Sheets Webhook] Sync notice:', err);
-  }
-}
+    anonymousActivityCount++;
+    toolUsageCounts[safeTool] = (toolUsageCounts[safeTool] || 0) + 1;
 
-// Endpoint 1: Register or update user
-app.post('/api/telemetry/user-registration', async (req: Request, res: Response) => {
-  try {
-    const { id, login, name, fullName, email, birthDate, fieldOfActivity, authProvider, registeredAt } = req.body;
-    
-    const effectiveName = fullName || name;
-    if (!login || !effectiveName) {
-      return res.status(400).json({ error: 'Логін та імʼя є обовʼязковими' });
-    }
-
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
-    const userAgent = req.headers['user-agent'] || '';
-
-    const existingIndex = telemetryStore.users.findIndex((u) => u.login === login || (email && u.email === email));
-
-    const userObj: TelemetryUser = {
-      id: id || `user_${Date.now()}`,
-      login: String(login).trim(),
-      name: String(effectiveName).trim(),
-      fullName: String(effectiveName).trim(),
-      email: email ? String(email).trim() : undefined,
-      birthDate: birthDate ? String(birthDate).trim() : undefined,
-      fieldOfActivity: fieldOfActivity ? String(fieldOfActivity).trim() : undefined,
-      authProvider: authProvider || 'local',
-      registeredAt: registeredAt || new Date().toISOString(),
-      lastLoginAt: new Date().toISOString(),
-      ip: String(ip),
-      userAgent: String(userAgent),
-    };
-
-    if (existingIndex >= 0) {
-      telemetryStore.users[existingIndex] = {
-        ...telemetryStore.users[existingIndex],
-        ...userObj,
-        lastLoginAt: new Date().toISOString(),
-      };
-    } else {
-      telemetryStore.users.unshift(userObj);
-    }
-
-    saveTelemetryStore();
-
-    // Push to owner's Google Sheet
-    forwardToGoogleSheets({
-      type: 'user_registration',
-      ...userObj,
-    });
-
-    res.json({ success: true, user: userObj, googleSheetConnected: !!telemetryStore.googleSheetsWebhookUrl });
-  } catch (err: any) {
-    console.error('Error in user-registration telemetry:', err);
-    res.status(500).json({ error: cleanErrorMessage(err) });
-  }
-});
-
-// Endpoint 2: Log user activity
-app.post('/api/telemetry/user-activity', async (req: Request, res: Response) => {
-  try {
-    const { userId, userName, userEmail, tab, toolName, querySummary, category } = req.body;
-    
-    const act: TelemetryActivity = {
-      id: `act_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-      timestamp: new Date().toISOString(),
-      userId,
-      userName: userName || 'Гість',
-      userEmail,
-      tab: tab || 'general',
-      toolName: toolName || 'Action',
-      querySummary: String(querySummary || '').slice(0, 300),
-      category,
-    };
-
-    telemetryStore.activities.unshift(act);
-    if (telemetryStore.activities.length > 3000) {
-      telemetryStore.activities = telemetryStore.activities.slice(0, 3000);
-    }
-
-    saveTelemetryStore();
-
-    // Push activity to Google Sheet
-    forwardToGoogleSheets({
-      type: 'user_activity',
-      ...act,
-    });
-
-    res.json({ success: true });
+    res.json({ success: true, count: anonymousActivityCount });
   } catch (err: any) {
     res.status(500).json({ error: cleanErrorMessage(err) });
   }
 });
 
-// Endpoint 3: Admin summary (restricted to pilnikoff@gmail.com / pilnikoff)
-app.get('/api/telemetry/admin-summary', (req: Request, res: Response) => {
-  const adminEmail = (req.query.adminEmail as string || req.headers['x-admin-email'] as string || '').toLowerCase().trim();
-  const adminLogin = (req.query.adminLogin as string || req.headers['x-admin-login'] as string || '').toLowerCase().trim();
-
-  const isOwner = adminEmail === 'pilnikoff@gmail.com' || adminLogin === 'pilnikoff';
-  if (!isOwner) {
-    return res.status(403).json({ error: 'Доступ лише для власника (pilnikoff@gmail.com)' });
-  }
-
-  res.json({
-    totalUsers: telemetryStore.users.length,
-    totalActivities: telemetryStore.activities.length,
-    googleSheetsWebhookUrl: telemetryStore.googleSheetsWebhookUrl,
-    googleSheetViewUrl: telemetryStore.googleSheetViewUrl,
-    users: telemetryStore.users,
-    recentActivities: telemetryStore.activities.slice(0, 50),
-  });
-});
-
-// Endpoint 4: Admin configures Google Sheet Webhook or View URL
-app.post('/api/telemetry/config-google-sheet', (req: Request, res: Response) => {
-  const { adminEmail, adminLogin, webhookUrl, sheetViewUrl } = req.body;
-  const isOwner = (adminEmail || '').toLowerCase().trim() === 'pilnikoff@gmail.com' || (adminLogin || '').toLowerCase().trim() === 'pilnikoff';
-  
-  if (!isOwner) {
-    return res.status(403).json({ error: 'Доступ лише для власника (pilnikoff@gmail.com)' });
-  }
-
-  if (typeof webhookUrl === 'string') {
-    telemetryStore.googleSheetsWebhookUrl = webhookUrl.trim();
-  }
-  if (typeof sheetViewUrl === 'string') {
-    telemetryStore.googleSheetViewUrl = sheetViewUrl.trim();
-  }
-
-  saveTelemetryStore();
-  res.json({
-    success: true,
-    googleSheetsWebhookUrl: telemetryStore.googleSheetsWebhookUrl,
-    googleSheetViewUrl: telemetryStore.googleSheetViewUrl,
-  });
-});
-
-// Endpoint 5: Export users as CSV (with UTF-8 BOM for Google Sheets / Excel)
-app.get('/api/telemetry/export-users-csv', (req: Request, res: Response) => {
-  const adminEmail = (req.query.adminEmail as string || '').toLowerCase().trim();
-  const adminLogin = (req.query.adminLogin as string || '').toLowerCase().trim();
-
-  const isOwner = adminEmail === 'pilnikoff@gmail.com' || adminLogin === 'pilnikoff';
-  if (!isOwner) {
-    return res.status(403).json({ error: 'Доступ лише для власника (pilnikoff@gmail.com)' });
-  }
-
-  const headers = ['ID', 'Дата реєстрації', 'Логін', 'Повне імʼя', 'Google Email', 'Дата народження', 'Сфера діяльності', 'Авторизація', 'Останній візит'];
-  const rows = telemetryStore.users.map((u) => [
-    `"${u.id}"`,
-    `"${new Date(u.registeredAt).toLocaleString('uk-UA')}"`,
-    `"${(u.login || '').replace(/"/g, '""')}"`,
-    `"${(u.fullName || u.name || '').replace(/"/g, '""')}"`,
-    `"${(u.email || '').replace(/"/g, '""')}"`,
-    `"${(u.birthDate || '').replace(/"/g, '""')}"`,
-    `"${(u.fieldOfActivity || '').replace(/"/g, '""')}"`,
-    `"${(u.authProvider || '').replace(/"/g, '""')}"`,
-    `"${new Date(u.lastLoginAt).toLocaleString('uk-UA')}"`,
-  ]);
-
-  const csv = '\uFEFF' + [headers.join(';'), ...rows.map((r) => r.join(';'))].join('\n');
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename=navigator_users_${Date.now()}.csv`);
-  res.send(csv);
-});
-
-// Endpoint 6: Export activity logs as CSV
-app.get('/api/telemetry/export-logs-csv', (req: Request, res: Response) => {
-  const adminEmail = (req.query.adminEmail as string || '').toLowerCase().trim();
-  const adminLogin = (req.query.adminLogin as string || '').toLowerCase().trim();
-
-  const isOwner = adminEmail === 'pilnikoff@gmail.com' || adminLogin === 'pilnikoff';
-  if (!isOwner) {
-    return res.status(403).json({ error: 'Доступ лише для власника (pilnikoff@gmail.com)' });
-  }
-
-  const headers = ['ID', 'Час', 'Користувач', 'Email', 'Розділ', 'Інструмент', 'Зміст запиту', 'Категорія'];
-  const rows = telemetryStore.activities.map((a) => [
-    `"${a.id}"`,
-    `"${new Date(a.timestamp).toLocaleString('uk-UA')}"`,
-    `"${(a.userName || '').replace(/"/g, '""')}"`,
-    `"${(a.userEmail || '').replace(/"/g, '""')}"`,
-    `"${(a.tab || '').replace(/"/g, '""')}"`,
-    `"${(a.toolName || '').replace(/"/g, '""')}"`,
-    `"${(a.querySummary || '').replace(/"/g, '""')}"`,
-    `"${(a.category || '').replace(/"/g, '""')}"`,
-  ]);
-
-  const csv = '\uFEFF' + [headers.join(';'), ...rows.map((r) => r.join(';'))].join('\n');
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename=navigator_activity_logs_${Date.now()}.csv`);
-  res.send(csv);
+// Deprecated: user registration telemetry removed for user privacy protection
+app.post('/api/telemetry/user-registration', (req: Request, res: Response) => {
+  res.json({ success: true, message: 'User profiles are managed locally and securely via Firebase.' });
 });
 
 // ==========================================
-// Multi-Device Cloud Sync Endpoints
-// (Enables cross-device synchronization between phone, laptop, and PC via Google Account)
+// DEPRECATED EXPRESS SYNC
+// (Replaced by secure, authenticated Firebase Firestore)
 // ==========================================
-const SYNC_DATA_DIR = path.join(process.cwd(), 'data', 'user_sync');
-if (!fs.existsSync(SYNC_DATA_DIR)) {
-  try {
-    fs.mkdirSync(SYNC_DATA_DIR, { recursive: true });
-  } catch (e) {
-    console.warn('Could not create sync directory', e);
-  }
-}
-
-function getSyncFilePath(key: string): string {
-  const sanitized = key.toLowerCase().replace(/[^a-z0-9_@-]/g, '_');
-  return path.join(SYNC_DATA_DIR, `${sanitized}.json`);
-}
-
-// 1. Push user data from client to cloud server
 app.post('/api/sync/push', (req: Request, res: Response) => {
-  try {
-    const { email, login, userId, profile, journalEntries, clientTimestamp } = req.body;
-    const syncKey = (email || login || userId || '').trim().toLowerCase();
-
-    if (!syncKey) {
-      return res.status(400).json({ error: 'User identifier (email, login, or ID) is required for sync' });
-    }
-
-    const filePath = getSyncFilePath(syncKey);
-    let existingData: any = { journalEntries: [], profile: null, updatedAt: null };
-
-    if (fs.existsSync(filePath)) {
-      try {
-        existingData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-      } catch (err) {
-        console.warn('Error reading existing sync file, overwriting', err);
-      }
-    }
-
-    // Merge journal entries by ID without duplicates, keeping latest date
-    const clientEntries: any[] = Array.isArray(journalEntries) ? journalEntries : [];
-    const serverEntries: any[] = Array.isArray(existingData.journalEntries) ? existingData.journalEntries : [];
-
-    const entryMap = new Map<string, any>();
-    // First populate from server
-    for (const e of serverEntries) {
-      if (e && e.id) entryMap.set(e.id, e);
-    }
-    // Then merge client entries
-    for (const e of clientEntries) {
-      if (e && e.id) {
-        entryMap.set(e.id, e);
-      }
-    }
-
-    const mergedEntries = Array.from(entryMap.values()).sort(
-      (a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()
-    );
-
-    const mergedProfile = profile || existingData.profile;
-    const now = new Date().toISOString();
-
-    const recordToSave = {
-      syncKey,
-      profile: mergedProfile,
-      journalEntries: mergedEntries,
-      updatedAt: now,
-      clientTimestamp: clientTimestamp || now,
-    };
-
-    fs.writeFileSync(filePath, JSON.stringify(recordToSave, null, 2), 'utf-8');
-
-    res.json({
-      success: true,
-      count: mergedEntries.length,
-      profile: mergedProfile,
-      journalEntries: mergedEntries,
-      lastSynced: now,
-    });
-  } catch (err: any) {
-    console.error('Failed to process cloud sync push', err);
-    res.status(500).json({ error: cleanErrorMessage(err) });
-  }
+  res.status(410).json({
+    success: false,
+    error: 'Файлова синхронізація знята з експлуатації для безпеки. Використовуйте Firebase Firestore.',
+  });
 });
 
-// 2. Pull user data from cloud server to client
 app.post('/api/sync/pull', (req: Request, res: Response) => {
-  try {
-    const { email, login, userId } = req.body;
-    const syncKey = (email || login || userId || '').trim().toLowerCase();
-
-    if (!syncKey) {
-      return res.status(400).json({ error: 'User identifier (email, login, or ID) is required' });
-    }
-
-    const filePath = getSyncFilePath(syncKey);
-
-    if (!fs.existsSync(filePath)) {
-      return res.json({
-        success: true,
-        found: false,
-        journalEntries: [],
-        profile: null,
-        message: 'No previous cloud records found for this account',
-      });
-    }
-
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    const parsed = JSON.parse(raw);
-
-    res.json({
-      success: true,
-      found: true,
-      journalEntries: parsed.journalEntries || [],
-      profile: parsed.profile || null,
-      lastSynced: parsed.updatedAt || new Date().toISOString(),
-    });
-  } catch (err: any) {
-    console.error('Failed to process cloud sync pull', err);
-    res.status(500).json({ error: cleanErrorMessage(err) });
-  }
+  res.status(410).json({
+    success: false,
+    error: 'Файлова синхронізація знята з експлуатації для безпеки. Використовуйте Firebase Firestore.',
+  });
 });
 
 async function setupServer() {

@@ -325,13 +325,27 @@ export const GoalMakersBoardGame: React.FC = () => {
           <div className="space-y-1.5 max-w-2xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-0.5 text-xs font-bold text-amber-700 dark:text-amber-300">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Коучингова гра – тренінг «Goal MAker$» (2014)</span>
+              <span>
+                {lang === 'en'
+                  ? 'Coaching Training Game «Goal MAker$» (2014)'
+                  : lang === 'ru'
+                  ? 'Коучинговая игра-тренинг «Goal MAker$» (2014)'
+                  : 'Коучингова гра – тренінг «Goal MAker$» (2014)'}
+              </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight font-serif text-stone-900 dark:text-stone-100">
-              Goal MAker$: Творці та Майстри Цілей
+              {lang === 'en'
+                ? 'Goal MAker$: Masters & Architects of Goals'
+                : lang === 'ru'
+                ? 'Goal MAker$: Создатели и Мастера Целей'
+                : 'Goal MAker$: Творці та Майстри Цілей'}
             </h1>
             <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 leading-relaxed">
-              Автентична трансформаційна гра за системною технологією «Конфайнмент-моделювання» Ольги Бобошко та Костянтина Галюка. Дослідіть свою мету через 9 секторів, матрицю Декарта, поради мудреців та подолання внутрішніх бар'єрів.
+              {lang === 'en'
+                ? 'Authentic transformational game based on Confinement Modeling System by Olga Boboshko & Kostiantyn Haliuk. Explore your aspiration across 9 sectors, Descartes matrix, sages advice, and subconscious barrier deconstruction.'
+                : lang === 'ru'
+                ? 'Аутентичная трансформационная игра по системной технологии «Конфайнмент-моделирование» Ольги Бобошко и Константина Галюка. Исследуйте свою цель через 9 секторов, матрицу Декарта, советы мудрецов и преодоление барьеров.'
+                : 'Автентична трансформаційна гра за системною технологією «Конфайнмент-моделювання» Ольги Бобошко та Костянтина Галюка. Дослідіть свою мету через 9 секторів, матрицю Декарта, поради мудреців та подолання внутрішніх бар\'єрів.'}
             </p>
           </div>
 
@@ -341,10 +355,13 @@ export const GoalMakersBoardGame: React.FC = () => {
               <Coins className="h-5 w-5 text-amber-500 animate-pulse" />
               <div>
                 <div className="text-[10px] uppercase tracking-wider font-semibold text-amber-700 dark:text-amber-300">
-                  {lang === 'en' ? 'Game Bank' : 'Банк Монет'}
+                  {lang === 'en' ? 'Game Bank' : lang === 'ru' ? 'Банк Монет' : 'Банк Монет'}
                 </div>
                 <div className="text-base sm:text-lg font-black text-amber-600 dark:text-amber-400">
-                  {coins} <span className="text-xs font-normal">монет</span>
+                  {coins}{' '}
+                  <span className="text-xs font-normal">
+                    {lang === 'en' ? 'coins' : lang === 'ru' ? 'монет' : 'монет'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -353,7 +370,19 @@ export const GoalMakersBoardGame: React.FC = () => {
               type="button"
               onClick={() => setSoundEnabled(!soundEnabled)}
               className="rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-2.5 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 cursor-pointer shadow-xs"
-              title={soundEnabled ? 'Вимкнути звук' : 'Увімкнути звук'}
+              title={
+                soundEnabled
+                  ? lang === 'en'
+                    ? 'Mute sound'
+                    : lang === 'ru'
+                    ? 'Выключить звук'
+                    : 'Вимкнути звук'
+                  : lang === 'en'
+                  ? 'Enable sound'
+                  : lang === 'ru'
+                  ? 'Включить звук'
+                  : 'Увімкнути звук'
+              }
             >
               {soundEnabled ? <Volume2 className="h-4 w-4 text-teal-600" /> : <VolumeX className="h-4 w-4 text-stone-400" />}
             </button>
@@ -364,31 +393,61 @@ export const GoalMakersBoardGame: React.FC = () => {
         <div className="mt-4 rounded-2xl border border-teal-500/30 bg-teal-950/20 p-4 space-y-3">
           <div className="flex items-center gap-2 text-teal-300 text-xs sm:text-sm font-bold">
             <HelpCircle className="h-4 w-4 text-teal-400" />
-            <span>Інструкція: Як рухатися по полю та грати в Goal MAker$</span>
+            <span>
+              {lang === 'en'
+                ? 'Instructions: Navigating the Board and Playing Goal MAker$'
+                : lang === 'ru'
+                ? 'Инструкция: Как двигаться по полю и играть в Goal MAker$'
+                : 'Інструкція: Як рухатися по полю та грати в Goal MAker$'}
+            </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <div className="p-3 rounded-xl bg-stone-900/80 border border-stone-800 space-y-1">
-              <span className="text-amber-400 font-bold block">1. Старт і ВАК-образ</span>
+              <span className="text-amber-400 font-bold block">
+                {lang === 'en' ? '1. Start & VAK Image' : lang === 'ru' ? '1. Старт и ВАК-образ' : '1. Старт і ВАК-образ'}
+              </span>
               <p className="text-stone-300 leading-relaxed">
-                Сформулюйте мету, дедлайн та сенсорну картинку успіху (що ви бачите, чуєте, відчуваєте в тілі).
+                {lang === 'en'
+                  ? 'Crystallize your goal, target deadline, and vivid sensory picture of fulfillment (what you see, hear, and feel somatically).'
+                  : lang === 'ru'
+                  ? 'Сформулируйте цель, дедлайн и сенсорную картинку успеха (что вы видите, слышите, чувствуете в теле).'
+                  : 'Сформулюйте мету, дедлайн та сенсорну картинку успіху (що ви бачите, чуєте, відчуваєте в тілі).'}
               </p>
             </div>
             <div className="p-3 rounded-xl bg-stone-900/80 border border-stone-800 space-y-1">
-              <span className="text-teal-400 font-bold block">2. Кидок кубика</span>
+              <span className="text-teal-400 font-bold block">
+                {lang === 'en' ? '2. Roll the Dice' : lang === 'ru' ? '2. Бросок кубика' : '2. Кидок кубика'}
+              </span>
               <p className="text-stone-300 leading-relaxed">
-                Кидайте кубик (1-6) — система переміщує фішку по 9 секторах (Стратегія, Операції, Мудреці, Правила).
+                {lang === 'en'
+                  ? 'Roll the 6-sided direction die — navigate across 9 sectors (Strategy, Operations, Sages, Rules, etc.).'
+                  : lang === 'ru'
+                  ? 'Бросайте кубик (1-6) — система перемещает фишку по 9 секторам (Стратегия, Операции, Мудрецы, Правила).'
+                  : 'Кидайте кубик (1-6) — система переміщує фішку по 9 секторах (Стратегія, Операції, Мудреці, Правила).'}
               </p>
             </div>
             <div className="p-3 rounded-xl bg-stone-900/80 border border-stone-800 space-y-1">
-              <span className="text-indigo-400 font-bold block">3. Картка & ШІ-Ведучий</span>
+              <span className="text-indigo-400 font-bold block">
+                {lang === 'en' ? '3. Card & AI Facilitator' : lang === 'ru' ? '3. Карточка и ИИ-Ведущий' : '3. Картка & ШІ-Ведучий'}
+              </span>
               <p className="text-stone-300 leading-relaxed">
-                Відповідайте на коучингові запитання карток голосом або текстом і отримуйте монети та поради від ШІ.
+                {lang === 'en'
+                  ? 'Reflect on coaching card prompts via voice or text, earning coins and ICF facilitative advice.'
+                  : lang === 'ru'
+                  ? 'Отвечайте на коучинговые вопросы карточек голосом или текстом, получая монеты и советы от ИИ.'
+                  : 'Відповідайте на коучингові запитання карток голосом або текстом і отримуйте монети та поради від ШІ.'}
               </p>
             </div>
             <div className="p-3 rounded-xl bg-stone-900/80 border border-stone-800 space-y-1">
-              <span className="text-emerald-400 font-bold block">4. Бланк & Фініш</span>
+              <span className="text-emerald-400 font-bold block">
+                {lang === 'en' ? '4. Action Sheet & Finish' : lang === 'ru' ? '4. Бланк и Финиш' : '4. Бланк & Фініш'}
+              </span>
               <p className="text-stone-300 leading-relaxed">
-                Заповнюйте Бланк дій, збирайте серію позитивних ходів і зберігайте повний звіт гри у свій Журнал.
+                {lang === 'en'
+                  ? 'Complete your Action Sheet, build positive move streaks, and export a game session summary to your Journal.'
+                  : lang === 'ru'
+                  ? 'Заполняйте Бланк действий, собирайте серию позитивных ходов и сохраняйте отчет игры в свой Журнал.'
+                  : 'Заповнюйте Бланк дій, збирайте серію позитивних ходів і зберігайте повний звіт гри у свій Журнал.'}
               </p>
             </div>
           </div>
@@ -428,10 +487,18 @@ export const GoalMakersBoardGame: React.FC = () => {
         <div className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6 sm:p-8 shadow-xl space-y-6">
           <div className="space-y-2 border-b border-stone-200 dark:border-stone-800 pb-4">
             <h2 className="text-xl font-bold font-serif">
-              {lang === 'en' ? '1. Initialize Your Goal on the Start Sector' : '1. Формулювання Мети на секторі «СТАРТ»'}
+              {lang === 'en'
+                ? '1. Initialize Your Goal on the Start Sector'
+                : lang === 'ru'
+                ? '1. Формулирование Цели на секторе «СТАРТ»'
+                : '1. Формулювання Мети на секторі «СТАРТ»'}
             </h2>
             <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-400">
-              «Ціль, яка не доведена до рівня картинки в голові (бачу – чую – відчуваю), не є ціллю. Це просто намір чи побажання.» — Goal MAker$
+              {lang === 'en'
+                ? '«A goal that hasn’t been crystallized into a sensory mental picture (see – hear – feel) is not a goal. It is merely a vague wish or intention.» — Goal MAker$'
+                : lang === 'ru'
+                ? '«Цель, не доведенная до уровня картинки в голове (вижу – слышу – чувствую), не является целью. Это просто намерение или пожелание.» — Goal MAker$'
+                : '«Ціль, яка не доведена до рівня картинки в голові (бачу – чую – відчуваю), не є ціллю. Це просто намір чи побажання.» — Goal MAker$'}
             </p>
           </div>
 
@@ -439,13 +506,18 @@ export const GoalMakersBoardGame: React.FC = () => {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between flex-wrap gap-1">
                 <label className="block text-xs font-bold text-stone-800 dark:text-stone-200">
-                  Ваша Ціль / Запит на гру <span className="text-rose-500">*</span>
+                  {lang === 'en'
+                    ? 'Your Goal / Game Request'
+                    : lang === 'ru'
+                    ? 'Ваша Цель / Запрос на игру'
+                    : 'Ваша Ціль / Запит на гру'}{' '}
+                  <span className="text-rose-500">*</span>
                 </label>
                 <VoiceInputButton
                   id="voice-input-goal-title"
                   currentValue={goalTitle}
                   onTranscript={(text) => setGoalTitle(text)}
-                  fieldLabel="Ціль на гру"
+                  fieldLabel={lang === 'en' ? 'Goal request' : lang === 'ru' ? 'Цель на игру' : 'Ціль на гру'}
                 />
               </div>
               <input
@@ -453,7 +525,13 @@ export const GoalMakersBoardGame: React.FC = () => {
                 required
                 value={goalTitle}
                 onChange={(e) => setGoalTitle(e.target.value)}
-                placeholder="Наприклад: Запустити власний коучинговий проєкт або вийти на дохід 100,000 грн"
+                placeholder={
+                  lang === 'en'
+                    ? 'e.g. Launch my signature consulting program or achieve $5,000 monthly profit'
+                    : lang === 'ru'
+                    ? 'Например: Запустить свой консалтинговый проект или выйти на доход $5,000 в месяц'
+                    : 'Наприклад: Запустити власний коучинговий проєкт або вийти на дохід 100,000 грн'
+                }
                 className="w-full rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 px-4 py-2.5 text-sm font-medium focus:border-teal-500 focus:outline-hidden"
               />
             </div>
@@ -462,27 +540,41 @@ export const GoalMakersBoardGame: React.FC = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between flex-wrap gap-1">
                   <label className="block text-xs font-bold text-stone-800 dark:text-stone-200">
-                    Сенсорний образ (Бачу – Чую – Відчуваю)
+                    {lang === 'en'
+                      ? 'Sensory VAK Image (See – Hear – Feel)'
+                      : lang === 'ru'
+                      ? 'Сенсорный образ (Вижу – Слышу – Чувствую)'
+                      : 'Сенсорний образ (Бачу – Чую – Відчуваю)'}
                   </label>
                   <VoiceInputButton
                     id="voice-input-vak"
                     currentValue={vakPicture}
                     onTranscript={(text) => setVakPicture(text)}
-                    fieldLabel="Образ VAK"
+                    fieldLabel={lang === 'en' ? 'VAK sensory image' : lang === 'ru' ? 'Образ VAK' : 'Образ VAK'}
                   />
                 </div>
                 <textarea
                   rows={3}
                   value={vakPicture}
                   onChange={(e) => setVakPicture(e.target.value)}
-                  placeholder="Опишіть, що ви бачите навколо, які звуки чуєте та які приємні відчуття у тілі, коли мета досягнута..."
+                  placeholder={
+                    lang === 'en'
+                      ? 'Describe what you see around you, what sounds you hear, and the physical sensations in your body when the goal is fulfilled...'
+                      : lang === 'ru'
+                      ? 'Опишите, что вы видите вокруг, какие звуки слышите и какие приятные ощущения в теле, когда цель достигнута...'
+                      : 'Опишіть, що ви бачите навколо, які звуки чуєте та які приємні відчуття у тілі, коли мета досягнута...'
+                  }
                   className="w-full rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 px-3.5 py-2 text-xs focus:border-teal-500 focus:outline-hidden"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold text-stone-800 dark:text-stone-200">
-                  Бажаний дедлайн / Термін реалізації
+                  {lang === 'en'
+                    ? 'Target Deadline / Horizon'
+                    : lang === 'ru'
+                    ? 'Желаемый дедлайн / Срок реализации'
+                    : 'Бажаний дедлайн / Термін реалізації'}
                 </label>
                 <input
                   type="date"
@@ -491,7 +583,19 @@ export const GoalMakersBoardGame: React.FC = () => {
                   className="w-full rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 px-3.5 py-2 text-xs focus:border-teal-500 focus:outline-hidden"
                 />
                 <div className="rounded-xl border border-teal-500/30 bg-teal-500/10 p-2.5 text-[11px] text-teal-800 dark:text-teal-300">
-                  🎁 Стартовий баланс: <strong>20 монет</strong>. Ви будете кидати 6-гранний кубик напрямків і переходити між 9 секторами системи.
+                  {lang === 'en' ? (
+                    <>
+                      🎁 Starting bank: <strong>20 coins</strong>. You will roll a 6-sided die to traverse across the 9 systemic sectors.
+                    </>
+                  ) : lang === 'ru' ? (
+                    <>
+                      🎁 Стартовый баланс: <strong>20 монет</strong>. Вы будете бросать 6-гранный кубик направлений и переходить между 9 секторами системы.
+                    </>
+                  ) : (
+                    <>
+                      🎁 Стартовий баланс: <strong>20 монет</strong>. Ви будете кидати 6-гранний кубик напрямків і переходити між 9 секторами системи.
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -502,7 +606,13 @@ export const GoalMakersBoardGame: React.FC = () => {
                 className="flex items-center gap-2 rounded-xl bg-teal-600 px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-teal-500 active:scale-95 transition-all cursor-pointer"
               >
                 <Play className="h-4 w-4 fill-current" />
-                <span>Розпочати Гру «Goal MAker$»</span>
+                <span>
+                  {lang === 'en'
+                    ? 'Start «Goal MAker$» Game'
+                    : lang === 'ru'
+                    ? 'Начать игру «Goal MAker$»'
+                    : 'Розпочати Гру «Goal MAker$»'}
+                </span>
               </button>
             </div>
           </form>
@@ -557,7 +667,11 @@ export const GoalMakersBoardGame: React.FC = () => {
                   <span>Поле Конфайнмент-Моделювання (9 Секторів)</span>
                 </h3>
                 <p className="text-xs text-stone-500 dark:text-stone-400">
-                  Натискайте на будь-який сектор для деталей або кидайте кубик для переходу
+                  {lang === 'en'
+                    ? 'Click any sector for deep insights or roll the dice to advance'
+                    : lang === 'ru'
+                    ? 'Нажимайте на любой сектор для деталей или бросайте кубик для перехода'
+                    : 'Натискайте на будь-який сектор для деталей або кидайте кубик для переходу'}
                 </p>
               </div>
 
@@ -574,7 +688,19 @@ export const GoalMakersBoardGame: React.FC = () => {
                   }`}
                 >
                   <Dice6 className={`h-4 w-4 ${isRolling ? 'animate-spin' : ''}`} />
-                  <span>{isRolling ? 'Кидок кубика...' : 'Кинути Кубик (1-6)'}</span>
+                  <span>
+                    {isRolling
+                      ? lang === 'en'
+                        ? 'Rolling dice...'
+                        : lang === 'ru'
+                        ? 'Бросок кубика...'
+                        : 'Кидок кубика...'
+                      : lang === 'en'
+                      ? 'Roll Direction Die (1-6)'
+                      : lang === 'ru'
+                      ? 'Бросить Кубик (1-6)'
+                      : 'Кинути Кубик (1-6)'}
+                  </span>
                 </button>
               </div>
             </div>
@@ -603,7 +729,7 @@ export const GoalMakersBoardGame: React.FC = () => {
                     {/* Active player indicator */}
                     {isCurrent && (
                       <span className="absolute -top-2.5 -right-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-teal-600 text-[10px] font-black text-white shadow-md animate-bounce">
-                        Я
+                        {lang === 'en' ? 'ME' : 'Я'}
                       </span>
                     )}
 
@@ -618,7 +744,7 @@ export const GoalMakersBoardGame: React.FC = () => {
                         <div>
                           <div className="text-xs font-bold font-serif flex items-center gap-1.5">
                             <span>#{sector.number}</span>
-                            <span>{sector.nameUk}</span>
+                            <span>{lang === 'en' ? sector.nameEn : sector.nameUk}</span>
                           </div>
                           <div className="text-[10px] text-stone-500 dark:text-stone-400 uppercase tracking-tight">
                             {sector.nameEn}
@@ -628,13 +754,13 @@ export const GoalMakersBoardGame: React.FC = () => {
 
                       {isConnected && !isCurrent && (
                         <span className="rounded-md bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
-                          Перехід
+                          {lang === 'en' ? 'Move' : lang === 'ru' ? 'Переход' : 'Перехід'}
                         </span>
                       )}
                     </div>
 
                     <p className="mt-2 text-[11px] text-stone-600 dark:text-stone-400 line-clamp-2 leading-relaxed">
-                      {sector.descriptionUk}
+                      {lang === 'en' ? sector.descriptionEn : sector.descriptionUk}
                     </p>
 
                     {/* Fast manual navigation button */}
@@ -650,7 +776,7 @@ export const GoalMakersBoardGame: React.FC = () => {
                         }}
                         className="mt-2.5 w-full flex items-center justify-center gap-1 rounded-lg bg-stone-200 dark:bg-stone-800 py-1 text-[11px] font-semibold text-stone-800 dark:text-stone-200 hover:bg-teal-600 hover:text-white transition-colors cursor-pointer"
                       >
-                        <span>Перейти сюди</span>
+                        <span>{lang === 'en' ? 'Move here' : lang === 'ru' ? 'Перейти сюда' : 'Перейти сюди'}</span>
                         <ArrowRight className="h-3 w-3" />
                       </button>
                     )}
@@ -672,14 +798,17 @@ export const GoalMakersBoardGame: React.FC = () => {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="rounded-md bg-teal-500/20 px-2 py-0.5 text-[10px] font-bold text-teal-700 dark:text-teal-300 uppercase tracking-wider">
-                        Картка: {GOAL_MAKERS_SECTORS[activeCard.category].nameUk}
+                        {lang === 'en'
+                          ? `Card: ${GOAL_MAKERS_SECTORS[activeCard.category].nameEn}`
+                          : `Картка: ${GOAL_MAKERS_SECTORS[activeCard.category].nameUk}`}
                       </span>
                       <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
-                        🏆 Винагорода: {activeCard.rewardDescription}
+                        {lang === 'en' ? '🏆 Reward: ' : '🏆 Винагорода: '}
+                        {activeCard.rewardDescription}
                       </span>
                     </div>
                     <h3 className="text-lg font-bold font-serif text-stone-900 dark:text-stone-100">
-                      {activeCard.title}
+                      {lang === 'en' && activeCard.titleEn ? activeCard.titleEn : activeCard.title}
                     </h3>
                   </div>
                 </div>
@@ -699,7 +828,17 @@ export const GoalMakersBoardGame: React.FC = () => {
                     onClick={() => setIsTimerRunning(!isTimerRunning)}
                     className="rounded-xl bg-stone-200 dark:bg-stone-800 px-2.5 py-1.5 text-xs font-semibold text-stone-700 dark:text-stone-300 hover:bg-stone-300 dark:hover:bg-stone-700 cursor-pointer"
                   >
-                    {isTimerRunning ? 'Пауза' : 'Старт таймера'}
+                    {isTimerRunning
+                      ? lang === 'en'
+                        ? 'Pause'
+                        : lang === 'ru'
+                        ? 'Пауза'
+                        : 'Пауза'
+                      : lang === 'en'
+                      ? 'Start Timer'
+                      : lang === 'ru'
+                      ? 'Старт таймера'
+                      : 'Старт таймера'}
                   </button>
                 </div>
               </div>
@@ -707,7 +846,7 @@ export const GoalMakersBoardGame: React.FC = () => {
               {/* Card Prompt Text */}
               <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 sm:p-5">
                 <p className="text-sm sm:text-base font-semibold text-stone-900 dark:text-stone-100 leading-relaxed font-serif">
-                  «{activeCard.prompt}»
+                  «{lang === 'en' && activeCard.promptEn ? activeCard.promptEn : activeCard.prompt}»
                 </p>
                 {activeCard.authorOrSource && (
                   <p className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300 text-right">
@@ -720,20 +859,30 @@ export const GoalMakersBoardGame: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between flex-wrap gap-1">
                   <label className="block text-xs font-bold text-stone-800 dark:text-stone-200">
-                    Ваша письмова відповідь / Інсайт для бланка гравця:
+                    {lang === 'en'
+                      ? 'Your written response / Insight for the player sheet:'
+                      : lang === 'ru'
+                      ? 'Ваш письменный ответ / Инсайт для бланка игрока:'
+                      : 'Ваша письмова відповідь / Інсайт для бланка гравця:'}
                   </label>
                   <VoiceInputButton
                     id="voice-input-card-answer"
                     currentValue={playerAnswer}
                     onTranscript={(text) => setPlayerAnswer(text)}
-                    fieldLabel={activeCard.title}
+                    fieldLabel={lang === 'en' && activeCard.titleEn ? activeCard.titleEn : activeCard.title}
                   />
                 </div>
                 <textarea
                   rows={4}
                   value={playerAnswer}
                   onChange={(e) => setPlayerAnswer(e.target.value)}
-                  placeholder="Запишіть ваші конкретні дії, висновки, 3 факти або роздуми за цим завданням..."
+                  placeholder={
+                    lang === 'en'
+                      ? 'Record your concrete actions, takeaways, 3 facts, or reflections for this prompt...'
+                      : lang === 'ru'
+                      ? 'Запишите ваши конкретные действия, выводы, 3 факта или размышления по этому заданию...'
+                      : 'Запишіть ваші конкретні дії, висновки, 3 факти або роздуми за цим завданням...'
+                  }
                   className="w-full rounded-2xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-950 p-4 text-xs sm:text-sm focus:border-teal-500 focus:outline-hidden shadow-inner"
                 />
               </div>
@@ -746,7 +895,7 @@ export const GoalMakersBoardGame: React.FC = () => {
                     onClick={handleFinishTurn}
                     className="w-full sm:w-auto rounded-xl border border-stone-300 dark:border-stone-700 px-4 py-2 text-xs font-semibold text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 cursor-pointer"
                   >
-                    Пропустити хід
+                    {lang === 'en' ? 'Skip Turn' : lang === 'ru' ? 'Пропустить ход' : 'Пропустити хід'}
                   </button>
 
                   <button
@@ -760,7 +909,19 @@ export const GoalMakersBoardGame: React.FC = () => {
                     ) : (
                       <Send className="h-4 w-4" />
                     )}
-                    <span>{isEvaluating ? 'ШІ-Ведучий аналізує відповідь...' : 'Отримати Оцінку Ведучого & Монети'}</span>
+                    <span>
+                      {isEvaluating
+                        ? lang === 'en'
+                          ? 'AI Host evaluating answer...'
+                          : lang === 'ru'
+                          ? 'ИИ-Ведущий анализирует ответ...'
+                          : 'ШІ-Ведучий аналізує відповідь...'
+                        : lang === 'en'
+                        ? 'Get Host Evaluation & Coins'
+                        : lang === 'ru'
+                        ? 'Получить Оценку Ведущего и Монеты'
+                        : 'Отримати Оцінку Ведучого & Монети'}
+                    </span>
                   </button>
                 </div>
               ) : (
@@ -768,11 +929,20 @@ export const GoalMakersBoardGame: React.FC = () => {
                   <div className="flex items-center justify-between border-b border-teal-500/30 pb-2">
                     <div className="flex items-center gap-2 text-xs font-bold text-teal-700 dark:text-teal-300">
                       <Sparkles className="h-4 w-4 text-amber-500" />
-                      <span>Аналіз ШІ-Ведучого гри «Goal MAker$»:</span>
+                      <span>
+                        {lang === 'en'
+                          ? 'Goal MAker$ AI Host Feedback:'
+                          : lang === 'ru'
+                          ? 'Анализ ИИ-Ведущего игры «Goal MAker$»:'
+                          : 'Аналіз ШІ-Ведучого гри «Goal MAker$»:'}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1 rounded-md bg-amber-500/20 px-2 py-0.5 text-xs font-bold text-amber-700 dark:text-amber-300">
                       <Coins className="h-3.5 w-3.5 text-amber-500" />
-                      <span>+{turnAwardedCoins} монет</span>
+                      <span>
+                        +{turnAwardedCoins}{' '}
+                        {lang === 'en' ? 'coins' : lang === 'ru' ? 'монет' : 'монет'}
+                      </span>
                     </div>
                   </div>
 
@@ -787,7 +957,13 @@ export const GoalMakersBoardGame: React.FC = () => {
                       className="flex items-center gap-2 rounded-xl bg-teal-600 px-6 py-2 text-xs font-bold text-white hover:bg-teal-500 shadow-md cursor-pointer active:scale-95"
                     >
                       <Check className="h-4 w-4" />
-                      <span>Зафіксувати у Бланк та Продовжити гру</span>
+                      <span>
+                        {lang === 'en'
+                          ? 'Record in Sheet & Continue'
+                          : lang === 'ru'
+                          ? 'Зафиксировать в Бланк и Продолжить игру'
+                          : 'Зафіксувати у Бланк та Продовжити гру'}
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -804,10 +980,20 @@ export const GoalMakersBoardGame: React.FC = () => {
             <div>
               <h2 className="text-lg font-bold font-serif flex items-center gap-2">
                 <BookmarkPlus className="h-5 w-5 text-teal-600" />
-                <span>Особистий Ігровий Бланк Гравця «Goal MAker$»</span>
+                <span>
+                  {lang === 'en'
+                    ? 'Goal MAker$ Personal Player Sheet'
+                    : lang === 'ru'
+                    ? 'Личный Игровой Бланк Игрока «Goal MAker$»'
+                    : 'Особистий Ігровий Бланк Гравця «Goal MAker$»'}
+                </span>
               </h2>
               <p className="text-xs text-stone-500 dark:text-stone-400">
-                Хроніка ходів, виконаних завдань, інсайтів та накопиченого капіталу
+                {lang === 'en'
+                  ? 'Chronicle of moves, fulfilled tasks, breakthrough insights, and accumulated capital'
+                  : lang === 'ru'
+                  ? 'Хроника ходов, выполненных заданий, инсайтов и накопленного капитала'
+                  : 'Хроніка ходів, виконаних завдань, інсайтів та накопиченого капіталу'}
               </p>
             </div>
 

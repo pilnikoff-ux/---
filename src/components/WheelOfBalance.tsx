@@ -597,8 +597,9 @@ export const WheelOfBalance: React.FC<WheelOfBalanceProps> = ({ onSavedToJournal
               <span className="text-2xl sm:text-3xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
                 {currentLocalBalance}%
               </span>
-              <span className="text-[10px] text-stone-400 block mt-0.5">
-                {spheres.reduce((a, b) => a + b.score, 0)} / 80 {lang === 'ru' ? 'баллов' : 'балів'}
+                <span className="text-[10px] text-stone-400 block mt-0.5">
+                {spheres.reduce((a, b) => a + b.score, 0)} / 80{' '}
+                {lang === 'en' ? 'points' : lang === 'ru' ? 'баллов' : 'балів'}
               </span>
             </div>
           </div>
@@ -1172,13 +1173,19 @@ export const WheelOfBalance: React.FC<WheelOfBalanceProps> = ({ onSavedToJournal
             {/* Deficit */}
             <div className="rounded-3xl border border-rose-500/30 bg-rose-50/40 dark:bg-rose-950/20 p-5 space-y-1.5 shadow-2xs">
               <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 block">
-                {lang === 'ru' ? 'Главная зона дефицита' : 'Головна зона дефіциту'}
+                {lang === 'en'
+                  ? 'Main Deficit Zone'
+                  : lang === 'ru'
+                  ? 'Главная зона дефицита'
+                  : 'Головна зона дефіциту'}
               </span>
               <h4 className="text-xs font-bold text-stone-900 dark:text-stone-100">
                 {result.aiAnalysis.primaryDeficitSphere}
               </h4>
               <p className="text-[11px] text-stone-600 dark:text-stone-400">
-                {lang === 'ru'
+                {lang === 'en'
+                  ? 'The sphere currently draining the most life energy and accumulating chronic tension.'
+                  : lang === 'ru'
                   ? 'Сфера, откуда сейчас больше всего утекает жизненный ресурс.'
                   : 'Сфера, звідки зараз найбільше витікає життєвий ресурс і де накопичується хронічна напруга.'}
               </p>
@@ -1187,13 +1194,19 @@ export const WheelOfBalance: React.FC<WheelOfBalanceProps> = ({ onSavedToJournal
             {/* Strategic Leverage */}
             <div className="rounded-3xl border border-emerald-500/30 bg-emerald-50/40 dark:bg-emerald-950/20 p-5 space-y-1.5 shadow-2xs">
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
-                {lang === 'ru' ? 'Точка приложения усилий' : 'Точка прикладання зусиль'}
+                {lang === 'en'
+                  ? 'Point of Highest Leverage'
+                  : lang === 'ru'
+                  ? 'Точка приложения усилий'
+                  : 'Точка прикладання зусиль'}
               </span>
               <h4 className="text-xs font-bold text-stone-900 dark:text-stone-100">
                 {result.aiAnalysis.leverageSphere}
               </h4>
               <p className="text-[11px] text-stone-600 dark:text-stone-400">
-                {lang === 'ru'
+                {lang === 'en'
+                  ? 'Minimum effort here triggers a ripple alignment across your entire life system.'
+                  : lang === 'ru'
                   ? 'Минимум усилий здесь дает максимальный синергетический эффект для всей жизни.'
                   : 'Мінімум зусиль тут запускає ланцюгове вирівнювання всієї системи життя.'}
               </p>
@@ -1202,7 +1215,11 @@ export const WheelOfBalance: React.FC<WheelOfBalanceProps> = ({ onSavedToJournal
             {/* Hidden Compensations */}
             <div className="rounded-3xl border border-amber-500/30 bg-amber-50/40 dark:bg-amber-950/20 p-5 space-y-2 shadow-2xs">
               <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
-                {lang === 'ru' ? 'Скрытые компенсации (New Leaf)' : 'Приховані компенсації (New Leaf)'}
+                {lang === 'en'
+                  ? 'Hidden Compensations (New Leaf)'
+                  : lang === 'ru'
+                  ? 'Скрытые компенсации (New Leaf)'
+                  : 'Приховані компенсації (New Leaf)'}
               </span>
               <div className="space-y-1.5">
                 {result.aiAnalysis.hiddenCompensations.map((comp, i) => (

@@ -79,15 +79,71 @@ const CATEGORY_CONFIG: Record<
   },
 };
 
-const STARTER_INSPIRATIONS = [
-  { text: 'Зустріти світанок на узбережжі океану в тиші', category: 'experience' as WishCategory, energy: 9 },
-  { text: 'Створити затишний робочий простір з ергономічним кріслом', category: 'material' as WishCategory, energy: 8 },
-  { text: 'Опанувати гру на музичному інструменті або новий танець', category: 'skills_growth' as WishCategory, energy: 9 },
-  { text: 'Щотижня мати один теплий вечір без гаджетів із близькими', category: 'relationships_health' as WishCategory, energy: 10 },
-  { text: 'Посадити дерево або долучитися до благодійного наставництва', category: 'contribution_spirit' as WishCategory, energy: 8 },
-  { text: 'Політати на повітряній кулі над весняними долинами', category: 'experience' as WishCategory, energy: 9 },
-  { text: 'Написати свою власну розповідь або створити авторський проєкт', category: 'contribution_spirit' as WishCategory, energy: 9 },
-  { text: 'Вільно та впевнено спілкуватися іноземною мовою під час подорожей', category: 'skills_growth' as WishCategory, energy: 9 },
+interface StarterInspiration {
+  textUk: string;
+  textRu: string;
+  textEn: string;
+  category: WishCategory;
+  energy: number;
+}
+
+const STARTER_INSPIRATIONS: StarterInspiration[] = [
+  {
+    textUk: 'Зустріти світанок на узбережжі океану в тиші',
+    textRu: 'Встретить рассвет на побережье океана в тишине',
+    textEn: 'Watch sunrise by the ocean coast in serene silence',
+    category: 'experience',
+    energy: 9,
+  },
+  {
+    textUk: 'Створити затишний робочий простір з ергономічним кріслом',
+    textRu: 'Создать уютное рабочее пространство с эргономичным креслом',
+    textEn: 'Design an ergonomic and peaceful creative workspace',
+    category: 'material',
+    energy: 8,
+  },
+  {
+    textUk: 'Опанувати гру на музичному інструменті або новий танець',
+    textRu: 'Освоить игру на музыкальном инструменте или новый танец',
+    textEn: 'Master playing a musical instrument or learn a new dance',
+    category: 'skills_growth',
+    energy: 9,
+  },
+  {
+    textUk: 'Щотижня мати один теплий вечір без гаджетів із близькими',
+    textRu: 'Каждую неделю проводить теплый вечер без гаджетов с близкими',
+    textEn: 'Have a weekly gadget-free heartfelt evening with loved ones',
+    category: 'relationships_health',
+    energy: 10,
+  },
+  {
+    textUk: 'Посадити дерево або долучитися до благодійного наставництва',
+    textRu: 'Посадить дерево или заняться благотворительным наставничеством',
+    textEn: 'Plant a tree or volunteer as a meaningful mentor',
+    category: 'contribution_spirit',
+    energy: 8,
+  },
+  {
+    textUk: 'Політати на повітряній кулі над весняними долинами',
+    textRu: 'Полетать на воздушном шаре над весенними долинами',
+    textEn: 'Fly in a hot-air balloon over blooming valleys',
+    category: 'experience',
+    energy: 9,
+  },
+  {
+    textUk: 'Написати свою власну розповідь або створити авторський проєкт',
+    textRu: 'Написать свой рассказ или создать авторский проект',
+    textEn: 'Write a personal story or launch an original creative project',
+    category: 'contribution_spirit',
+    energy: 9,
+  },
+  {
+    textUk: 'Вільно та впевнено спілкуватися іноземною мовою під час подорожей',
+    textRu: 'Свободно и уверенно общаться на иностранном языке в поездках',
+    textEn: 'Speak fluently and effortlessly in a foreign language while traveling',
+    category: 'skills_growth',
+    energy: 9,
+  },
 ];
 
 export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
@@ -130,14 +186,14 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
     const initial: WishItem[] = STARTER_INSPIRATIONS.map((item, idx) => ({
       id: `wish-${Date.now()}-${idx}`,
       number: idx + 1,
-      text: item.text,
+      text: lang === 'en' ? item.textEn : lang === 'ru' ? item.textRu : item.textUk,
       category: item.category,
       energyScore: item.energy,
       layer: (idx + 1 <= 30 ? 'social' : idx + 1 <= 70 ? 'personal' : 'deep_subconscious') as WishLayer,
       status: 'pending',
     }));
     setWishes(initial);
-  }, []);
+  }, [lang]);
 
   // Save to local storage on changes
   useEffect(() => {
@@ -216,7 +272,7 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
     const wish: WishItem = {
       id: `wish-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
       number: nextNumber,
-      text: item.text,
+      text: lang === 'en' ? item.textEn : lang === 'ru' ? item.textRu : item.textUk,
       category: item.category,
       energyScore: item.energy,
       layer: determineLayer(nextNumber),
@@ -351,13 +407,16 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
             </div>
             <div className="flex items-center gap-3 text-stone-500 dark:text-stone-400">
               <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
-                <CheckCircle2 className="h-3.5 w-3.5" /> {completedCount} {lang === 'ru' ? 'сбылось' : 'здійснено'}
+                <CheckCircle2 className="h-3.5 w-3.5" /> {completedCount}{' '}
+                {lang === 'en' ? 'fulfilled' : lang === 'ru' ? 'сбылось' : 'здійснено'}
               </span>
               <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold">
-                <Clock className="h-3.5 w-3.5" /> {inProgressCount} {lang === 'ru' ? 'в процессе' : 'у процесі'}
+                <Clock className="h-3.5 w-3.5" /> {inProgressCount}{' '}
+                {lang === 'en' ? 'in progress' : lang === 'ru' ? 'в процессе' : 'у процесі'}
               </span>
               <span className="flex items-center gap-1 text-rose-500 font-semibold">
-                <Flame className="h-3.5 w-3.5" /> {highEnergyCount} {lang === 'ru' ? 'огонь (8-10)' : 'вогонь (8-10)'}
+                <Flame className="h-3.5 w-3.5" /> {highEnergyCount}{' '}
+                {lang === 'en' ? 'ignited (8-10)' : lang === 'ru' ? 'огонь (8-10)' : 'вогонь (8-10)'}
               </span>
             </div>
           </div>
@@ -372,13 +431,13 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
           {/* 3 Psychological Layers Labels */}
           <div className="mt-2 grid grid-cols-3 text-[11px] font-medium text-stone-500 dark:text-stone-400 text-center">
             <div className={`py-1 rounded-sm ${wishes.length >= 1 ? 'text-teal-600 dark:text-teal-400 font-bold' : ''}`}>
-              1–30: {lang === 'ru' ? 'Социальный слой' : 'Соціальний шар'}
+              1–30: {lang === 'en' ? 'Social Layer' : lang === 'ru' ? 'Социальный слой' : 'Соціальний шар'}
             </div>
             <div className={`py-1 rounded-sm ${wishes.length >= 31 ? 'text-amber-600 dark:text-amber-400 font-bold' : ''}`}>
-              31–70: {lang === 'ru' ? 'Личностный слой' : 'Особистісний шар'}
+              31–70: {lang === 'en' ? 'Personal Layer' : lang === 'ru' ? 'Личностный слой' : 'Особистісний шар'}
             </div>
             <div className={`py-1 rounded-sm ${wishes.length >= 71 ? 'text-rose-600 dark:text-rose-400 font-bold' : ''}`}>
-              71–100: {lang === 'ru' ? 'Глубинные мечты' : 'Глибинні мрії'}
+              71–100: {lang === 'en' ? 'Deep Desires' : lang === 'ru' ? 'Глубинные мечты' : 'Глибинні мрії'}
             </div>
           </div>
         </div>
@@ -400,10 +459,17 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs leading-relaxed">
               <div className="space-y-2 rounded-lg bg-white/70 dark:bg-stone-900/70 p-3.5 border border-stone-200/70 dark:border-stone-800">
                 <h4 className="font-bold text-teal-700 dark:text-teal-400">
-                  1. {lang === 'ru' ? 'Включите режим «Если бы всё было возможно»' : 'Вимкніть цензора «Якби все було можливо»'}
+                  1.{' '}
+                  {lang === 'en'
+                    ? 'Turn off your inner censor: “What if anything were possible?”'
+                    : lang === 'ru'
+                    ? 'Включите режим «Если бы всё было возможно»'
+                    : 'Вимкніть цензора «Якби все було можливо»'}
                 </h4>
                 <p className="text-stone-600 dark:text-stone-400">
-                  {lang === 'ru'
+                  {lang === 'en'
+                    ? 'The primary trap is evaluating budget or feasibility while listing desires. Write down everything: from small daily pleasures (coffee in an antique cup) to monumental life visions (visiting Antarctica, founding an academy).'
+                    : lang === 'ru'
                     ? 'Главная ошибка — думать о деньгах, времени или реалистичности в момент записи. Записывайте как материальные вещи (автомобиль, кофеварка), так и ощущения (встретить рассвет на скале, погладить кита).'
                     : 'Головна пастка — оцінювати реалістичність або вартість на етапі запису. Пишіть абсолютно все: від дрібних щоденних радощів до найсміливіших космічних фантазій.'}
                 </p>
@@ -411,10 +477,17 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
 
               <div className="space-y-2 rounded-lg bg-white/70 dark:bg-stone-900/70 p-3.5 border border-stone-200/70 dark:border-stone-800">
                 <h4 className="font-bold text-amber-700 dark:text-amber-400">
-                  2. {lang === 'ru' ? 'Формулировка в настоящем времени' : 'Формулювання в теперішньому часі та без частки «НЕ»'}
+                  2.{' '}
+                  {lang === 'en'
+                    ? 'Present-tense affirmative phrasing'
+                    : lang === 'ru'
+                    ? 'Формулировка в настоящем времени'
+                    : 'Формулювання в теперішньому часі та без частки «НЕ»'}
                 </h4>
                 <p className="text-stone-600 dark:text-stone-400">
-                  {lang === 'ru'
+                  {lang === 'en'
+                    ? 'The subconscious mind discards negative particles. Instead of “Not getting sick”, write “I have a resilient, energetic, and healthy body”. Instead of “Getting out of debt”, write “I easily earn $7,000+ per month”.'
+                    : lang === 'ru'
                     ? 'Мозг не воспринимает отрицание. Вместо «Не болеть» пишите «Я чувствую бодрость и лёгкость в теле». Вместо «Избавиться от долгов» — «Я свободно зарабатываю от $5000 в месяц».'
                     : 'Підсвідомість не зчитує заперечення. Замість «Не хворіти» пишіть «Я маю витривале, здорове та гнучке тіло». Замість «Не сваритися» — «Я будую довірливі та ніжні стосунки».'}
                 </p>
@@ -422,10 +495,17 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
 
               <div className="space-y-2 rounded-lg bg-white/70 dark:bg-stone-900/70 p-3.5 border border-stone-200/70 dark:border-stone-800">
                 <h4 className="font-bold text-rose-700 dark:text-rose-400">
-                  3. {lang === 'ru' ? 'Преодоление «Стены затыка» (на 35–45 желании)' : 'Подолання кризи на 35–45 бажанні'}
+                  3.{' '}
+                  {lang === 'en'
+                    ? 'Overcoming the resistance wall (wishes 35–45)'
+                    : lang === 'ru'
+                    ? 'Преодоление «Стены затыка» (на 35–45 желании)'
+                    : 'Подолання кризи на 35–45 бажанні'}
                 </h4>
                 <p className="text-stone-600 dark:text-stone-400">
-                  {lang === 'ru'
+                  {lang === 'en'
+                    ? 'Almost everyone hits a block around desire #35, once social conditioning runs dry. That is precisely where authentic inner work starts! Ask yourself: “What did I love at age 7?”, “What skill do I yearn to learn?”, “What gives me genuine goosebumps?”'
+                    : lang === 'ru'
                     ? 'Почти каждый человек останавливается на 30–40 желаниях, когда иссякают поверхностные стереотипы. Именно здесь начинается глубинная работа! Задайте себе вопросы: «О чём я мечтал(а) в 7 лет?», «Чему хочу научиться?», «Кому я хочу подарить радость?»'
                     : 'Майже кожен відчуває ступор після 30–40 пунктів, коли поверхневі «треба» закінчуються. Не здавайтеся! Запитайте себе: «Що приносить мені дитяче захоплення?», «Який досвід я хочу пережити хоча б раз у житті?»'}
                 </p>
@@ -433,10 +513,17 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
 
               <div className="space-y-2 rounded-lg bg-white/70 dark:bg-stone-900/70 p-3.5 border border-stone-200/70 dark:border-stone-800">
                 <h4 className="font-bold text-purple-700 dark:text-purple-400">
-                  4. {lang === 'ru' ? 'Тест на внутренний огонь (шкала 1-10)' : 'Енергетичний тест на істинність (1-10)'}
+                  4.{' '}
+                  {lang === 'en'
+                    ? 'Somatic fire test (Energy rating 1–10)'
+                    : lang === 'ru'
+                    ? 'Тест на внутренний огонь (шкала 1-10)'
+                    : 'Енергетичний тест на істинність (1-10)'}
                 </h4>
                 <p className="text-stone-600 dark:text-stone-400">
-                  {lang === 'ru'
+                  {lang === 'en'
+                    ? 'Rate how strongly your body reacts: if your pulse quickens and excitement sparks, that desire scores 9–10. High-fire items deserve immediate breakdown into SMART goals.'
+                    : lang === 'ru'
                     ? 'Оцените каждое желание: если при мысли о нём сердце замирает или появляется мурашки — это ваш истинный 10-бальный огонь. Такие желания имеют высший приоритет для переноса в SMART-цели.'
                     : 'Оцініть, чи виникає тілесний відгук і трепет у грудях від цього пункту. Бажання з балом 9-10 — це ваш головний драйвер, який варто негайно декомпозувати у SMART-цілі.'}
                 </p>
@@ -454,14 +541,18 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400 flex items-center gap-1.5">
             <Plus className="h-4 w-4 text-teal-500" />
-            {lang === 'ru' ? `Добавить желание #${wishes.length + 1}` : `Додати бажання #${wishes.length + 1}`}
+            {lang === 'en'
+              ? `Add desire #${wishes.length + 1}`
+              : lang === 'ru'
+              ? `Добавить желание #${wishes.length + 1}`
+              : `Додати бажання #${wishes.length + 1}`}
           </span>
           <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
             {determineLayer(wishes.length + 1) === 'social'
-              ? (lang === 'ru' ? 'Слой: Социальный (1–30)' : 'Шар: Соціальний (1–30)')
+              ? (lang === 'en' ? 'Layer: Social (1–30)' : lang === 'ru' ? 'Слой: Социальный (1–30)' : 'Шар: Соціальний (1–30)')
               : determineLayer(wishes.length + 1) === 'personal'
-              ? (lang === 'ru' ? 'Слой: Личностный (31–70)' : 'Шар: Особистісний (31–70)')
-              : (lang === 'ru' ? 'Слой: Глубинный (71–100)' : 'Шар: Глибинний (71–100)')}
+              ? (lang === 'en' ? 'Layer: Personal (31–70)' : lang === 'ru' ? 'Слой: Личностный (31–70)' : 'Шар: Особистісний (31–70)')
+              : (lang === 'en' ? 'Layer: Deep Subconscious (71–100)' : lang === 'ru' ? 'Слой: Глубинный (71–100)' : 'Шар: Глибинний (71–100)')}
           </span>
         </div>
 
@@ -501,7 +592,7 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
                       : 'border-stone-200 dark:border-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800'
                   }`}
                 >
-                  {cfg.labelUk}
+                  {lang === 'en' ? cfg.labelEn : lang === 'ru' ? cfg.labelRu : cfg.labelUk}
                 </button>
               );
             })}
@@ -510,7 +601,7 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
           <div className="flex items-center gap-2">
             <span className="text-xs text-stone-500 flex items-center gap-1">
               <Flame className="h-3.5 w-3.5 text-rose-500" />
-              {lang === 'ru' ? 'Энергия:' : 'Енергія:'}
+              {lang === 'en' ? 'Energy:' : lang === 'ru' ? 'Энергия:' : 'Енергія:'}
             </span>
             <div className="flex items-center gap-1">
               {[1, 3, 5, 7, 8, 9, 10].map((val) => (
@@ -535,7 +626,7 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
               className="flex items-center gap-1 rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:pointer-events-none px-4 py-2 text-xs font-bold text-white transition shadow-xs cursor-pointer ml-2"
             >
               <Send className="h-3.5 w-3.5" />
-              <span>{lang === 'ru' ? 'Добавить' : 'Додати'}</span>
+              <span>{lang === 'en' ? 'Add' : lang === 'ru' ? 'Добавить' : 'Додати'}</span>
             </button>
           </div>
         </div>
@@ -546,22 +637,34 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
         <div className="rounded-xl border border-stone-200/80 dark:border-stone-800/80 bg-stone-100/60 dark:bg-stone-900/60 p-3.5 space-y-2">
           <div className="flex items-center gap-1.5 text-xs font-bold text-stone-700 dark:text-stone-300">
             <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
-            <span>{lang === 'ru' ? 'Нужна искра вдохновения? Нажмите, чтобы добавить:' : 'Потрібна іскра натхнення? Натисніть для додавання:'}</span>
+            <span>
+              {lang === 'en'
+                ? 'Need inspiration? Click to instantly add:'
+                : lang === 'ru'
+                ? 'Нужна искра вдохновения? Нажмите, чтобы добавить:'
+                : 'Потрібна іскра натхнення? Натисніть для додавання:'}
+            </span>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {STARTER_INSPIRATIONS.filter((s) => !wishes.some((w) => w.text === s.text))
+            {STARTER_INSPIRATIONS.filter((s) => {
+              const sText = lang === 'en' ? s.textEn : lang === 'ru' ? s.textRu : s.textUk;
+              return !wishes.some((w) => w.text === sText);
+            })
               .slice(0, 4)
-              .map((item, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleQuickAddInspiration(item)}
-                  className="flex items-center gap-1 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 px-2.5 py-1 text-xs text-stone-700 dark:text-stone-300 hover:border-teal-500/50 hover:bg-teal-50/30 dark:hover:bg-teal-950/30 transition cursor-pointer"
-                >
-                  <Plus className="h-3 w-3 text-teal-600 dark:text-teal-400" />
-                  <span>{item.text}</span>
-                </button>
-              ))}
+              .map((item, idx) => {
+                const itemText = lang === 'en' ? item.textEn : lang === 'ru' ? item.textRu : item.textUk;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleQuickAddInspiration(item)}
+                    className="flex items-center gap-1 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 px-2.5 py-1 text-xs text-stone-700 dark:text-stone-300 hover:border-teal-500/50 hover:bg-teal-50/30 dark:hover:bg-teal-950/30 transition cursor-pointer"
+                  >
+                    <Plus className="h-3 w-3 text-teal-600 dark:text-teal-400" />
+                    <span>{itemText}</span>
+                  </button>
+                );
+              })}
           </div>
         </div>
       )}
@@ -575,10 +678,16 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
             onChange={(e) => setFilterCategory(e.target.value)}
             className="rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 px-2.5 py-1.5 text-xs font-medium text-stone-800 dark:text-stone-200 focus:outline-hidden"
           >
-            <option value="all">{lang === 'ru' ? 'Все категории' : 'Всі категорії'}</option>
+            <option value="all">
+              {lang === 'en' ? 'All categories' : lang === 'ru' ? 'Все категории' : 'Всі категорії'}
+            </option>
             {(Object.keys(CATEGORY_CONFIG) as WishCategory[]).map((cat) => (
               <option key={cat} value={cat}>
-                {CATEGORY_CONFIG[cat].labelUk}
+                {lang === 'en'
+                  ? CATEGORY_CONFIG[cat].labelEn
+                  : lang === 'ru'
+                  ? CATEGORY_CONFIG[cat].labelRu
+                  : CATEGORY_CONFIG[cat].labelUk}
               </option>
             ))}
           </select>
@@ -589,10 +698,18 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
             onChange={(e) => setFilterLayer(e.target.value)}
             className="rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 px-2.5 py-1.5 text-xs font-medium text-stone-800 dark:text-stone-200 focus:outline-hidden"
           >
-            <option value="all">{lang === 'ru' ? 'Все 3 слоя' : 'Всі 3 шари'}</option>
-            <option value="social">{lang === 'ru' ? '1–30: Социальный слой' : '1–30: Соціальний шар'}</option>
-            <option value="personal">{lang === 'ru' ? '31–70: Личностный слой' : '31–70: Особистісний шар'}</option>
-            <option value="deep_subconscious">{lang === 'ru' ? '71–100: Глубинные мечты' : '71–100: Глибинні мрії'}</option>
+            <option value="all">
+              {lang === 'en' ? 'All 3 layers' : lang === 'ru' ? 'Все 3 слоя' : 'Всі 3 шари'}
+            </option>
+            <option value="social">
+              {lang === 'en' ? '1–30: Social Layer' : lang === 'ru' ? '1–30: Социальный слой' : '1–30: Соціальний шар'}
+            </option>
+            <option value="personal">
+              {lang === 'en' ? '31–70: Personal Layer' : lang === 'ru' ? '31–70: Личностный слой' : '31–70: Особистісний шар'}
+            </option>
+            <option value="deep_subconscious">
+              {lang === 'en' ? '71–100: Deep Desires' : lang === 'ru' ? '71–100: Глубинные мечты' : '71–100: Глибинні мрії'}
+            </option>
           </select>
 
           {/* Status Filter */}
@@ -601,10 +718,18 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
             onChange={(e) => setFilterStatus(e.target.value)}
             className="rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 px-2.5 py-1.5 text-xs font-medium text-stone-800 dark:text-stone-200 focus:outline-hidden"
           >
-            <option value="all">{lang === 'ru' ? 'Все статусы' : 'Всі статуси'}</option>
-            <option value="pending">{lang === 'ru' ? 'Новые' : 'Нові'}</option>
-            <option value="in_progress">{lang === 'ru' ? 'В процессе' : 'У процесі'}</option>
-            <option value="completed">{lang === 'ru' ? 'Здійснено!' : 'Здійснено!'}</option>
+            <option value="all">
+              {lang === 'en' ? 'All statuses' : lang === 'ru' ? 'Все статусы' : 'Всі статуси'}
+            </option>
+            <option value="pending">
+              {lang === 'en' ? 'New' : lang === 'ru' ? 'Новые' : 'Нові'}
+            </option>
+            <option value="in_progress">
+              {lang === 'en' ? 'In progress' : lang === 'ru' ? 'В процессе' : 'У процесі'}
+            </option>
+            <option value="completed">
+              {lang === 'en' ? 'Fulfilled!' : lang === 'ru' ? 'Здійснено!' : 'Здійснено!'}
+            </option>
           </select>
 
           {/* Search */}
@@ -612,7 +737,13 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={lang === 'ru' ? 'Поиск желания...' : 'Пошук бажання...'}
+            placeholder={
+              lang === 'en'
+                ? 'Search desire...'
+                : lang === 'ru'
+                ? 'Поиск желания...'
+                : 'Пошук бажання...'
+            }
             className="w-36 sm:w-48 rounded-lg border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 px-2.5 py-1.5 text-xs text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:outline-hidden"
           />
         </div>
@@ -629,7 +760,19 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
           ) : (
             <Sparkles className="h-3.5 w-3.5" />
           )}
-          <span>{isAnalyzing ? (lang === 'ru' ? 'ШИ анализирует...' : 'ШІ аналізує...') : (lang === 'ru' ? 'Глубинный ШИ-Анализ' : 'Глибинний ШІ-Аналіз')}</span>
+          <span>
+            {isAnalyzing
+              ? lang === 'en'
+                ? 'AI analyzing...'
+                : lang === 'ru'
+                ? 'ИИ анализирует...'
+                : 'ШІ аналізує...'
+              : lang === 'en'
+              ? 'Deep AI Analysis'
+              : lang === 'ru'
+              ? 'Глубинный ИИ-Анализ'
+              : 'Глибинний ШІ-Аналіз'}
+          </span>
         </button>
       </div>
 
@@ -638,7 +781,9 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
         {filteredWishes.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-stone-300 dark:border-stone-700 p-8 text-center text-stone-500">
             <p className="text-sm">
-              {lang === 'ru'
+              {lang === 'en'
+                ? 'No desires match the selected filters. Add a new desire above!'
+                : lang === 'ru'
                 ? 'Желания по выбранным фильтрам не найдены. Добавьте новое желание выше!'
                 : 'Бажань за обраними фільтрами не знайдено. Додайте нове бажання у формі вгорі!'}
             </p>
@@ -667,9 +812,21 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
                     onClick={() => handleToggleStatus(item.id)}
                     title={
                       isCompleted
-                        ? 'Позначити як нове'
+                        ? lang === 'en'
+                          ? 'Mark as new'
+                          : lang === 'ru'
+                          ? 'Пометить как новое'
+                          : 'Позначити як нове'
                         : isInProgress
-                        ? 'Позначити як здійснене!'
+                        ? lang === 'en'
+                          ? 'Mark as fulfilled!'
+                          : lang === 'ru'
+                          ? 'Пометить как исполненное!'
+                          : 'Позначити як здійснене!'
+                        : lang === 'en'
+                        ? 'Set in progress'
+                        : lang === 'ru'
+                        ? 'Взять в работу'
                         : 'Взяти у процес'
                     }
                     className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border transition cursor-pointer ${
@@ -697,7 +854,7 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
                         #{item.number}
                       </span>
                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${catCfg.badge}`}>
-                        {catCfg.labelUk}
+                        {lang === 'en' ? catCfg.labelEn : lang === 'ru' ? catCfg.labelRu : catCfg.labelUk}
                       </span>
                       {item.energyScore >= 8 && (
                         <span className="flex items-center gap-0.5 text-[10px] font-extrabold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded-md">
@@ -726,11 +883,17 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
                       value={item.energyScore}
                       onChange={(e) => handleUpdateEnergy(item.id, Number(e.target.value))}
                       className="bg-transparent text-xs font-bold text-stone-700 dark:text-stone-300 focus:outline-hidden cursor-pointer"
-                      title="Енергетичний заряд (1-10)"
+                      title={
+                        lang === 'en'
+                          ? 'Energy spark rating (1–10)'
+                          : lang === 'ru'
+                          ? 'Энергетический заряд (1-10)'
+                          : 'Енергетичний заряд (1-10)'
+                      }
                     >
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
                         <option key={n} value={n}>
-                          {n} б.
+                          {n} {lang === 'en' ? 'pts' : 'б.'}
                         </option>
                       ))}
                     </select>
@@ -742,7 +905,13 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
                       type="button"
                       onClick={() => onSendToSmartGoal(item.text, item.category)}
                       className="flex items-center gap-1 rounded-lg border border-teal-500/30 bg-teal-500/10 hover:bg-teal-500/20 px-2 py-1 text-xs font-semibold text-teal-700 dark:text-teal-300 transition cursor-pointer"
-                      title="Трансформувати це бажання у SMART-ціль"
+                      title={
+                        lang === 'en'
+                          ? 'Transform this desire into a SMART goal'
+                          : lang === 'ru'
+                          ? 'Преобразовать это желание в SMART-цель'
+                          : 'Трансформувати це бажання у SMART-ціль'
+                      }
                     >
                       <ArrowRight className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">SMART</span>
@@ -754,7 +923,7 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
                     type="button"
                     onClick={() => handleDeleteWish(item.id)}
                     className="p-1.5 text-stone-400 hover:text-rose-500 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer"
-                    title="Видалити"
+                    title={lang === 'en' ? 'Delete' : lang === 'ru' ? 'Удалить' : 'Видалити'}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -791,7 +960,11 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
           {/* Category Distribution with coach notes */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
-              {lang === 'ru' ? 'Распределение по 5 векторам жизни:' : 'Розподіл за 5 життєвими векторами:'}
+              {lang === 'en'
+                ? 'Distribution across 5 life vectors:'
+                : lang === 'ru'
+                ? 'Распределение по 5 векторам жизни:'
+                : 'Розподіл за 5 життєвими векторами:'}
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {aiAnalysis.balanceByCategory.map((cat, idx) => (
@@ -821,7 +994,11 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
           <div className="rounded-xl border border-amber-500/30 bg-amber-50/40 dark:bg-amber-950/20 p-4 space-y-1.5">
             <h4 className="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
               <Award className="h-4 w-4" />
-              {lang === 'ru' ? 'Прорыв внутреннего цензора (3 слоя):' : 'Прорив внутрішнього цензора (3 шари):'}
+              {lang === 'en'
+                ? 'Subconscious Censor Breakthrough (3 Layers):'
+                : lang === 'ru'
+                ? 'Прорыв внутреннего цензора (3 слоя):'
+                : 'Прорив внутрішнього цензора (3 шари):'}
             </h4>
             <p className="text-xs text-stone-700 dark:text-stone-300 leading-relaxed">
               {aiAnalysis.dominantLayerInsight}
@@ -832,7 +1009,11 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400 flex items-center gap-1.5">
               <Flame className="h-4 w-4 text-rose-500" />
-              {lang === 'ru' ? 'ТОП желаний с наивысшим энергетическим зарядом:' : 'ТОП бажань з найвищим енергетичним зарядом:'}
+              {lang === 'en'
+                ? 'TOP Desires with Highest Energy Drive:'
+                : lang === 'ru'
+                ? 'ТОП желаний с наивысшим энергетическим зарядом:'
+                : 'ТОП бажань з найвищим енергетичним зарядом:'}
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {aiAnalysis.topHighEnergyPicks.map((pick, idx) => (
@@ -851,7 +1032,7 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
                       onClick={() => onSendToSmartGoal(pick.text, 'experience')}
                       className="mt-2 flex items-center justify-center gap-1 rounded-lg bg-teal-600 dark:bg-teal-500 px-2.5 py-1.5 text-xs font-bold text-white dark:text-stone-950 hover:opacity-90 transition cursor-pointer"
                     >
-                      <span>{lang === 'ru' ? 'В SMART-цель' : 'У SMART-ціль'}</span>
+                      <span>{lang === 'en' ? 'To SMART Goal' : lang === 'ru' ? 'В SMART-цель' : 'У SMART-ціль'}</span>
                       <ArrowRight className="h-3.5 w-3.5" />
                     </button>
                   )}
@@ -864,7 +1045,11 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
             <div className="rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-4 space-y-2">
               <h5 className="text-xs font-bold text-stone-800 dark:text-stone-200">
-                {lang === 'ru' ? 'Притоки и скрытые темы:' : 'Приховані психологічні теми:'}
+                {lang === 'en'
+                  ? 'Hidden Psychological Themes:'
+                  : lang === 'ru'
+                  ? 'Притоки и скрытые темы:'
+                  : 'Приховані психологічні теми:'}
               </h5>
               <ul className="list-disc list-inside text-xs text-stone-600 dark:text-stone-400 space-y-1">
                 {aiAnalysis.hiddenThemes.map((theme, i) => (
@@ -875,7 +1060,11 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
 
             <div className="rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-4 space-y-2">
               <h5 className="text-xs font-bold text-teal-700 dark:text-teal-400">
-                {lang === 'ru' ? 'Коучинговые шаги трансформации:' : 'Коучингові кроки трансформації:'}
+                {lang === 'en'
+                  ? 'Coaching Transformation Steps:'
+                  : lang === 'ru'
+                  ? 'Коучинговые шаги трансформации:'
+                  : 'Коучингові кроки трансформації:'}
               </h5>
               <ul className="list-disc list-inside text-xs text-stone-600 dark:text-stone-400 space-y-1">
                 {aiAnalysis.coachingRecommendations.map((rec, i) => (

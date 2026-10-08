@@ -315,27 +315,52 @@ export const ActionStepByStepModal: React.FC<ActionStepByStepModalProps> = ({
     switch (timeframe) {
       case '24h':
         return {
-          label: lang === 'ru' ? '24 Часа: Перший мікро-крок' : '24 Години: Перший мікро-крок',
+          label:
+            lang === 'en'
+              ? '24 Hours: First micro-step'
+              : lang === 'ru'
+              ? '24 Часа: Первый микро-шаг'
+              : '24 Години: Перший мікро-крок',
           badgeColor: 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30',
         };
       case '7d':
         return {
-          label: lang === 'ru' ? '7 Дней: Закрепление практики' : '7 Днів: Закріплення практики',
+          label:
+            lang === 'en'
+              ? '7 Days: Practice consolidation'
+              : lang === 'ru'
+              ? '7 Дней: Закрепление практики'
+              : '7 Днів: Закріплення практики',
           badgeColor: 'bg-teal-500/20 text-teal-600 dark:text-teal-400 border-teal-500/30',
         };
       case '30d':
         return {
-          label: lang === 'ru' ? '30 Дней: Системная стратегия' : '30 Днів: Системна стратегія',
+          label:
+            lang === 'en'
+              ? '30 Days: Systemic strategy'
+              : lang === 'ru'
+              ? '30 Дней: Системная стратегия'
+              : '30 Днів: Системна стратегія',
           badgeColor: 'bg-sky-500/20 text-sky-600 dark:text-sky-400 border-sky-500/30',
         };
       case 'experiment':
         return {
-          label: lang === 'ru' ? 'Поведенческий эксперимент (КПТ)' : 'Поведінковий експеримент (КПТ)',
+          label:
+            lang === 'en'
+              ? 'Behavioral Experiment (CBT)'
+              : lang === 'ru'
+              ? 'Поведенческий эксперимент (КПТ)'
+              : 'Поведінковий експеримент (КПТ)',
           badgeColor: 'bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border-indigo-500/30',
         };
       default:
         return {
-          label: lang === 'ru' ? 'Рекомендованная практика' : 'Рекомендована практика',
+          label:
+            lang === 'en'
+              ? 'Recommended Practice'
+              : lang === 'ru'
+              ? 'Рекомендованная практика'
+              : 'Рекомендована практика',
           badgeColor: 'bg-stone-500/20 text-stone-600 dark:text-stone-400 border-stone-500/30',
         };
     }
@@ -382,7 +407,11 @@ export const ActionStepByStepModal: React.FC<ActionStepByStepModalProps> = ({
           {/* Target Action Card */}
           <div className="rounded-2xl border border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 p-4 space-y-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400">
-              {lang === 'ru' ? 'Рекомендованное действие:' : 'Рекомендована дія / практика:'}
+              {lang === 'en'
+                ? 'Recommended action / practice:'
+                : lang === 'ru'
+                ? 'Рекомендованное действие:'
+                : 'Рекомендована дія / практика:'}
             </span>
             <p className="text-sm font-medium text-stone-900 dark:text-stone-100 leading-relaxed">
               «{actionText}»
@@ -402,7 +431,7 @@ export const ActionStepByStepModal: React.FC<ActionStepByStepModalProps> = ({
                     : 'Прямий перехід до практики у додатку:'}
                 </span>
                 <span className="text-[10px] text-stone-400">
-                  {lang === 'ru' ? 'В один клик' : 'В 1 клік'}
+                  {lang === 'en' ? 'In 1 click' : lang === 'ru' ? 'В один клик' : 'В 1 клік'}
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -429,7 +458,9 @@ export const ActionStepByStepModal: React.FC<ActionStepByStepModalProps> = ({
             <div className="py-12 flex flex-col items-center justify-center gap-3 text-center">
               <RefreshCw className="h-7 w-7 text-amber-500 animate-spin" />
               <p className="text-xs text-stone-500 font-medium">
-                {lang === 'ru'
+                {lang === 'en'
+                  ? 'Generating step-by-step psychological protocol...'
+                  : lang === 'ru'
                   ? 'Формируем пошаговый психологический протокол...'
                   : 'Формуємо покроковий психологічний протокол...'}
               </p>
@@ -441,7 +472,9 @@ export const ActionStepByStepModal: React.FC<ActionStepByStepModalProps> = ({
                 <div className="flex items-center gap-2 text-teal-800 dark:text-teal-300 font-bold">
                   <Brain className="h-4 w-4 text-teal-600 dark:text-teal-400" />
                   <span>
-                    {lang === 'ru'
+                    {lang === 'en'
+                      ? 'Psychological mechanism (Why it works):'
+                      : lang === 'ru'
                       ? 'Психологический смысл (Почему это работает):'
                       : 'Психологічний сенс (Чому це працює):'}
                   </span>
@@ -456,11 +489,15 @@ export const ActionStepByStepModal: React.FC<ActionStepByStepModalProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-stone-900 dark:text-stone-100 uppercase tracking-wider flex items-center gap-1.5">
                     <Layers className="h-4 w-4 text-amber-500" />
-                    {lang === 'ru' ? 'Пошаговый протокол выполнения:' : 'Покроковий протокол виконання:'}
+                    {lang === 'en'
+                      ? 'Step-by-step implementation protocol:'
+                      : lang === 'ru'
+                      ? 'Пошаговый протокол выполнения:'
+                      : 'Покроковий протокол виконання:'}
                   </span>
                   <span className="text-[10px] text-stone-400">
                     {completedSteps.length} / {guide.stepByStepProtocol.length}{' '}
-                    {lang === 'ru' ? 'выполнено' : 'виконано'}
+                    {lang === 'en' ? 'completed' : lang === 'ru' ? 'выполнено' : 'виконано'}
                   </span>
                 </div>
 
@@ -518,7 +555,9 @@ export const ActionStepByStepModal: React.FC<ActionStepByStepModalProps> = ({
                   <div className="flex items-center gap-2 text-rose-800 dark:text-rose-300 font-bold">
                     <AlertTriangle className="h-4 w-4 text-rose-500" />
                     <span>
-                      {lang === 'ru'
+                      {lang === 'en'
+                        ? 'Resistance trap & Antidote:'
+                        : lang === 'ru'
                         ? 'Ловушка сопротивления и Антидот:'
                         : 'Пастка опору та Антидот:'}
                     </span>
@@ -535,7 +574,11 @@ export const ActionStepByStepModal: React.FC<ActionStepByStepModalProps> = ({
                   <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold">
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                     <span>
-                      {lang === 'ru' ? 'Критерий готовности:' : 'Критерій завершеності:'}
+                      {lang === 'en'
+                        ? 'Completion criterion:'
+                        : lang === 'ru'
+                        ? 'Критерий готовности:'
+                        : 'Критерій завершеності:'}
                     </span>
                   </div>
                   <p className="text-stone-700 dark:text-stone-300 leading-relaxed font-medium">
@@ -556,7 +599,9 @@ export const ActionStepByStepModal: React.FC<ActionStepByStepModalProps> = ({
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>{lang === 'ru' ? 'Обновить ШИ-гайд' : 'Оновити ШІ-гайд'}</span>
+            <span>
+              {lang === 'en' ? 'Refresh AI Guide' : lang === 'ru' ? 'Обновить ШИ-гайд' : 'Оновити ШІ-гайд'}
+            </span>
           </button>
 
           <div className="flex items-center gap-2">
@@ -573,9 +618,13 @@ export const ActionStepByStepModal: React.FC<ActionStepByStepModalProps> = ({
               <Bookmark className="h-3.5 w-3.5" />
               <span>
                 {savedSuccess
-                  ? lang === 'ru'
+                  ? lang === 'en'
+                    ? 'Saved to Journal!'
+                    : lang === 'ru'
                     ? 'Сохранено в Журнал!'
                     : 'Збережено в Журнал!'
+                  : lang === 'en'
+                  ? 'Save Algorithm'
                   : lang === 'ru'
                   ? 'Сохранить алгоритм'
                   : 'Зберегти алгоритм'}
@@ -587,7 +636,7 @@ export const ActionStepByStepModal: React.FC<ActionStepByStepModalProps> = ({
               onClick={onClose}
               className="px-4 py-1.5 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-800 dark:text-stone-200 font-semibold hover:bg-stone-300 dark:hover:bg-stone-700 transition-colors"
             >
-              {lang === 'ru' ? 'Закрыть' : 'Закрити'}
+              {lang === 'en' ? 'Close' : lang === 'ru' ? 'Закрыть' : 'Закрити'}
             </button>
           </div>
         </div>

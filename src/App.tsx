@@ -17,6 +17,7 @@ import { HundredWishesPractice } from './components/HundredWishesPractice';
 import { SelfReflectionTool } from './components/SelfReflectionTool';
 import { SmartGoalsTool } from './components/SmartGoalsTool';
 import { PreMortemTool } from './components/PreMortemTool';
+import { BodyDoublerTool } from './components/BodyDoublerTool';
 import { FeedbackSystem } from './components/FeedbackSystem';
 import { KnowledgeBase } from './components/KnowledgeBase';
 import { MyJournal } from './components/MyJournal';
@@ -34,6 +35,7 @@ import {
   setAuthDismissed,
 } from './services/userStatsService';
 import { syncCloudData } from './services/cloudSyncService';
+import { initFirebaseAuth } from './services/firestoreSyncService';
 import {
   getReminderConfig,
   playSereneChime,
@@ -85,6 +87,11 @@ export function App() {
   useEffect(() => {
     updateJournalCount();
 
+    // Initialize Firebase Auth listener
+    const unsubAuth = initFirebaseAuth(() => {
+      updateJournalCount();
+    });
+
     const profile = getUserProfile();
     const hasData = hasUserEnteredData(profile);
     const dismissed = isAuthDismissed();
@@ -106,6 +113,7 @@ export function App() {
     window.addEventListener('journal_cloud_synced', handleCloudSync);
     window.addEventListener('storage', handleCloudSync);
     return () => {
+      unsubAuth();
       window.removeEventListener('journal_cloud_synced', handleCloudSync);
       window.removeEventListener('storage', handleCloudSync);
     };
@@ -252,6 +260,13 @@ export function App() {
             onSelectTab={setActiveTab}
             onOpenGrounding={() => setIsSomaticOpen(true)}
             onSavedToJournal={handleSavedToJournal}
+          />
+        )}
+
+        {activeTab === 'bodyDouble' && (
+          <BodyDoublerTool
+            onSavedToJournal={handleSavedToJournal}
+            onNavigateToTab={(tab) => setActiveTab(tab)}
           />
         )}
 

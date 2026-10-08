@@ -1100,3 +1100,172 @@ export async function runPreMortemAnalysis(params: {
     };
   }
 }
+
+// 12. BODY DOUBLING (ТІЛО-ДУБЛЕР) SERVICE FUNCTIONS
+export async function requestBodyDoubleDecompose(payload: {
+  taskTitle: string;
+  context?: string;
+  durationMinutes?: number;
+  personaName?: string;
+  lang?: string;
+}): Promise<{
+  welcomingNote: string;
+  dopamineMicroSteps: string[];
+  focusAnchorTip: string;
+}> {
+  try {
+    const response = await fetchWithTimeout('/api/gemini/body-double-decompose', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return await handleApiResponse(response);
+  } catch (error) {
+    console.warn('Fallback to synthetic decompose:', error);
+    const persona = payload.personaName || 'Алекс';
+    const lang = payload.lang || 'uk';
+
+    if (lang === 'en') {
+      return {
+        welcomingNote: `Hey there! I am ${persona}, and I am sitting right next to you working on my own tasks. You don't have to finish everything right now — just start with step 1. I'm right here with you.`,
+        dopamineMicroSteps: [
+          `Open the workspace and prepare the first line/item for: "${payload.taskTitle.slice(0, 45)}"`,
+          'Spend 5 minutes purely on the most obvious, non-intimidating piece without judging the result',
+          'Review the draft and add 1 refinement before the timer rings',
+        ],
+        focusAnchorTip: 'Take a soft belly breath. Lower your shoulders. Just 5 minutes of low-stakes presence.',
+      };
+    }
+
+    if (lang === 'ru') {
+      return {
+        welcomingNote: `Привет! Я ${persona}, и я прямо сейчас сижу рядом и молча занимаюсь своими делами. Тебе не нужно делать всё идеально — просто открой задачу и сделай первый легкий вдох. Я с тобой.`,
+        dopamineMicroSteps: [
+          `Открыть рабочую область и сделать первый набросок для: "${payload.taskTitle.slice(0, 45)}"`,
+          'Поработать ровно 5 минут над самым простым элементом, выключив внутреннего критика',
+          'Закрепить полученный черновик и отметить первый успех',
+        ],
+        focusAnchorTip: 'Сделай один глубокий выдох. Опусти плечи. Давай просто начнем без перфекционизма.',
+      };
+    }
+
+    return {
+      welcomingNote: `Привіт! Я ${persona}, твій боді-дублер на цю сесію. Я відкрив свій блокнот і працюю мовчки поруч з тобою. Тобі не треба перевертати гори просто зараз — лише зроби перший мікро-рух. Відчуй мою підтримку.`,
+      dopamineMicroSteps: [
+        `Відкрити робочий простір і записати перший пункт для: "${payload.taskTitle.slice(0, 45)}"`,
+        'Попрацювати рівно 5-7 хвилин над найпростішою частиною без очікування ідеалу',
+        'Поглянути на зроблений шматочок, видихнути і зафіксувати мікро-результат',
+      ],
+      focusAnchorTip: 'Опусти плечі, зроби м’який видих животом. Ми робимо це разом у спокійному темпі.',
+    };
+  }
+}
+
+export async function requestBodyDoubleSOS(payload: {
+  taskTitle: string;
+  currentStep?: string;
+  issueType?: string;
+  personaName?: string;
+  lang?: string;
+}): Promise<{
+  reassuringMessage: string;
+  groundingAction: string;
+  next60SecondsFocus: string;
+}> {
+  try {
+    const response = await fetchWithTimeout('/api/gemini/body-double-sos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return await handleApiResponse(response);
+  } catch (error) {
+    console.warn('Fallback to synthetic SOS:', error);
+    const lang = payload.lang || 'uk';
+
+    if (lang === 'en') {
+      return {
+        reassuringMessage: 'Take a breath. Stalling or losing focus is completely normal and human. There is no guilt here.',
+        groundingAction: 'Feel your feet firmly touching the floor. Inhale for 4 seconds, exhale slowly for 6 seconds.',
+        next60SecondsFocus: 'For the next 60 seconds, do not try to finish the task — just write or adjust ONE single word or detail.',
+      };
+    }
+
+    if (lang === 'ru') {
+      return {
+        reassuringMessage: 'Спокойно. Ступор или отвлечение — это естественная реакция мозга на новизну или усталость. Ты в безопасности.',
+        groundingAction: 'Почувствуй опору стоп на полу. Сделай медленный вдох через нос и удлиненный выдох через рот.',
+        next60SecondsFocus: 'На следующие 60 секунд выбери одно микро-действие: написать всего одну строку или просто кликнуть нужную кнопку.',
+      };
+    }
+
+    return {
+      reassuringMessage: 'Все гаразд. Втрата фокусу або напад внутрішнього критика — це природний захисний сигнал мозку. Жодного самобичування.',
+      groundingAction: 'Відчуй стопи на підлозі, розімкни щелепи. Зроби повільний вдих на 4 рахунки і довгий видих на 6.',
+      next60SecondsFocus: 'На наступні 60 секунд не намагайся закінчити всю задачу — зроби лише один мікро-рух: напиши одне речення або відкрий файл.',
+    };
+  }
+}
+
+export async function requestBodyDoubleReflection(payload: {
+  taskTitle: string;
+  completedStepsCount: number;
+  totalStepsCount: number;
+  durationMinutes: number;
+  userFeedback?: string;
+  lang?: string;
+}): Promise<{
+  coachingSummary: string;
+  reflectionQuestions: string[];
+  closingDopamineAffirmation: string;
+}> {
+  try {
+    const response = await fetchWithTimeout('/api/gemini/body-double-reflection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return await handleApiResponse(response);
+  } catch (error) {
+    console.warn('Fallback to synthetic reflection:', error);
+    const lang = payload.lang || 'uk';
+
+    if (lang === 'en') {
+      return {
+        coachingSummary: `Great job dedicating ${payload.durationMinutes} minutes to "${payload.taskTitle}". You showed up and broke through inertia.`,
+        reflectionQuestions: [
+          'What felt surprisingly easy once you actually started?',
+          'At what point did resistance or the inner critic try to interrupt, and how did having a body double help?',
+          'What sensations are present in your body right now compared to when you began?',
+          'What is one tiny victory from this session that you can genuinely appreciate yourself for?',
+        ],
+        closingDopamineAffirmation: 'I am someone who can take meaningful micro-steps even through resistance.',
+      };
+    }
+
+    if (lang === 'ru') {
+      return {
+        coachingSummary: `Отличная работа! Ты выделил ${payload.durationMinutes} минут осознанного присутствия задаче "${payload.taskTitle}". Инерция преодолена.`,
+        reflectionQuestions: [
+          'Что оказалось легче, чем казалось до того, как ты начал?',
+          'В какой момент включился внутренний критик или желание отвлечься, и как помогло присутствие напарника?',
+          'Что сейчас чувствует тело: появилось ли облегчение или тепло в мышцах?',
+          'За какую конкретную деталь проделанной работы ты искренне благодарен себе прямо сейчас?',
+        ],
+        closingDopamineAffirmation: 'Я умею двигаться вперед маленькими честными шагами, уважая свой темп.',
+      };
+    }
+
+    return {
+      coachingSummary: `Чудова робота! Ти присвятив ${payload.durationMinutes} хвилин чесного фокусу задачі "${payload.taskTitle}". Найважче — це старт, і ти подолав інерцію.`,
+      reflectionQuestions: [
+        'Що виявилося значно легшим, ніж уявлялося до початку сесії?',
+        'У який момент з’явився внутрішній опір чи критик, і що допомогло повернутися в процес?',
+        'Що зараз відчуває твоє тіло (плечі, дихання, рівень напруги) порівняно з початком?',
+        'За який конкретний крок ти можеш щиро сказати собі «дякую» просто зараз?',
+      ],
+      closingDopamineAffirmation: 'Я рухаюся вперед у своєму темпі, і кожен мій маленький крок має цінність.',
+    };
+  }
+}
+

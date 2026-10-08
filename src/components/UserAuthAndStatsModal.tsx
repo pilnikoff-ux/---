@@ -40,6 +40,13 @@ import {
   getQuickGoogleDraft,
 } from '../services/googleAuthService';
 import { syncCloudData } from '../services/cloudSyncService';
+import {
+  signInWithGoogle,
+  signOutFromGoogle,
+  syncFirestoreJournal,
+  getFirestoreSyncStatus,
+  subscribeToFirestoreSync,
+} from '../services/firestoreSyncService';
 import { UserProfile } from '../types';
 
 interface UserAuthAndStatsModalProps {
@@ -132,11 +139,20 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
   const [sheetViewUrlInput, setSheetViewUrlInput] = useState('');
   const [adminSaving, setAdminSaving] = useState(false);
   const [adminSavedSuccess, setAdminSavedSuccess] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [firestoreStatus, setFirestoreStatus] = useState(getFirestoreSyncStatus());
 
   const googleBtnRef = useRef<HTMLDivElement>(null);
 
   // Owner check (pilnikoff@gmail.com or login pilnikoff)
   const isOwner = isAppOwner(profile) || email.toLowerCase() === 'pilnikoff@gmail.com' || login.toLowerCase() === 'pilnikoff';
+
+  useEffect(() => {
+    const unsub = subscribeToFirestoreSync((status) => {
+      setFirestoreStatus(status);
+    });
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -159,7 +175,9 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
         setAvatarUrl(effective.avatarUrl);
         if (effective.authProvider === 'google' && effective.email) {
           setGoogleConnectedNotice(
-            lang === 'ru'
+            lang === 'en'
+              ? `✓ Google account (${effective.email}) connected`
+              : lang === 'ru'
               ? `✓ Google аккаунт (${effective.email}) подключен`
               : `✓ Google акаунт (${effective.email}) підключено`
           );
@@ -269,7 +287,9 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
     setAuthProvider('google');
     setErrorMessage(null);
     setGoogleConnectedNotice(
-      lang === 'ru'
+      lang === 'en'
+        ? `✓ Google account (${draft.email}) connected`
+        : lang === 'ru'
         ? `✓ Google аккаунт (${draft.email}) подключен`
         : `✓ Google акаунт (${draft.email}) підключено`
     );
@@ -297,7 +317,9 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
     if (!candidate) {
       setShowGoogleInput(true);
       setErrorMessage(
-        lang === 'ru'
+        lang === 'en'
+          ? 'Please specify your Google email to connect (in the field below or the form).'
+          : lang === 'ru'
           ? 'Пожалуйста, укажите ваш Google Email для подключения (в поле ниже или в форме).'
           : 'Будь ласка, вкажіть ваш Google Email для підключення (у полі нижче або у формі).'
       );
@@ -322,7 +344,13 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
     const cleanField = (fieldOfActivity.trim() || 'Дослідник власного потенціалу').trim();
 
     if (!cleanLogin && !email.trim()) {
-      setErrorMessage(lang === 'ru' ? 'Пожалуйста, укажите логин или email' : 'Будь ласка, вкажіть логін або email');
+      setErrorMessage(
+        lang === 'en'
+          ? 'Please enter your login or email'
+          : lang === 'ru'
+          ? 'Пожалуйста, укажите логин или email'
+          : 'Будь ласка, вкажіть логін або email'
+      );
       return;
     }
 
@@ -335,7 +363,6 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
       birthDate: cleanBirthDate || undefined,
       dateOfBirth: cleanBirthDate || undefined,
       fieldOfActivity: cleanField,
-      pinOrPassword: password.trim() || undefined,
       authProvider: authProvider,
       avatarUrl: avatarUrl || (authProvider === 'google' ? `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(cleanLogin)}` : undefined),
       registeredAt: profile?.registeredAt || new Date().toISOString(),
@@ -440,23 +467,29 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                   <h3 className="font-bold text-base sm:text-lg text-white">
                     {profile && isProfileComplete(profile)
                       ? profile.fullName || profile.name
+                      : lang === 'en'
+                      ? 'Sign In & Profile Setup'
                       : lang === 'ru'
                       ? 'Вход & Обязательная регистрация'
                       : 'Вхід & Обовʼязкова реєстрація'}
                   </h3>
                   {isOwner && (
                     <span className="px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-bold">
-                      ВЛАСНИК
+                      {lang === 'en' ? 'OWNER' : lang === 'ru' ? 'ВЛАДЕЛЕЦ' : 'ВЛАСНИК'}
                     </span>
                   )}
                 </div>
                 <p className="text-xs text-stone-400">
                   {mustCompleteRegistration
-                    ? lang === 'ru'
+                    ? lang === 'en'
+                      ? 'All form fields are required to access the application'
+                      : lang === 'ru'
                       ? 'Все поля формы являются обязательными для входа в приложение'
                       : 'Усі поля форми є обовʼязковими для входу в додаток'
                     : profile && isProfileComplete(profile)
                     ? `${profile.fieldOfActivity} • ${profile.authProvider === 'google' ? 'Google: ' + profile.email : profile.login}`
+                    : lang === 'en'
+                    ? 'Fill in your personal profile to get started'
                     : lang === 'ru'
                     ? 'Заполните ваш личный профиль для старта'
                     : 'Заповніть ваш особистий профіль для старту'}
@@ -471,7 +504,7 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                   onClose();
                 }}
                 className="p-2 rounded-xl text-stone-400 hover:text-white hover:bg-stone-800 transition-colors cursor-pointer"
-                title="Закрити"
+                title={lang === 'en' ? 'Close' : lang === 'ru' ? 'Закрыть' : 'Закрити'}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -491,7 +524,7 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                 }`}
               >
                 <User className="w-4 h-4" />
-                <span>{lang === 'ru' ? 'Мой Профиль' : 'Мій Профіль'}</span>
+                <span>{lang === 'en' ? 'My Profile' : lang === 'ru' ? 'Мой Профиль' : 'Мій Профіль'}</span>
               </button>
               <button
                 type="button"
@@ -506,7 +539,7 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                 }`}
               >
                 <FileSpreadsheet className="w-4 h-4" />
-                <span>Google Таблиця & Статистика (Власник)</span>
+                <span>{lang === 'en' ? 'Google Sheet & Stats (Owner)' : lang === 'ru' ? 'Google Таблица & Статистика (Владелец)' : 'Google Таблиця & Статистика (Власник)'}</span>
               </button>
             </div>
           )}
@@ -521,12 +554,16 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                     <Info className="w-5 h-5 text-teal-400 shrink-0 mt-0.5" />
                     <div className="text-xs text-stone-200 space-y-1">
                       <p className="font-semibold text-teal-300">
-                        {lang === 'ru'
+                        {lang === 'en'
+                          ? 'Mandatory profile data to access the Navigator'
+                          : lang === 'ru'
                           ? 'Обязательное заполнение данных для доступа к Навигатору'
                           : 'Обовʼязкове заповнення даних для доступу до Навігатора'}
                       </p>
                       <p className="text-stone-400">
-                        {lang === 'ru'
+                        {lang === 'en'
+                          ? 'To personalize techniques, psychological algorithms, and save sessions, fill in the fields below. You can also quickly connect a Google account.'
+                          : lang === 'ru'
                           ? 'Для персонализации техник, психологических алгоритмов и сохранения сессий заполните все 4 поля ниже. Вы также можете быстро подключить Google аккаунт.'
                           : 'Для персоналізації технік, психологічних алгоритмів та збереження сесій заповніть усі 4 поля нижче. Ви також можете швидко підключити Google акаунт.'}
                       </p>
@@ -558,10 +595,12 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                       </svg>
                       <div>
                         <h4 className="text-sm font-bold text-white">
-                          {lang === 'ru' ? 'Вход через Google' : 'Вхід через Google'}
+                          {lang === 'en' ? 'Google Sign-In' : lang === 'ru' ? 'Вход через Google' : 'Вхід через Google'}
                         </h4>
                         <p className="text-[11px] text-stone-400">
-                          {lang === 'ru'
+                          {lang === 'en'
+                            ? 'Link profile with Google (fields can still be edited below)'
+                            : lang === 'ru'
                             ? 'Свяжите профиль с Google (поля формы все равно заполняются)'
                             : 'Звʼяжіть профіль з Google (поля форми все одно заповнюються)'}
                         </p>
@@ -579,57 +618,126 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                   {/* Native Google Button if initialized */}
                   <div ref={googleBtnRef} className="flex justify-center empty:hidden" />
 
-                  {/* 1-Click Fast Google Connect Button */}
-                  <div className="space-y-2">
+                  {/* 1-Click Fast Google Connect Button with Firebase Firestore */}
+                  <div className="space-y-2.5">
                     <button
                       type="button"
-                      onClick={() => {
-                        const rawClientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID;
-                        const googleClientId = typeof rawClientId === 'string' ? rawClientId.trim() : '';
-                        const w = window as any;
-                        if (googleClientId && googleClientId.length > 5 && w.google?.accounts?.id?.prompt) {
-                          try {
-                            w.google.accounts.id.prompt();
-                          } catch (err) {
-                            console.log('GIS prompt fallback', err);
+                      disabled={isGoogleLoading}
+                      onClick={async () => {
+                        setIsGoogleLoading(true);
+                        setErrorMessage(null);
+                        try {
+                          const res = await signInWithGoogle();
+                          if (res.success && res.user) {
+                            const u = res.user;
+                            const userEmail = u.email || '';
+                            const userName = u.displayName || '';
+                            setEmail(userEmail);
+                            if (!login || login === 'guest') {
+                              setLogin(userEmail ? userEmail.split('@')[0] : 'user');
+                            }
+                            if (!fullName) {
+                              setFullName(userName);
+                            }
+                            if (u.photoURL) {
+                              setAvatarUrl(u.photoURL);
+                            }
+                            setAuthProvider('google');
+                            setGoogleConnectedNotice(
+                              lang === 'en'
+                                ? `✓ Google account (${userEmail}) connected to Firebase Firestore!`
+                                : lang === 'ru'
+                                ? `✓ Google аккаунт (${userEmail}) подключен к Firebase Firestore!`
+                                : `✓ Google акаунт (${userEmail}) підключено до Firebase Firestore!`
+                            );
+                          } else if (res.error) {
+                            // If popup cancelled/blocked or client error, prompt email fallback
+                            if (email.trim()) {
+                              handleQuickGoogleDraft(email.trim());
+                            } else {
+                              setShowGoogleInput(true);
+                            }
                           }
-                        }
-                        if (email.trim()) {
-                          handleQuickGoogleDraft(email.trim());
-                        } else {
-                          setShowGoogleInput(true);
+                        } catch (err: any) {
+                          console.warn('Firebase Google Auth error:', err);
+                          if (email.trim()) {
+                            handleQuickGoogleDraft(email.trim());
+                          } else {
+                            setShowGoogleInput(true);
+                          }
+                        } finally {
+                          setIsGoogleLoading(false);
                         }
                       }}
-                      className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-stone-100 text-stone-900 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                      className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-stone-100 text-stone-900 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 disabled:opacity-75"
                     >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24">
-                        <path
-                          fill="#4285F4"
-                          d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                        />
-                        <path
-                          fill="#EA4335"
-                          d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                        />
-                      </svg>
+                      {isGoogleLoading ? (
+                        <RefreshCw className="w-4 h-4 animate-spin text-stone-700" />
+                      ) : (
+                        <svg className="w-4 h-4" viewBox="0 0 24 24">
+                          <path
+                            fill="#4285F4"
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                          />
+                          <path
+                            fill="#34A853"
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                          />
+                          <path
+                            fill="#FBBC05"
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                          />
+                          <path
+                            fill="#EA4335"
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                          />
+                        </svg>
+                      )}
                       <span>
-                        {authProvider === 'google' && email
-                          ? lang === 'ru'
+                        {isGoogleLoading
+                          ? lang === 'en'
+                            ? 'Connecting via Google...'
+                            : lang === 'ru'
+                            ? 'Подключение через Google...'
+                            : 'Підключення через Google...'
+                          : authProvider === 'google' && email
+                          ? lang === 'en'
+                            ? `Google connected (${email})`
+                            : lang === 'ru'
                             ? `Google подключен (${email})`
                             : `Google підключено (${email})`
+                          : lang === 'en'
+                          ? 'Sign in with Google (Firebase Firestore)'
                           : lang === 'ru'
-                          ? 'Подключить Google аккаунт'
-                          : 'Підключити Google акаунт'}
+                          ? 'Войти через Google (Firebase Firestore)'
+                          : 'Увійти через Google (Firebase Firestore)'}
                       </span>
                     </button>
+
+                    {/* Firebase Firestore Status & Sync Badge */}
+                    <div className="p-2.5 rounded-xl bg-stone-900/90 border border-stone-800 text-[11px] text-stone-300 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 truncate">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 animate-pulse" />
+                        <span className="truncate">
+                          <strong>Firebase Firestore:</strong> {firestoreStatus.isConnected ? (lang === 'en' ? 'Synced' : lang === 'ru' ? 'Синхронизировано' : 'Синхронізовано') : (lang === 'en' ? 'Ready to connect' : lang === 'ru' ? 'Готово к подключению' : 'Готово до підключення')}
+                        </span>
+                      </div>
+                      {authProvider === 'google' && (
+                        <button
+                          type="button"
+                          disabled={firestoreStatus.isSyncing}
+                          onClick={async () => {
+                            if (profile?.id) {
+                              await syncFirestoreJournal(profile.id);
+                            }
+                          }}
+                          className="px-2 py-1 bg-stone-800 hover:bg-stone-700 text-teal-400 rounded-lg text-[10px] font-semibold shrink-0 flex items-center gap-1 cursor-pointer"
+                        >
+                          <RefreshCw className={`w-3 h-3 ${firestoreStatus.isSyncing ? 'animate-spin' : ''}`} />
+                          <span>{firestoreStatus.isSyncing ? (lang === 'en' ? 'Syncing...' : lang === 'ru' ? 'Синхронизация...' : 'Синхронізація...') : (lang === 'en' ? 'Refresh' : lang === 'ru' ? 'Обновить' : 'Оновити')}</span>
+                        </button>
+                      )}
+                    </div>
 
                     <div className="flex items-center justify-between text-[11px] text-stone-400 px-1">
                       <button
@@ -638,27 +746,32 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                         className="text-teal-400 hover:underline cursor-pointer"
                       >
                         {showGoogleInput
-                          ? lang === 'ru'
+                          ? lang === 'en'
+                            ? 'Hide email input'
+                            : lang === 'ru'
                             ? 'Скрыть ввод email'
                             : 'Сховати введення email'
+                          : lang === 'en'
+                          ? 'Enter specific Google email manually'
                           : lang === 'ru'
-                          ? 'Ввести конкретный Google email'
-                          : 'Ввести конкретний Google email'}
+                          ? 'Ввести конкретный Google email вручную'
+                          : 'Ввести конкретний Google email вручну'}
                       </button>
                       {authProvider === 'google' ? (
                         <button
                           type="button"
-                          onClick={() => {
+                          onClick={async () => {
+                            await signOutFromGoogle();
                             setAuthProvider('local');
                             setGoogleConnectedNotice(null);
                           }}
                           className="text-stone-400 hover:text-rose-400 underline cursor-pointer"
                         >
-                          {lang === 'ru' ? 'Отвязать Google' : 'Відвʼязати Google'}
+                          {lang === 'en' ? 'Sign out of Google' : lang === 'ru' ? 'Выйти из Google' : 'Вийти з Google'}
                         </button>
                       ) : (
                         <span className="text-stone-500">
-                          {lang === 'ru' ? 'Синхронизация с профилем' : 'Синхронізація з профілем'}
+                          {lang === 'en' ? 'Cloud synchronization' : lang === 'ru' ? 'Облачная синхронизация' : 'Хмарна синхронізація'}
                         </span>
                       )}
                     </div>
@@ -696,7 +809,7 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                 <div className="relative flex py-1 items-center">
                   <div className="flex-grow border-t border-stone-800" />
                   <span className="flex-shrink mx-4 text-[11px] uppercase tracking-wider text-stone-500 font-semibold">
-                    {lang === 'ru' ? 'Обязательные поля профиля' : 'Обовʼязкові поля профілю'}
+                    {lang === 'en' ? 'Required Profile Fields' : lang === 'ru' ? 'Обязательные поля профиля' : 'Обовʼязкові поля профілю'}
                   </span>
                   <div className="flex-grow border-t border-stone-800" />
                 </div>
@@ -716,12 +829,12 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                     <label className="text-xs font-semibold text-stone-300 flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
                         <Mail className="w-3.5 h-3.5 text-teal-400" />
-                        <span>{lang === 'ru' ? 'Email (Электронная почта):' : 'Email (Електронна пошта):'}</span>
+                        <span>{lang === 'en' ? 'Email (Electronic mail):' : lang === 'ru' ? 'Email (Электронная почта):' : 'Email (Електронна пошта):'}</span>
                       </span>
                       <span className="text-[10px] text-stone-400">
                         {authProvider === 'google' && email
-                          ? (lang === 'ru' ? '✓ Синхронизировано с Google' : '✓ Синхронізовано з Google')
-                          : (lang === 'ru' ? 'Вручную или через Google' : 'Вручну або через Google')}
+                          ? (lang === 'en' ? '✓ Synced with Google' : lang === 'ru' ? '✓ Синхронизировано с Google' : '✓ Синхронізовано з Google')
+                          : (lang === 'en' ? 'Manual or via Google' : lang === 'ru' ? 'Вручную или через Google' : 'Вручну або через Google')}
                       </span>
                     </label>
                     <div className="relative">
@@ -740,7 +853,9 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                       )}
                     </div>
                     <p className="text-[10px] text-stone-400">
-                      {lang === 'ru'
+                      {lang === 'en'
+                        ? 'Field is initially empty. Fill manually or sign in via Google.'
+                        : lang === 'ru'
                         ? 'Поле изначально пустое. Заполните его вручную или выполните вход через Google.'
                         : 'Поле початково пусте. Заповніть його вручну або виконайте вхід через Google.'}
                     </p>
@@ -750,10 +865,10 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-stone-300 flex items-center justify-between">
                       <span>
-                        {lang === 'ru' ? '1. Логин (Никнейм):' : '1. Логін (Нікнейм):'} <span className="text-teal-400 font-bold">*</span>
+                        {lang === 'en' ? '1. Login (Nickname):' : lang === 'ru' ? '1. Логин (Никнейм):' : '1. Логін (Нікнейм):'} <span className="text-teal-400 font-bold">*</span>
                       </span>
                       <span className="text-[10px] text-stone-400">
-                        {lang === 'ru' ? 'Логин или email' : 'Логін або email'}
+                        {lang === 'en' ? 'Login or email' : lang === 'ru' ? 'Логин или email' : 'Логін або email'}
                       </span>
                     </label>
                     <input
@@ -763,7 +878,7 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                         setLogin(e.target.value);
                         updateDraft({ login: e.target.value });
                       }}
-                      placeholder="наприклад: ivan_m"
+                      placeholder={lang === 'en' ? 'e.g.: alex_m' : 'наприклад: ivan_m'}
                       className="w-full text-xs bg-stone-950/80 border border-stone-700/80 rounded-xl p-3 text-stone-100 placeholder:text-stone-600 focus:outline-none focus:border-teal-500"
                     />
                   </div>
@@ -772,10 +887,10 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-stone-300 flex items-center justify-between">
                       <span>
-                        {lang === 'ru' ? '2. Полное имя / Как обращаться:' : '2. Повне імʼя / Як звертатися:'}
+                        {lang === 'en' ? '2. Full Name / How to address:' : lang === 'ru' ? '2. Полное имя / Как обращаться:' : '2. Повне імʼя / Як звертатися:'}
                       </span>
                       <span className="text-[10px] text-stone-500">
-                        {lang === 'ru' ? 'За бажанням' : 'За бажанням'}
+                        {lang === 'en' ? 'Optional' : lang === 'ru' ? 'По желанию' : 'За бажанням'}
                       </span>
                     </label>
                     <input
@@ -785,7 +900,7 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                         setFullName(e.target.value);
                         updateDraft({ fullName: e.target.value });
                       }}
-                      placeholder="Іван Мельник"
+                      placeholder={lang === 'en' ? 'Alex Miller' : lang === 'ru' ? 'Иван Мельник' : 'Іван Мельник'}
                       className="w-full text-xs bg-stone-950/80 border border-stone-700/80 rounded-xl p-3 text-stone-100 focus:outline-none focus:border-teal-500"
                     />
                   </div>
@@ -796,10 +911,10 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-stone-300 flex items-center justify-between">
                         <span>
-                          {lang === 'ru' ? '3. Дата рождения:' : '3. Дата народження:'}
+                          {lang === 'en' ? '3. Date of birth:' : lang === 'ru' ? '3. Дата рождения:' : '3. Дата народження:'}
                         </span>
                         <span className="text-[10px] text-stone-500">
-                          {lang === 'ru' ? 'За бажанням' : 'За бажанням'}
+                          {lang === 'en' ? 'Optional' : lang === 'ru' ? 'По желанию' : 'За бажанням'}
                         </span>
                       </label>
                       <input
@@ -817,10 +932,10 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-stone-300 flex items-center justify-between">
                         <span>
-                          {lang === 'ru' ? '4. Сфера деятельности:' : '4. Сфера діяльності:'}
+                          {lang === 'en' ? '4. Field of activity:' : lang === 'ru' ? '4. Сфера деятельности:' : '4. Сфера діяльності:'}
                         </span>
                         <span className="text-[10px] text-stone-500">
-                          {lang === 'ru' ? 'За бажанням' : 'За бажанням'}
+                          {lang === 'en' ? 'Optional' : lang === 'ru' ? 'По желанию' : 'За бажанням'}
                         </span>
                       </label>
                       <input
@@ -830,7 +945,7 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                           setFieldOfActivity(e.target.value);
                           updateDraft({ fieldOfActivity: e.target.value });
                         }}
-                        placeholder="Коучинг, IT, Бізнес, Психологія..."
+                        placeholder={lang === 'en' ? 'Coaching, IT, Business, Psychology...' : lang === 'ru' ? 'Коучинг, IT, Бизнес, Психология...' : 'Коучинг, IT, Бізнес, Психологія...'}
                         className="w-full text-xs bg-stone-950/80 border border-stone-700/80 rounded-xl p-3 text-stone-100 focus:outline-none focus:border-teal-500"
                       />
                     </div>
@@ -838,7 +953,12 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
 
                   {/* Quick suggestions for Field of Activity */}
                   <div className="flex flex-wrap gap-1.5 pt-0.5">
-                    {['Психологія & Коучинг', 'IT & Технології', 'Підприємництво', 'Освіта & Наука', 'Мистецтво & Дизайн'].map((preset) => (
+                    {(lang === 'en'
+                      ? ['Psychology & Coaching', 'IT & Tech', 'Entrepreneurship', 'Education & Science', 'Art & Design']
+                      : lang === 'ru'
+                      ? ['Психология & Коучинг', 'IT & Технологии', 'Предпринимательство', 'Образование & Наука', 'Искусство & Дизайн']
+                      : ['Психологія & Коучинг', 'IT & Технології', 'Підприємництво', 'Освіта & Наука', 'Мистецтво & Дизайн']
+                    ).map((preset) => (
                       <button
                         key={preset}
                         type="button"
@@ -856,8 +976,8 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                   {/* Password / PIN (Optional protection) */}
                   <div className="space-y-1.5 pt-1">
                     <label className="text-xs font-semibold text-stone-300 flex items-center justify-between">
-                      <span>{lang === 'ru' ? 'Пароль / PIN для защиты журнала:' : 'Пароль / PIN для захисту журналу:'}</span>
-                      <span className="text-[10px] text-stone-500">За бажанням</span>
+                      <span>{lang === 'en' ? 'Password / PIN for journal lock:' : lang === 'ru' ? 'Пароль / PIN для защиты журнала:' : 'Пароль / PIN для захисту журналу:'}</span>
+                      <span className="text-[10px] text-stone-500">{lang === 'en' ? 'Optional' : lang === 'ru' ? 'По желанию' : 'За бажанням'}</span>
                     </label>
                     <input
                       type="password"
@@ -875,7 +995,7 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                       className="w-full sm:flex-1 py-3 px-4 bg-teal-600 hover:bg-teal-500 text-stone-950 font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                     >
                       <CheckCircle className="w-4 h-4" />
-                      <span>{savedSuccess ? (lang === 'ru' ? 'Успешно сохранено!' : 'Збережено успішно!') : (lang === 'ru' ? 'Сохранить и войти' : 'Зберегти та увійти')}</span>
+                      <span>{savedSuccess ? (lang === 'en' ? 'Saved successfully!' : lang === 'ru' ? 'Успешно сохранено!' : 'Збережено успішно!') : (lang === 'en' ? 'Save & Enter' : lang === 'ru' ? 'Сохранить и войти' : 'Зберегти та увійти')}</span>
                     </button>
 
                     {profile && isProfileComplete(profile) && (
@@ -885,7 +1005,7 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                         className="w-full sm:w-auto py-3 px-4 bg-stone-800 hover:bg-rose-950/60 hover:text-rose-300 text-stone-400 font-semibold text-xs rounded-xl border border-stone-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <LogOut className="w-4 h-4" />
-                        <span>{lang === 'ru' ? 'Выйти' : 'Вийти'}</span>
+                        <span>{lang === 'en' ? 'Log out' : lang === 'ru' ? 'Выйти' : 'Вийти'}</span>
                       </button>
                     )}
                   </div>
@@ -894,7 +1014,8 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                 {/* Developer / Studio Footer */}
                 <div className="mt-4 pt-3 border-t border-stone-800 flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-400 gap-1.5">
                   <span className="text-center sm:text-left">
-                    Розроблено — <strong className="text-stone-200">Pilnikov Maksym Studio</strong> • Версія: 1.0.2
+                    {lang === 'en' ? 'Developed by — ' : lang === 'ru' ? 'Разработано — ' : 'Розроблено — '}
+                    <strong className="text-stone-200">Pilnikov Maksym Studio</strong> • {lang === 'en' ? 'Version' : lang === 'ru' ? 'Версия' : 'Версія'}: 1.0.2
                   </span>
                   <a
                     href="https://t.me/pilnikoff"
@@ -902,7 +1023,7 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                     rel="noopener noreferrer"
                     className="text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1 transition-colors"
                   >
-                    <span>Звʼязок у Telegram: @pilnikoff</span>
+                    <span>{lang === 'en' ? 'Contact in Telegram: @pilnikoff' : lang === 'ru' ? 'Связь в Telegram: @pilnikoff' : 'Звʼязок у Telegram: @pilnikoff'}</span>
                   </a>
                 </div>
               </div>
@@ -1066,14 +1187,47 @@ export const UserAuthAndStatsModal: React.FC<UserAuthAndStatsModalProps> = ({
                       <span>{copiedScript ? 'Скопійовано!' : 'Скопіювати код'}</span>
                     </button>
                   </div>
-                  <ol className="text-xs text-stone-300 space-y-1.5 list-decimal list-inside">
-                    <li>Створіть нову Google Таблицю на своєму акаунті <b>pilnikoff@gmail.com</b>.</li>
-                    <li>У верхньому меню натисніть <b>Розширення (Extensions) &rarr; Apps Script</b>.</li>
-                    <li>Вставте скопійований код нижче та натисніть <b>Зберегти</b>.</li>
-                    <li>Натисніть <b>Розгорнути (Deploy) &rarr; Нове розгортання (New deployment) &rarr; Веб-програма (Web app)</b>.</li>
-                    <li>Встановіть: «Виконувати від імені: Мене» та «Хто має доступ: <b>Усі (Anyone)</b>».</li>
-                    <li>Скопіюйте отриманий URL веб-програми та вставте його в поле вище.</li>
-                  </ol>
+                  <div className="space-y-2.5 text-xs text-stone-300">
+                    <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-500/40 text-[11px] text-amber-200">
+                      <strong>⚠️ Зверніть увагу:</strong> Перед вставкою коду обовʼязково натисніть у вікні редактора <code>Ctrl + A</code> і видаліть увесь початковий текст (шаблон <code>function myFunction() &#123;&#125;</code>), щоб поле стало повністю порожнім. Код повинен починатися безпосередньо з коментаря та <code>function doPost(e)</code>.
+                    </div>
+
+                    <ol className="space-y-2 list-decimal list-inside">
+                      <li>
+                        Створіть нову Google Таблицю на акаунті <b>pilnikoff@gmail.com</b>.
+                      </li>
+                      <li>
+                        У верхньому меню натисніть <b>Розширення (Extensions) &rarr; Apps Script</b>.
+                      </li>
+                      <li>
+                        У редакторі Apps Script натисніть <b>Ctrl + A</b> &rarr; <b>Delete</b> (очистіть усе). Вставте скопійований код нижче та натисніть іконку <b>💾 Зберегти</b> (або Ctrl + S).
+                      </li>
+                      <li>
+                        <b>Розгорніть вікно браузера на весь екран:</b> у самому правому верхньому кутку сторінки (праворуч від «Журнал виконання», біля вашої аватарки Google) знайдіть синю кнопку <b>«Розгорнути»</b> (в англ. інтерфейсі <b>«Deploy»</b>).
+                      </li>
+                      <li>
+                        Натисніть <b>«Розгорнути» &rarr; «Нове розгортання»</b> (New deployment).
+                      </li>
+                      <li>
+                        У вікні, що зʼявиться:
+                        <ul className="pl-6 pt-1 space-y-1 list-disc text-stone-400">
+                          <li>Зліва натисніть на значок <b>шестірні ⚙️ («Виберіть тип»)</b> &rarr; виберіть <b>«Веб-програма» (Web app)</b>.</li>
+                          <li>У полі «Опис» введіть: <i>Навігатор</i>.</li>
+                          <li>«Виконувати від імені»: виберіть <b>«Мене» (ваш email)</b>.</li>
+                          <li>«Хто має доступ»: оберіть <b>«Усі» (Anyone)</b> — це обовʼязково для звʼязку.</li>
+                        </ul>
+                      </li>
+                      <li>
+                        Натисніть синю кнопку <b>«Розгорнути» (Deploy)</b> внизу вікна.
+                      </li>
+                      <li>
+                        Натисніть <b>«Надати доступ» (Authorize access)</b> &rarr; оберіть свій акаунт Google &rarr; натисніть <b>«Додатково» (Advanced)</b> &rarr; <b>«Перейти до сторінки... (небезпечно)»</b> &rarr; <b>«Дозволити» (Allow)</b>.
+                      </li>
+                      <li>
+                        Скопіюйте посилання з рядка <b>«URL-адреса веб-програми»</b> (воно закінчується на <code>/exec</code>) та вставте його у верхнє поле «URL Google Apps Script Webhook».
+                      </li>
+                    </ol>
+                  </div>
                   <pre className="p-3 bg-stone-950 rounded-xl text-[11px] text-stone-400 font-mono overflow-x-auto max-h-44 custom-scrollbar border border-stone-800">
                     {SAMPLE_APPS_SCRIPT_CODE}
                   </pre>

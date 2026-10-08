@@ -26,6 +26,7 @@ import { META_CARDS_DECK } from '../data/metaCardsData';
 import { requestGoalMakersStrategy } from '../services/geminiService';
 import { saveJournalEntry } from '../services/storageService';
 import { VoiceInputButton } from './VoiceInputButton';
+import { useThemeLanguage } from '../context/ThemeLanguageContext';
 
 interface GoalMakersGameProps {
   initialData?: {
@@ -41,47 +42,106 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
   initialData,
   onSavedToJournal,
 }) => {
+  const { lang, t } = useThemeLanguage();
+
   const [goalTitle, setGoalTitle] = useState(
-    initialData?.title || 'Сміливий запуск нового проекту без страху провалу'
+    initialData?.title ||
+      (lang === 'en'
+        ? 'Courageous launch of a new project without fear of failure'
+        : lang === 'ru'
+        ? 'Смелый запуск нового проекта без страха провала'
+        : 'Сміливий запуск нового проекту без страху провалу')
   );
   const [pointA, setPointA] = useState(
-    initialData?.pointA || 'Відчуваю розгубленість, прокрастиную через страх неідеальності.'
+    initialData?.pointA ||
+      (lang === 'en'
+        ? 'Feeling overwhelmed, procrastinating due to fear of imperfection.'
+        : lang === 'ru'
+        ? 'Чувствую растерянность, прокрастинирую из-за страха неидеальности.'
+        : 'Відчуваю розгубленість, прокрастиную через страх неідеальності.')
   );
   const [pointB, setPointB] = useState(
-    initialData?.pointB || 'Запущений перший продукт, перші 3 задоволені клієнти, впевненість у своїх силах.'
+    initialData?.pointB ||
+      (lang === 'en'
+        ? 'First offering launched, first 3 delighted clients, unshakeable self-confidence.'
+        : lang === 'ru'
+        ? 'Запущен первый продукт, первые 3 довольных клиента, уверенность в своих силах.'
+        : 'Запущений перший продукт, перші 3 задоволені клієнти, впевненість у своїх силах.')
   );
 
-  const [resources, setResources] = useState<string[]>([
-    'Мій 5-річний практичний досвід',
-    'Підтримка близького друга/наставника',
-    'Готовність учитися на помилках',
-  ]);
+  const [resources, setResources] = useState<string[]>(() =>
+    lang === 'en'
+      ? [
+          'My 5-year hands-on experience',
+          'Support from a close mentor / friend',
+          'Willingness to learn rapidly from mistakes',
+        ]
+      : lang === 'ru'
+      ? [
+          'Мой 5-летний практический опыт',
+          'Поддержка близкого друга / наставника',
+          'Готовность учиться на ошибках',
+        ]
+      : [
+          'Мій 5-річний практичний досвід',
+          'Підтримка близького друга/наставника',
+          'Готовність учитися на помилках',
+        ]
+  );
   const [newResource, setNewResource] = useState('');
 
-  const [saboteurs, setSaboteurs] = useState<string[]>([
-    'Внутрішній Перфекціоніст («або ідеально, або ніяк»)',
-    'Страх публічної критики та засудження',
-  ]);
+  const [saboteurs, setSaboteurs] = useState<string[]>(() =>
+    lang === 'en'
+      ? [
+          'Inner Perfectionist (“all-or-nothing trap”)',
+          'Fear of public criticism and judgment',
+        ]
+      : lang === 'ru'
+      ? [
+          'Внутренний Перфекционист («или идеально, или никак»)',
+          'Страх публичной критики и осуждения',
+        ]
+      : [
+          'Внутрішній Перфекціоніст («або ідеально, або ніяк»)',
+          'Страх публічної критики та засудження',
+        ]
+  );
   const [newSaboteur, setNewSaboteur] = useState('');
 
-  const [quests, setQuests] = useState<GoalMakersQuest[]>([
+  const [quests, setQuests] = useState<GoalMakersQuest[]>(() => [
     {
       id: 'q1',
-      title: initialData?.action24h || 'Скласти чернетку структури проекту за 15 хвилин без редагування',
+      title:
+        initialData?.action24h ||
+        (lang === 'en'
+          ? 'Draft project outline in 15 minutes with zero editing'
+          : lang === 'ru'
+          ? 'Составить черновик структуры проекта за 15 минут без редактирования'
+          : 'Скласти чернетку структури проекту за 15 хвилин без редагування'),
       timeframe: '24h',
       completed: false,
       rewardPoints: 50,
     },
     {
       id: 'q2',
-      title: 'Провести 2 тестові інтерв’ю з потенційними користувачами',
+      title:
+        lang === 'en'
+          ? 'Conduct 2 discovery interviews with potential users'
+          : lang === 'ru'
+          ? 'Провести 2 тестовых интервью с потенциальными клиентами'
+          : 'Провести 2 тестові інтерв’ю з потенційними користувачами',
       timeframe: '7d',
       completed: false,
       rewardPoints: 100,
     },
     {
       id: 'q3',
-      title: 'Опублікувати фінальний реліз та відсвяткувати перемогу',
+      title:
+        lang === 'en'
+          ? 'Publish the initial release and celebrate victory'
+          : lang === 'ru'
+          ? 'Опубликовать финальный релиз и отпраздновать победу'
+          : 'Опублікувати фінальний реліз та відсвяткувати перемогу',
       timeframe: '30d',
       completed: false,
       rewardPoints: 250,
@@ -196,7 +256,13 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
   // AI Strategy Generation
   const handleGenerateStrategy = async () => {
     if (!goalTitle.trim()) {
-      setError('Введіть назву мети подорожі.');
+      setError(
+        lang === 'en'
+          ? 'Please enter the journey goal title.'
+          : lang === 'ru'
+          ? 'Введите название цели путешествия.'
+          : 'Введіть назву мети подорожі.'
+      );
       return;
     }
     setError(null);
@@ -228,7 +294,14 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
       }
       triggerConfetti();
     } catch (err: any) {
-      setError(err?.message || 'Не вдалося згенерувати стратегію Goal Makers.');
+      setError(
+        err?.message ||
+          (lang === 'en'
+            ? 'Failed to generate Goal Makers strategy.'
+            : lang === 'ru'
+            ? 'Не удалось сгенерировать стратегию Goal Makers.'
+            : 'Не вдалося згенерувати стратегію Goal Makers.')
+      );
     } finally {
       setIsLoadingAi(false);
     }
@@ -256,10 +329,10 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
 
     saveJournalEntry({
       type: 'goalMakers',
-      title: `Мета Героя: ${goalTitle}`,
-      summary: `Прогрес: ${progressPercent}% (${totalPoints}/${maxPoints} XP). Залишилося квестів: ${
-        quests.filter((q) => !q.completed).length
-      }`,
+      title: `${lang === 'en' ? "Hero's Goal" : lang === 'ru' ? 'Цель Героя' : 'Мета Героя'}: ${goalTitle}`,
+      summary: `${lang === 'en' ? 'Progress' : lang === 'ru' ? 'Прогресс' : 'Прогрес'}: ${progressPercent}% (${totalPoints}/${maxPoints} XP). ${
+        lang === 'en' ? 'Quests remaining' : lang === 'ru' ? 'Осталось квестов' : 'Залишилося квестів'
+      }: ${quests.filter((q) => !q.completed).length}`,
       data,
     });
 
@@ -279,44 +352,86 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
       <div className="space-y-2">
         <div className="inline-flex items-center gap-2 rounded-full border border-rose-500/30 bg-rose-950/40 px-3 py-1 text-xs font-semibold text-rose-300">
           <Swords className="h-3.5 w-3.5" />
-          Коучингова гра & Трекер досягнення «Мета Героя»
+          {lang === 'en'
+            ? 'Coaching Quest & Achievement Tracker «Hero’s Goal»'
+            : lang === 'ru'
+            ? 'Коучинговая игра & Трекер достижений «Цель Героя»'
+            : 'Коучингова гра & Трекер досягнення «Мета Героя»'}
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-stone-100 sm:text-3xl font-serif">
-          Арена «Мета Героя»: Перетворення Інсайтів на Перемогу
+          {lang === 'en'
+            ? '«Hero’s Goal» Arena: Turning Insights into Triumph'
+            : lang === 'ru'
+            ? 'Арена «Цель Героя»: Превращение Инсайтов в Победу'
+            : 'Арена «Мета Героя»: Перетворення Інсайтів на Перемогу'}
         </h1>
         <p className="text-sm text-stone-400 max-w-3xl leading-relaxed">
-          Ігрова подорож героя: переведіть будь-який психологічний інсайт, проблему або сумнів у захопливий квест із ресурсами, битвою із внутрішніми драконами (саботерами) та швидкими перемогами за 24 години!
+          {lang === 'en'
+            ? 'A gamified hero’s journey: translate any psychological insight, struggle, or self-doubt into an epic quest loaded with resources, inner dragon (saboteur) battles, and quick 24-hour wins!'
+            : lang === 'ru'
+            ? 'Игровое путешествие героя: переведите любой психологический инсайт, проблему или сомнение в увлекательный квест с ресурсами, битвой с внутренними драконами (саботерами) и быстрыми победами за 24 часа!'
+            : 'Ігрова подорож героя: переведіть будь-який психологічний інсайт, проблему або сумнів у захопливий квест із ресурсами, битвою із внутрішніми драконами (саботерами) та швидкими перемогами за 24 години!'}
         </p>
 
         {/* User Instructions Guide */}
         <div className="rounded-2xl border border-amber-500/30 bg-amber-950/20 p-4 sm:p-5 space-y-3">
           <div className="flex items-center gap-2 text-amber-300 text-xs sm:text-sm font-bold">
             <HelpCircle className="h-4 w-4 text-amber-400" />
-            <span>Інструкція: Як рухатися за методологією «Мета Героя»</span>
+            <span>
+              {lang === 'en'
+                ? 'Instructions: Navigating the «Hero’s Goal» Framework'
+                : lang === 'ru'
+                ? 'Инструкция: Как двигаться по методологии «Цель Героя»'
+                : 'Інструкція: Як рухатися за методологією «Мета Героя»'}
+            </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <div className="p-3 rounded-xl bg-stone-900/80 border border-stone-800 space-y-1">
-              <span className="text-amber-400 font-bold block">1. Точка А → Б</span>
+              <span className="text-amber-400 font-bold block">
+                {lang === 'en' ? '1. Point A → B' : lang === 'ru' ? '1. Точка А → Б' : '1. Точка А → Б'}
+              </span>
               <p className="text-stone-300 leading-relaxed">
-                Опишіть вихідний стан (страх, біль, розгубленість) та бажаний фінал (якість життя, показники успіху).
+                {lang === 'en'
+                  ? 'Define your starting reality (fear, confusion, friction) and desired triumphant destination.'
+                  : lang === 'ru'
+                  ? 'Опишите исходное состояние (страх, боль, растерянность) и желаемый финал (качество жизни, показатели).'
+                  : 'Опишіть вихідний стан (страх, біль, розгубленість) та бажаний фінал (якість життя, показники успіху).'}
               </p>
             </div>
             <div className="p-3 rounded-xl bg-stone-900/80 border border-stone-800 space-y-1">
-              <span className="text-teal-400 font-bold block">2. Рюкзак & Дракони</span>
+              <span className="text-teal-400 font-bold block">
+                {lang === 'en' ? '2. Backpack & Dragons' : lang === 'ru' ? '2. Рюкзак & Драконы' : '2. Рюкзак & Дракони'}
+              </span>
               <p className="text-stone-300 leading-relaxed">
-                Додайте свої сильні сторони, навички та людей у «Рюкзак», і викрийте саботерів («внутрішній критик»).
+                {lang === 'en'
+                  ? 'Equip your strengths, allies, and tools into the Backpack, and expose limiting saboteurs.'
+                  : lang === 'ru'
+                  ? 'Добавьте свои сильные стороны, навыки и союзников в «Рюкзак», и разоблачите саботеров.'
+                  : 'Додайте свої сильні сторони, навички та людей у «Рюкзак», і викрийте саботерів («внутрішній критик»).'}
               </p>
             </div>
             <div className="p-3 rounded-xl bg-stone-900/80 border border-stone-800 space-y-1">
-              <span className="text-purple-400 font-bold block">3. ШІ-Стратегія</span>
+              <span className="text-purple-400 font-bold block">
+                {lang === 'en' ? '3. AI Strategy' : lang === 'ru' ? '3. ИИ-Стратегия' : '3. ШІ-Стратегія'}
+              </span>
               <p className="text-stone-300 leading-relaxed">
-                Натисніть кнопку генерації, щоб ШІ розрахував ваш архетип героя, антидоти до страхів і 3 мікро-квести.
+                {lang === 'en'
+                  ? 'Click generate so AI calculates your hero archetype, saboteur antidotes, and 3 progressive quests.'
+                  : lang === 'ru'
+                  ? 'Нажмите кнопку генерации, чтобы ИИ рассчитал ваш архетип героя, антидоты к страхам и 3 квеста.'
+                  : 'Натисніть кнопку генерації, щоб ШІ розрахував ваш архетип героя, антидоти до страхів і 3 мікро-квести.'}
               </p>
             </div>
             <div className="p-3 rounded-xl bg-stone-900/80 border border-stone-800 space-y-1">
-              <span className="text-rose-400 font-bold block">4. Дія за 24 год + Таймер</span>
+              <span className="text-rose-400 font-bold block">
+                {lang === 'en' ? '4. 24h Action + Timer' : lang === 'ru' ? '4. Действие за 24ч + Таймер' : '4. Дія за 24 год + Таймер'}
+              </span>
               <p className="text-stone-300 leading-relaxed">
-                Увімкніть 25-хв фокус-таймер, виконайте перший крок за добу, ставте галочки та збирайте Бали Сили (XP)!
+                {lang === 'en'
+                  ? 'Activate the 25-min focus timer, complete your immediate step within 24h, and earn Power XP!'
+                  : lang === 'ru'
+                  ? 'Включите 25-мин фокус-таймер, выполните первый шаг за сутки, отмечайте галочки и копите XP!'
+                  : 'Увімкніть 25-хв фокус-таймер, виконайте перший крок за добу, ставте галочки та збирайте Бали Сили (XP)!'}
               </p>
             </div>
           </div>
@@ -329,12 +444,14 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-stone-800 pb-5">
           <div className="flex-1 min-w-[280px] space-y-1">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-semibold text-stone-400">Назва місії героя:</label>
+              <label className="block text-xs font-semibold text-stone-400">
+                {lang === 'en' ? 'Hero’s quest mission:' : lang === 'ru' ? 'Название миссии героя:' : 'Назва місії героя:'}
+              </label>
               <VoiceInputButton
                 id="voice-input-goalmakers-title"
                 currentValue={goalTitle}
                 onTranscript={(text) => setGoalTitle(text)}
-                fieldLabel="Назва місії героя"
+                fieldLabel={lang === 'en' ? 'Hero quest title' : lang === 'ru' ? 'Название миссии героя' : 'Назва місії героя'}
               />
             </div>
             <input
@@ -342,7 +459,13 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
               value={goalTitle}
               onChange={(e) => setGoalTitle(e.target.value)}
               className="w-full text-base sm:text-lg font-bold text-amber-200 bg-transparent border-b border-stone-700 pb-1 focus:border-amber-500 focus:outline-hidden"
-              placeholder="Сформулюйте головну мету..."
+              placeholder={
+                lang === 'en'
+                  ? 'Formulate your primary mission...'
+                  : lang === 'ru'
+                  ? 'Сформулируйте главную цель...'
+                  : 'Сформулюйте головну мету...'
+              }
             />
           </div>
 
@@ -350,17 +473,31 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
             <div className="flex items-center gap-2 rounded-xl bg-amber-500/20 border border-amber-500/40 px-4 py-2 text-amber-300">
               <Trophy className="h-5 w-5 text-amber-400" />
               <div>
-                <div className="text-[10px] uppercase font-bold text-amber-400">Бали Сили (XP)</div>
+                <div className="text-[10px] uppercase font-bold text-amber-400">
+                  {lang === 'en' ? 'Power Points (XP)' : lang === 'ru' ? 'Очки Силы (XP)' : 'Бали Сили (XP)'}
+                </div>
                 <div className="text-sm font-extrabold">{totalPoints} / {maxPoints} XP</div>
               </div>
             </div>
             <button
               onClick={handleSave}
               disabled={isSaved}
-              className="flex items-center gap-1.5 rounded-xl bg-stone-800 px-3.5 py-2.5 text-xs font-semibold text-stone-200 hover:bg-stone-700 transition-all"
+              className="flex items-center gap-1.5 rounded-xl bg-stone-800 px-3.5 py-2.5 text-xs font-semibold text-stone-200 hover:bg-stone-700 transition-all cursor-pointer"
             >
               {isSaved ? <Check className="h-4 w-4 text-emerald-400" /> : <Bookmark className="h-4 w-4" />}
-              <span>{isSaved ? 'Збережено' : 'Зберегти'}</span>
+              <span>
+                {isSaved
+                  ? lang === 'en'
+                    ? 'Saved'
+                    : lang === 'ru'
+                    ? 'Сохранено'
+                    : 'Збережено'
+                  : lang === 'en'
+                  ? 'Save'
+                  : lang === 'ru'
+                  ? 'Сохранить'
+                  : 'Зберегти'}
+              </span>
             </button>
           </div>
         </div>
@@ -368,7 +505,13 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
         {/* Progress Bar */}
         <div className="space-y-1.5">
           <div className="flex justify-between text-xs font-semibold text-stone-400">
-            <span>Прогрес виконання квестів</span>
+            <span>
+              {lang === 'en'
+                ? 'Quest completion progress'
+                : lang === 'ru'
+                ? 'Прогресс выполнения квестов'
+                : 'Прогрес виконання квестів'}
+            </span>
             <span className="text-amber-400">{progressPercent}%</span>
           </div>
           <div className="h-2.5 w-full rounded-full bg-stone-800 overflow-hidden">
@@ -385,20 +528,30 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500/20 text-[11px]">A</span>
-                Точка А (Вихідна реальність / Біль)
+                {lang === 'en'
+                  ? 'Point A (Current Reality / Pain)'
+                  : lang === 'ru'
+                  ? 'Точка А (Исходная реальность / Боль)'
+                  : 'Точка А (Вихідна реальність / Біль)'}
               </span>
               <VoiceInputButton
                 id="voice-input-goalmakers-point-a"
                 currentValue={pointA}
                 onTranscript={(text) => setPointA(text)}
-                fieldLabel="Точка А"
+                fieldLabel={lang === 'en' ? 'Point A' : lang === 'ru' ? 'Точка А' : 'Точка А'}
               />
             </div>
             <textarea
               rows={3}
               value={pointA}
               onChange={(e) => setPointA(e.target.value)}
-              placeholder="Де ви знаходитеся зараз? Які перешкоди та труднощі відчуваєте?"
+              placeholder={
+                lang === 'en'
+                  ? 'Where are you right now? What obstacles, friction, or doubts do you experience?'
+                  : lang === 'ru'
+                  ? 'Где вы находитесь сейчас? Какие препятствия и трудности ощущаете?'
+                  : 'Де ви знаходитеся зараз? Які перешкоди та труднощі відчуваєте?'
+              }
               className="w-full bg-transparent text-xs text-stone-200 placeholder-stone-600 focus:outline-hidden resize-none"
             />
           </div>
@@ -407,20 +560,30 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-[11px]">B</span>
-                Точка Б (Бажаний фініш / Тріумф)
+                {lang === 'en'
+                  ? 'Point B (Desired Finish / Triumph)'
+                  : lang === 'ru'
+                  ? 'Точка Б (Желаемый финиш / Триумф)'
+                  : 'Точка Б (Бажаний фініш / Тріумф)'}
               </span>
               <VoiceInputButton
                 id="voice-input-goalmakers-point-b"
                 currentValue={pointB}
                 onTranscript={(text) => setPointB(text)}
-                fieldLabel="Точка Б"
+                fieldLabel={lang === 'en' ? 'Point B' : lang === 'ru' ? 'Точка Б' : 'Точка Б'}
               />
             </div>
             <textarea
               rows={3}
               value={pointB}
               onChange={(e) => setPointB(e.target.value)}
-              placeholder="Який конкретний вигляд матиме ваша перемога? Як ви дізнаєтеся, що дійшли?"
+              placeholder={
+                lang === 'en'
+                  ? 'What concrete form will your victory take? How will you know you have arrived?'
+                  : lang === 'ru'
+                  ? 'Какой конкретный вид будет иметь ваша победа? Как вы поймете, что дошли?'
+                  : 'Який конкретний вигляд матиме ваша перемога? Як ви дізнаєтеся, що дійшли?'
+              }
               className="w-full bg-transparent text-xs text-stone-200 placeholder-stone-600 focus:outline-hidden resize-none"
             />
           </div>
@@ -432,7 +595,11 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
           <div className="rounded-2xl border border-teal-500/30 bg-stone-950/70 p-5 space-y-3">
             <span className="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
               <Backpack className="h-4 w-4" />
-              Магічний Рюкзак (Ресурси & Союзники)
+              {lang === 'en'
+                ? 'Magic Backpack (Resources & Allies)'
+                : lang === 'ru'
+                ? 'Магический Рюкзак (Ресурсы & Союзники)'
+                : 'Магічний Рюкзак (Ресурси & Союзники)'}
             </span>
 
             <div className="space-y-1.5">
@@ -444,7 +611,8 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
                   <span>{res}</span>
                   <button
                     onClick={() => removeResource(i)}
-                    className="text-stone-500 hover:text-rose-400 p-1"
+                    className="text-stone-500 hover:text-rose-400 p-1 cursor-pointer"
+                    title={lang === 'en' ? 'Delete resource' : lang === 'ru' ? 'Удалить ресурс' : 'Видалити ресурс'}
                   >
                     <Trash2 className="h-3 w-3" />
                   </button>
@@ -458,7 +626,13 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
                 value={newResource}
                 onChange={(e) => setNewResource(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addResource()}
-                placeholder="Додати ресурс або союзника..."
+                placeholder={
+                  lang === 'en'
+                    ? 'Add resource or ally...'
+                    : lang === 'ru'
+                    ? 'Добавить ресурс или союзника...'
+                    : 'Додати ресурс або союзника...'
+                }
                 className="flex-1 min-w-0 rounded-lg border border-stone-800 bg-stone-900 px-3 py-2 text-xs text-stone-100 placeholder-stone-500 focus:outline-hidden focus:border-teal-500"
               />
               <VoiceInputButton
@@ -466,11 +640,11 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
                 compact
                 currentValue={newResource}
                 onTranscript={(text) => setNewResource(text)}
-                fieldLabel="Ресурс"
+                fieldLabel={lang === 'en' ? 'Resource' : lang === 'ru' ? 'Ресурс' : 'Ресурс'}
               />
               <button
                 onClick={addResource}
-                title="Додати ресурс"
+                title={lang === 'en' ? 'Add resource' : lang === 'ru' ? 'Добавить ресурс' : 'Додати ресурс'}
                 className="h-8 w-8 min-w-[32px] flex items-center justify-center rounded-lg bg-teal-600 hover:bg-teal-500 text-stone-950 font-bold cursor-pointer active:scale-95 transition-all shadow-xs shrink-0"
               >
                 <Plus className="h-4 w-4" />
@@ -482,7 +656,11 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
           <div className="rounded-2xl border border-rose-500/30 bg-stone-950/70 p-4 sm:p-5 space-y-3">
             <span className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
               <Shield className="h-4 w-4" />
-              Внутрішні Дракони (Саботери & Страхи)
+              {lang === 'en'
+                ? 'Inner Dragons (Saboteurs & Fears)'
+                : lang === 'ru'
+                ? 'Внутренние Драконы (Саботеры & Страхи)'
+                : 'Внутрішні Дракони (Саботери & Страхи)'}
             </span>
 
             <div className="space-y-1.5">
@@ -495,7 +673,7 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
                   <button
                     onClick={() => removeSaboteur(i)}
                     className="text-stone-500 hover:text-rose-400 p-1 cursor-pointer shrink-0"
-                    title="Видалити саботера"
+                    title={lang === 'en' ? 'Delete saboteur' : lang === 'ru' ? 'Удалить саботера' : 'Видалити саботера'}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -509,7 +687,13 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
                 value={newSaboteur}
                 onChange={(e) => setNewSaboteur(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addSaboteur()}
-                placeholder="Додати страх, сумнів чи перфекціонізм..."
+                placeholder={
+                  lang === 'en'
+                    ? 'Add fear, doubt, or perfectionism...'
+                    : lang === 'ru'
+                    ? 'Добавить страх, сомнение или перфекционизм...'
+                    : 'Додати страх, сумнів чи перфекціонізм...'
+                }
                 className="flex-1 min-w-0 rounded-lg border border-stone-800 bg-stone-900 px-3 py-2 text-xs text-stone-100 placeholder-stone-500 focus:outline-hidden focus:border-rose-500"
               />
               <VoiceInputButton
@@ -517,11 +701,11 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
                 compact
                 currentValue={newSaboteur}
                 onTranscript={(text) => setNewSaboteur(text)}
-                fieldLabel="Саботер"
+                fieldLabel={lang === 'en' ? 'Saboteur' : lang === 'ru' ? 'Саботер' : 'Саботер'}
               />
               <button
                 onClick={addSaboteur}
-                title="Додати саботера"
+                title={lang === 'en' ? 'Add saboteur' : lang === 'ru' ? 'Добавить саботера' : 'Додати саботера'}
                 className="h-8 w-8 min-w-[32px] flex items-center justify-center rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer active:scale-95 transition-all shadow-xs shrink-0"
               >
                 <Plus className="h-4 w-4" />
@@ -534,26 +718,46 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-xl border border-amber-500/30 bg-amber-950/20">
           <div>
             <div className="text-xs font-bold text-amber-300">
-              ШІ-Майстер Гри «Мета Героя»:
+              {lang === 'en'
+                ? 'Goal MAker$ AI Game Master:'
+                : lang === 'ru'
+                ? 'ИИ-Мастер Игры «Цель Героя»:'
+                : 'ШІ-Майстер Гри «Мета Героя»:'}
             </div>
             <div className="text-[11px] text-stone-400">
-              Автоматично згенерувати архетип героя, квести 24г/7д/30д та антидоти проти драконів
+              {lang === 'en'
+                ? 'Automatically generate your hero archetype, 24h/7d/30d progressive quests, and dragon antidotes'
+                : lang === 'ru'
+                ? 'Автоматически рассчитать архетип героя, квесты 24ч/7д/30д и антидоты против драконов'
+                : 'Автоматично згенерувати архетип героя, квести 24г/7д/30д та антидоти проти драконів'}
             </div>
           </div>
           <button
             onClick={handleGenerateStrategy}
             disabled={isLoadingAi || !goalTitle.trim()}
-            className="flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-xs font-bold text-stone-950 shadow-md hover:bg-amber-400 active:scale-98 transition-all disabled:opacity-50 whitespace-nowrap"
+            className="flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-xs font-bold text-stone-950 shadow-md hover:bg-amber-400 active:scale-98 transition-all disabled:opacity-50 whitespace-nowrap cursor-pointer"
           >
             {isLoadingAi ? (
               <>
                 <RefreshCw className="h-4 w-4 animate-spin" />
-                <span>Генеруємо квести...</span>
+                <span>
+                  {lang === 'en'
+                    ? 'Generating quests...'
+                    : lang === 'ru'
+                    ? 'Генерируем квесты...'
+                    : 'Генеруємо квести...'}
+                </span>
               </>
             ) : (
               <>
                 <Sparkles className="h-4 w-4" />
-                <span>Створити Дорожню Карту Квестів</span>
+                <span>
+                  {lang === 'en'
+                    ? 'Generate Quest Roadmap'
+                    : lang === 'ru'
+                    ? 'Создать Дорожную Карту Квестов'
+                    : 'Створити Дорожню Карту Квестів'}
+                </span>
               </>
             )}
           </button>
@@ -570,14 +774,22 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
           <div className="space-y-3 rounded-xl border border-stone-800 bg-stone-950/80 p-5 animate-in fade-in text-xs">
             {heroArchetype && (
               <div className="text-stone-300">
-                <span className="text-amber-400 font-bold">Архетип твого героя: </span>
+                <span className="text-amber-400 font-bold">
+                  {lang === 'en' ? 'Your Hero Archetype: ' : lang === 'ru' ? 'Архетип твоего героя: ' : 'Архетип твого героя: '}
+                </span>
                 <span className="font-semibold text-stone-100">{heroArchetype}</span>
               </div>
             )}
 
             {saboteurAntidotes.length > 0 && (
               <div className="space-y-1.5 pt-1">
-                <span className="text-rose-300 font-bold block">Зброя проти внутрішніх саботерів:</span>
+                <span className="text-rose-300 font-bold block">
+                  {lang === 'en'
+                    ? 'Weapons Against Inner Saboteurs:'
+                    : lang === 'ru'
+                    ? 'Оружие против внутренних саботеров:'
+                    : 'Зброя проти внутрішніх саботерів:'}
+                </span>
                 {saboteurAntidotes.map((ant, idx) => (
                   <div key={idx} className="rounded-lg bg-stone-900 p-2.5 border border-stone-800">
                     <strong className="text-stone-200">{ant.saboteur}: </strong>
@@ -589,7 +801,13 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
 
             {victoryRitual && (
               <div className="pt-1 text-emerald-300">
-                <span className="font-bold">Ритуал святкування перемоги: </span>
+                <span className="font-bold">
+                  {lang === 'en'
+                    ? 'Victory Celebration Ritual: '
+                    : lang === 'ru'
+                    ? 'Ритуал празднования победы: '
+                    : 'Ритуал святкування перемоги: '}
+                </span>
                 <span className="text-stone-300">{victoryRitual}</span>
               </div>
             )}
@@ -601,7 +819,11 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-stone-200 flex items-center gap-2">
               <Zap className="h-4 w-4 text-amber-400" />
-              Матриця Квестів Трансформації (24 години / 7 днів / 30 днів)
+              {lang === 'en'
+                ? 'Transformation Quest Matrix (24 Hours / 7 Days / 30 Days)'
+                : lang === 'ru'
+                ? 'Матрица Квестов Трансформации (24 часа / 7 дней / 30 дней)'
+                : 'Матриця Квестів Трансформації (24 години / 7 днів / 30 днів)'}
             </span>
           </div>
 
@@ -650,9 +872,9 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
                         : 'bg-sky-500/20 text-sky-300'
                     }`}
                   >
-                    {quest.timeframe === '24h' && '24 ГОДИНИ'}
-                    {quest.timeframe === '7d' && '7 ДНІВ'}
-                    {quest.timeframe === '30d' && '30 ДНІВ'}
+                    {quest.timeframe === '24h' && (lang === 'en' ? '24 HOURS' : lang === 'ru' ? '24 ЧАСА' : '24 ГОДИНИ')}
+                    {quest.timeframe === '7d' && (lang === 'en' ? '7 DAYS' : lang === 'ru' ? '7 ДНЕЙ' : '7 ДНІВ')}
+                    {quest.timeframe === '30d' && (lang === 'en' ? '30 DAYS' : lang === 'ru' ? '30 ДНЕЙ' : '30 ДНІВ')}
                   </span>
                   <span className="text-[11px] font-mono text-amber-400">+{quest.rewardPoints} XP</span>
                   <button
@@ -660,7 +882,8 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
                       e.stopPropagation();
                       removeQuest(quest.id);
                     }}
-                    className="text-stone-600 hover:text-rose-400 p-1"
+                    className="text-stone-600 hover:text-rose-400 p-1 cursor-pointer"
+                    title={lang === 'en' ? 'Delete quest' : lang === 'ru' ? 'Удалить квест' : 'Видалити квест'}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -677,14 +900,20 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
                 value={newQuestTitle}
                 onChange={(e) => setNewQuestTitle(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addQuest()}
-                placeholder="Додати свій квест дій..."
+                placeholder={
+                  lang === 'en'
+                    ? 'Add custom action quest...'
+                    : lang === 'ru'
+                    ? 'Добавить свой квест действий...'
+                    : 'Додати свій квест дій...'
+                }
                 className="flex-1 bg-transparent text-xs text-stone-100 focus:outline-hidden"
               />
               <VoiceInputButton
                 id="voice-input-goalmakers-quest"
                 currentValue={newQuestTitle}
                 onTranscript={(text) => setNewQuestTitle(text)}
-                fieldLabel="Квест дій"
+                fieldLabel={lang === 'en' ? 'Action quest' : lang === 'ru' ? 'Квест действий' : 'Квест дій'}
               />
             </div>
             <select
@@ -692,15 +921,21 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
               onChange={(e) => setNewQuestTimeframe(e.target.value as any)}
               className="rounded-xl border border-stone-800 bg-stone-950 px-3 py-2 text-xs text-stone-300"
             >
-              <option value="24h">24 Години (Спринт)</option>
-              <option value="7d">7 Днів (Рубікон)</option>
-              <option value="30d">30 Днів (Стратегія)</option>
+              <option value="24h">
+                {lang === 'en' ? '24 Hours (Sprint)' : lang === 'ru' ? '24 Часа (Спринт)' : '24 Години (Спринт)'}
+              </option>
+              <option value="7d">
+                {lang === 'en' ? '7 Days (Rubicon)' : lang === 'ru' ? '7 Дней (Рубикон)' : '7 Днів (Рубікон)'}
+              </option>
+              <option value="30d">
+                {lang === 'en' ? '30 Days (Strategy)' : lang === 'ru' ? '30 Дней (Стратегия)' : '30 Днів (Стратегія)'}
+              </option>
             </select>
             <button
               onClick={addQuest}
-              className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-stone-950 hover:bg-amber-400 transition-all"
+              className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-stone-950 hover:bg-amber-400 transition-all cursor-pointer"
             >
-              Додати квест
+              {lang === 'en' ? 'Add Quest' : lang === 'ru' ? 'Добавить квест' : 'Додати квест'}
             </button>
           </div>
         </div>
@@ -710,7 +945,13 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
               <Clock className="h-4 w-4" />
-              <span>Таймер Фокусу «Спринт 24 Години»: Зроби перший крок просто зараз</span>
+              <span>
+                {lang === 'en'
+                  ? '«24-Hour Sprint» Focus Timer: Take your immediate first step right now'
+                  : lang === 'ru'
+                  ? 'Таймер Фокуса «Спринт 24 Часа»: Сделай первый шаг прямо сейчас'
+                  : 'Таймер Фокусу «Спринт 24 Години»: Зроби перший крок просто зараз'}
+              </span>
             </div>
             <div className="flex gap-2 text-xs">
               <button
@@ -718,27 +959,27 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
                   setIsTimerRunning(false);
                   setTimerSeconds(15 * 60);
                 }}
-                className="rounded bg-stone-900 px-2.5 py-1 text-stone-400 hover:text-stone-200"
+                className="rounded bg-stone-900 px-2.5 py-1 text-stone-400 hover:text-stone-200 cursor-pointer"
               >
-                15 хв
+                15 {lang === 'en' ? 'min' : lang === 'ru' ? 'мин' : 'хв'}
               </button>
               <button
                 onClick={() => {
                   setIsTimerRunning(false);
                   setTimerSeconds(25 * 60);
                 }}
-                className="rounded bg-stone-900 px-2.5 py-1 text-stone-400 hover:text-stone-200"
+                className="rounded bg-stone-900 px-2.5 py-1 text-stone-400 hover:text-stone-200 cursor-pointer"
               >
-                25 хв
+                25 {lang === 'en' ? 'min' : lang === 'ru' ? 'мин' : 'хв'}
               </button>
               <button
                 onClick={() => {
                   setIsTimerRunning(false);
                   setTimerSeconds(50 * 60);
                 }}
-                className="rounded bg-stone-900 px-2.5 py-1 text-stone-400 hover:text-stone-200"
+                className="rounded bg-stone-900 px-2.5 py-1 text-stone-400 hover:text-stone-200 cursor-pointer"
               >
-                50 хв
+                50 {lang === 'en' ? 'min' : lang === 'ru' ? 'мин' : 'хв'}
               </button>
             </div>
           </div>
@@ -751,7 +992,7 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsTimerRunning(!isTimerRunning)}
-                className={`flex h-10 w-10 items-center justify-center rounded-xl font-bold transition-all ${
+                className={`flex h-10 w-10 items-center justify-center rounded-xl font-bold transition-all cursor-pointer ${
                   isTimerRunning
                     ? 'bg-amber-500 text-stone-950 hover:bg-amber-400'
                     : 'bg-teal-600 text-stone-950 hover:bg-teal-500'
@@ -764,7 +1005,7 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
                   setIsTimerRunning(false);
                   setTimerSeconds(25 * 60);
                 }}
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-stone-800 text-stone-400 hover:bg-stone-700 hover:text-stone-200"
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-stone-800 text-stone-400 hover:bg-stone-700 hover:text-stone-200 cursor-pointer"
               >
                 <RotateCcw className="h-4 w-4" />
               </button>
@@ -778,10 +1019,18 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
                 <Sparkles className="h-4 w-4" />
-                Колода Метафоричних & Провокаційних Карток
+                {lang === 'en'
+                  ? 'Metaphorical & Provocative Meta-Cards Deck'
+                  : lang === 'ru'
+                  ? 'Колода Метафорических & Провокационных Карточек'
+                  : 'Колода Метафоричних & Провокаційних Карток'}
               </span>
               <p className="text-[11px] text-stone-400">
-                Витягни випадкову карту інсайту для виходу з глухого кута
+                {lang === 'en'
+                  ? 'Draw a random insight card to break through any plateau or creative block'
+                  : lang === 'ru'
+                  ? 'Вытяни случайную карту инсайта для выхода из тупика'
+                  : 'Витягни випадкову карту інсайту для виходу з глухого кута'}
               </p>
             </div>
 
@@ -791,19 +1040,31 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
                 onChange={(e) => setSelectedDeckCategory(e.target.value)}
                 className="rounded-xl border border-stone-800 bg-stone-900 px-3 py-1.5 text-xs text-stone-300"
               >
-                <option value="all">Усі 5 колод (Повний набір)</option>
-                <option value="courage">Шлях Сміливості</option>
-                <option value="truth">Дзеркало Правди</option>
-                <option value="linetsky_flow">Природний Потік Линецького</option>
-                <option value="resource">Ресурсний Якір</option>
-                <option value="future_focus">Фокус Майбутнього</option>
+                <option value="all">
+                  {lang === 'en' ? 'All 5 Decks (Full Set)' : lang === 'ru' ? 'Все 5 колод (Полный набор)' : 'Усі 5 колод (Повний набір)'}
+                </option>
+                <option value="courage">
+                  {lang === 'en' ? 'Path of Courage' : lang === 'ru' ? 'Путь Смелости' : 'Шлях Сміливості'}
+                </option>
+                <option value="truth">
+                  {lang === 'en' ? 'Mirror of Truth' : lang === 'ru' ? 'Зеркало Правды' : 'Дзеркало Правди'}
+                </option>
+                <option value="linetsky_flow">
+                  {lang === 'en' ? 'Linetsky Natural Flow' : lang === 'ru' ? 'Естественный Поток Линецкого' : 'Природний Потік Линецького'}
+                </option>
+                <option value="resource">
+                  {lang === 'en' ? 'Resource Anchor' : lang === 'ru' ? 'Ресурсный Якорь' : 'Ресурсний Якір'}
+                </option>
+                <option value="future_focus">
+                  {lang === 'en' ? 'Future Focus' : lang === 'ru' ? 'Фокус Будущего' : 'Фокус Майбутнього'}
+                </option>
               </select>
 
               <button
                 onClick={drawRandomCard}
-                className="rounded-xl bg-purple-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-purple-500 transition-all shadow-md active:scale-95"
+                className="rounded-xl bg-purple-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-purple-500 transition-all shadow-md active:scale-95 cursor-pointer"
               >
-                Тягнути Картку
+                {lang === 'en' ? 'Draw Card' : lang === 'ru' ? 'Тянуть Карточку' : 'Тягнути Картку'}
               </button>
             </div>
           </div>
@@ -829,12 +1090,16 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
               )}
 
               <div className="rounded-xl bg-stone-950 p-4 border border-stone-800 text-xs space-y-1">
-                <strong className="text-purple-300 block">🔥 Провокаційне запитання:</strong>
+                <strong className="text-purple-300 block">
+                  {lang === 'en' ? '🔥 Provocative Question:' : lang === 'ru' ? '🔥 Провокационный вопрос:' : '🔥 Провокаційне запитання:'}
+                </strong>
                 <p className="text-stone-200">{activeCard.provocativeQuestion}</p>
               </div>
 
               <div className="rounded-xl bg-emerald-950/30 p-3.5 border border-emerald-500/30 text-xs text-emerald-200">
-                <strong>Імпульс до дії: </strong>
+                <strong>
+                  {lang === 'en' ? 'Action Impulse: ' : lang === 'ru' ? 'Импульс к действию: ' : 'Імпульс до дії: '}
+                </strong>
                 {activeCard.actionImpulse}
               </div>
             </div>
@@ -844,3 +1109,4 @@ export const GoalMakersGame: React.FC<GoalMakersGameProps> = ({
     </div>
   );
 };
+

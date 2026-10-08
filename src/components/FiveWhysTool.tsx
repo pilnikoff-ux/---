@@ -51,7 +51,12 @@ const DEFAULT_QUESTIONS = {
 export const FiveWhysTool: React.FC<{ onSavedToJournal?: () => void }> = ({ onSavedToJournal }) => {
   const { lang, t } = useThemeLanguage();
 
-  const questionsList = DEFAULT_QUESTIONS[lang as 'uk' | 'ru' | 'en'] || DEFAULT_QUESTIONS.uk;
+  const questionsList =
+    lang === 'en'
+      ? DEFAULT_QUESTIONS.en
+      : lang === 'ru'
+      ? DEFAULT_QUESTIONS.ru
+      : DEFAULT_QUESTIONS.uk;
 
   const [initialProblem, setInitialProblem] = useState('');
   const [steps, setSteps] = useState([

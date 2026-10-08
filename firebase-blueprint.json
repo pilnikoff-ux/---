@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile containing personal metadata and contact details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "login": { "type": "string", "maxLength": 100 },
+        "fullName": { "type": "string", "maxLength": 150 },
+        "name": { "type": "string", "maxLength": 150 },
+        "email": { "type": "string", "maxLength": 200 },
+        "dateOfBirth": { "type": "string", "maxLength": 50 },
+        "fieldOfActivity": { "type": "string", "maxLength": 150 },
+        "authProvider": { "type": "string", "enum": ["google", "local"] },
+        "avatarUrl": { "type": "string", "maxLength": 1000 },
+        "registeredAt": { "type": "string", "maxLength": 100 },
+        "updatedAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["id", "login"]
+    },
+    "JournalEntry": {
+      "title": "JournalEntry",
+      "description": "Personal practice, goal or reflection entry",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 500 },
+        "type": { "type": "string", "maxLength": 100 },
+        "date": { "type": "string", "maxLength": 100 },
+        "content": { "type": "string", "maxLength": 100000 },
+        "summary": { "type": "string", "maxLength": 10000 },
+        "status": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string", "maxLength": 100 },
+        "updatedAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["id", "userId", "title", "type", "date"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Private user profile collection"
+    },
+    "/users/{userId}/journal_entries/{entryId}": {
+      "schema": "JournalEntry",
+      "description": "Subcollection of journal entries belonging strictly to the user"
+    }
+  }
+}

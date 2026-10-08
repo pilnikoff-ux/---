@@ -29,6 +29,8 @@ interface ValueDefinition {
   nameRu: string;
   nameEn: string;
   categoryUk: string;
+  categoryRu: string;
+  categoryEn: string;
   descriptionUk: string;
   descriptionRu: string;
   descriptionEn: string;
@@ -43,6 +45,8 @@ const SCHWARTZ_VALUES_CATALOG: ValueDefinition[] = [
     nameRu: 'Самостоятельность и свобода',
     nameEn: 'Self-Direction & Autonomy',
     categoryUk: 'Відкритість до змін',
+    categoryRu: 'Открытость изменениям',
+    categoryEn: 'Openness to Change',
     descriptionUk: 'Свобода думок і дій, творчість, дослідження власного потенціалу без зовнішнього примусу.',
     descriptionRu: 'Свобода мыслей и действий, творчество, исследование своего потенциала.',
     descriptionEn: 'Freedom of thought and action, creativity, self-determination.',
@@ -55,6 +59,8 @@ const SCHWARTZ_VALUES_CATALOG: ValueDefinition[] = [
     nameRu: 'Стимуляция и новизна',
     nameEn: 'Stimulation & Novelty',
     categoryUk: 'Відкритість до змін',
+    categoryRu: 'Открытость изменениям',
+    categoryEn: 'Openness to Change',
     descriptionUk: 'Прагнення до хвилювання, викликів, яскравих відчуттів та нових життєвих пригод.',
     descriptionRu: 'Стремление к волнению, вызовам, ярким ощущениям и новизне.',
     descriptionEn: 'Excitement, novelty, and challenge in life.',
@@ -67,6 +73,8 @@ const SCHWARTZ_VALUES_CATALOG: ValueDefinition[] = [
     nameRu: 'Гедонизм и наслаждение',
     nameEn: 'Hedonism & Pleasure',
     categoryUk: 'Відкритість / Самопідсилення',
+    categoryRu: 'Открытость / Самовозвышение',
+    categoryEn: 'Openness / Self-Enhancement',
     descriptionUk: 'Насолода життям, чуттєве задоволення, радість та комфорт тут і зараз.',
     descriptionRu: 'Наслаждение жизнью, чувственное удовольствие, радость и комфорт.',
     descriptionEn: 'Pleasure and sensuous gratification for oneself.',
@@ -79,6 +87,8 @@ const SCHWARTZ_VALUES_CATALOG: ValueDefinition[] = [
     nameRu: 'Достижения и успех',
     nameEn: 'Achievement & Success',
     categoryUk: 'Самопідсилення',
+    categoryRu: 'Самовозвышение',
+    categoryEn: 'Self-Enhancement',
     descriptionUk: 'Особистий успіх через прояв компетентності згідно з високими стандартами.',
     descriptionRu: 'Личный успех через компетентность и высокие стандарты.',
     descriptionEn: 'Personal success through demonstrating competence according to social standards.',
@@ -91,6 +101,8 @@ const SCHWARTZ_VALUES_CATALOG: ValueDefinition[] = [
     nameRu: 'Власть и статус',
     nameEn: 'Power & Influence',
     categoryUk: 'Самопідсилення',
+    categoryRu: 'Самовозвышение',
+    categoryEn: 'Self-Enhancement',
     descriptionUk: 'Соціальний статус, престиж, контроль над ресурсами та людьми, лідерство.',
     descriptionRu: 'Социальный статус, престиж, лидерство и контроль над ресурсами.',
     descriptionEn: 'Social status and prestige, control or dominance over people and resources.',
@@ -103,6 +115,8 @@ const SCHWARTZ_VALUES_CATALOG: ValueDefinition[] = [
     nameRu: 'Безопасность и стабильность',
     nameEn: 'Security & Safety',
     categoryUk: 'Збереження',
+    categoryRu: 'Сохранение',
+    categoryEn: 'Conservation',
     descriptionUk: 'Безпека, гармонія та стабільність суспільства, сімʼї та самого себе.',
     descriptionRu: 'Безопасность, гармония и стабильность семьи, общества и себя.',
     descriptionEn: 'Safety, harmony, and stability of society, of relationships, and of self.',
@@ -115,6 +129,8 @@ const SCHWARTZ_VALUES_CATALOG: ValueDefinition[] = [
     nameRu: 'Конформизм и порядок',
     nameEn: 'Conformity & Order',
     categoryUk: 'Збереження',
+    categoryRu: 'Сохранение',
+    categoryEn: 'Conservation',
     descriptionUk: 'Стримування дій, які можуть завдати шкоди іншим або порушити соціальні норми.',
     descriptionRu: 'Сдерживание действий, нарушающих социальные ожидания и нормы.',
     descriptionEn: 'Restraint of actions, inclinations, and impulses likely to upset or harm others.',
@@ -127,6 +143,8 @@ const SCHWARTZ_VALUES_CATALOG: ValueDefinition[] = [
     nameRu: 'Традиция и обычаи',
     nameEn: 'Tradition & Heritage',
     categoryUk: 'Збереження',
+    categoryRu: 'Сохранение',
+    categoryEn: 'Conservation',
     descriptionUk: 'Повага, прийняття та дотримання звичаїв та ідей своєї культури чи релігії.',
     descriptionRu: 'Уважение и соблюдение традиций и обычаев своей культуры.',
     descriptionEn: 'Respect, commitment, and acceptance of cultural or religious customs.',
@@ -139,6 +157,8 @@ const SCHWARTZ_VALUES_CATALOG: ValueDefinition[] = [
     nameRu: 'Доброта и забота',
     nameEn: 'Benevolence & Care',
     categoryUk: 'Самотрансцендентність',
+    categoryRu: 'Самотрансцендентность',
+    categoryEn: 'Self-Transcendence',
     descriptionUk: 'Збереження та підвищення благополуччя близьких людей, вірність, щирість.',
     descriptionRu: 'Забота о благополучии близких людей, верность, искренность.',
     descriptionEn: 'Preserving and enhancing the welfare of those with whom one is in personal contact.',
@@ -151,6 +171,8 @@ const SCHWARTZ_VALUES_CATALOG: ValueDefinition[] = [
     nameRu: 'Универсализм и справедливость',
     nameEn: 'Universalism & Ecology',
     categoryUk: 'Самотрансцендентність',
+    categoryRu: 'Самотрансцендентность',
+    categoryEn: 'Self-Transcendence',
     descriptionUk: 'Розуміння, терпимість, захист справедливості для всіх людей та турбота про природу.',
     descriptionRu: 'Терпимость, справедливость для всех людей и защита природы.',
     descriptionEn: 'Understanding, appreciation, tolerance, and protection for the welfare of all people and nature.',
@@ -423,7 +445,9 @@ export const ValuesMotivationDiagnostic: React.FC<ValuesMotivationDiagnosticProp
                       <span className="font-semibold text-sm text-slate-200">
                         {lang === 'ru' ? val.nameRu : lang === 'en' ? val.nameEn : val.nameUk}
                       </span>
-                      <span className="block text-[11px] text-teal-400/80">{val.categoryUk}</span>
+                      <span className="block text-[11px] text-teal-400/80">
+                        {lang === 'ru' ? val.categoryRu : lang === 'en' ? val.categoryEn : val.categoryUk}
+                      </span>
                     </div>
                   </div>
                   <div className="text-xs font-bold text-white bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700">

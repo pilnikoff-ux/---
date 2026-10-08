@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.id is string && data.id == userId
+        && data.login is string && data.login.size() > 0 && data.login.size() <= 100
+        && (!('fullName' in data) || (data.fullName is string && data.fullName.size() <= 150))
+        && (!('name' in data) || (data.name is string && data.name.size() <= 150))
+        && (!('email' in data) || (data.email is string && data.email.size() <= 200))
+        && (!('dateOfBirth' in data) || (data.dateOfBirth is string && data.dateOfBirth.size() <= 50))
+        && (!('fieldOfActivity' in data) || (data.fieldOfActivity is string && data.fieldOfActivity.size() <= 150))
+        && (!('authProvider' in data) || (data.authProvider in ['google', 'local']))
+        && (!('avatarUrl' in data) || (data.avatarUrl is string && data.avatarUrl.size() <= 1000));
+    }
+
+    function isValidJournalEntry(data, userId) {
+      return data.id is string && data.id.size() > 0 && data.id.size() <= 128
+        && data.userId is string && data.userId == userId
+        && data.title is string && data.title.size() <= 500
+        && data.type is string && data.type.size() <= 100
+        && data.date is string && data.date.size() <= 100
+        && (!('content' in data) || (data.content is string && data.content.size() <= 100000))
+        && (!('summary' in data) || (data.summary is string && data.summary.size() <= 10000))
+        && (!('status' in data) || (data.status is string && data.status.size() <= 50));
+    }
+
+    // User Profile
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(request.resource.data, userId);
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(request.resource.data, userId);
+      allow delete: if false;
+
+      // User's Journal Entries Subcollection
+      match /journal_entries/{entryId} {
+        allow get: if isOwner(userId) && isValidId(entryId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(entryId) && isValidJournalEntry(request.resource.data, userId);
+        allow update: if isOwner(userId) && isValidId(entryId) && isValidJournalEntry(request.resource.data, userId);
+        allow delete: if isOwner(userId) && isValidId(entryId);
+      }
+    }
+  }
+}

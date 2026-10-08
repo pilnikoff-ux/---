@@ -411,7 +411,6 @@ export interface UserProfile {
   email?: string;
   avatarUrl?: string;
   authProvider?: 'google' | 'local' | 'guest';
-  pinOrPassword?: string;
   birthDate?: string;
   dateOfBirth?: string;
   fieldOfActivity?: string;
@@ -757,11 +756,50 @@ export interface JournalEntry {
     | 'selfReflection'
     | 'smartGoals'
     | 'preMortem'
-    | 'feedback';
+    | 'feedback'
+    | 'bodyDouble';
   title: string;
   date: string;
   summary: string;
   data: any;
+}
+
+// 5. Техніка «Body Doubling» (Тіло-дублер для фокусу та саморефлексії)
+export type BodyDoublePersonaId = 'alex' | 'maya' | 'mark' | 'cat';
+
+export interface BodyDoublePersona {
+  id: BodyDoublePersonaId;
+  name: string;
+  title: string;
+  description: string;
+  avatarEmoji: string;
+  focusStyle: string;
+  currentActivityStatus: string[];
+}
+
+export interface BodyDoubleMicroStep {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+export interface BodyDoubleSessionData {
+  id: string;
+  taskTitle: string;
+  sourceContext?: string;
+  personaId: BodyDoublePersonaId;
+  personaName: string;
+  durationMinutes: number;
+  actualDurationMinutes: number;
+  completedStepsCount: number;
+  totalStepsCount: number;
+  microSteps: BodyDoubleMicroStep[];
+  selfReflectionNotes: string;
+  reflectionAnswers?: Record<string, string>;
+  difficultyRating?: number;
+  energyAfterSession?: number;
+  status: 'completed' | 'cancelled' | 'in_progress';
+  date: string;
 }
 
 
