@@ -32,6 +32,7 @@ import { requestPersonalizedAffirmation } from '../services/geminiService';
 import { saveJournalEntry, getJournalEntries } from '../services/storageService';
 import { useThemeLanguage } from '../context/ThemeLanguageContext';
 import { VoiceInputButton } from './VoiceInputButton';
+import { speakText, stopSpeaking } from '../utils/speechUtils';
 
 interface DailyAffirmationsProps {
   onSavedToJournal?: () => void;
@@ -112,19 +113,8 @@ export const DailyAffirmations: React.FC<DailyAffirmationsProps> = ({ onSavedToJ
 
   // Handle Speech
   const toggleSpeech = () => {
-    if (!('speechSynthesis' in window)) {
-      alert(
-        lang === 'en'
-          ? 'Speech synthesis is not supported in this browser.'
-          : lang === 'ru'
-          ? 'Озвучивание не поддерживается в вашем браузере.'
-          : 'Озвучення не підтримується у вашому браузері.'
-      );
-      return;
-    }
-
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
+      stopSpeaking();
       setIsSpeaking(false);
       return;
     }
@@ -136,24 +126,24 @@ export const DailyAffirmations: React.FC<DailyAffirmationsProps> = ({ onSavedToJ
         ? `${currentAffirmation.quoteEn}. ${currentAffirmation.authorOrSchoolEn}.`
         : `${currentAffirmation.quoteUk}. ${currentAffirmation.authorOrSchoolUk}.`;
 
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.lang = lang === 'ru' ? 'ru-RU' : lang === 'en' ? 'en-US' : 'uk-UA';
-    utterance.rate = 0.88; // Calm, meditative pace
-    utterance.pitch = 0.95;
+    const success = speakText(textToSpeak, {
+      lang,
+      rate: 0.95,
+      voiceName: 'Kore',
+      onStart: () => setIsSpeaking(true),
+      onEnd: () => setIsSpeaking(false),
+      onError: () => setIsSpeaking(false),
+    });
 
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-
-    setIsSpeaking(true);
-    window.speechSynthesis.speak(utterance);
+    if (!success) {
+      setIsSpeaking(false);
+    }
   };
 
   // Stop speech on unmount
   useEffect(() => {
     return () => {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      stopSpeaking();
     };
   }, []);
 

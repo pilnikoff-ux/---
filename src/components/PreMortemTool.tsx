@@ -139,7 +139,7 @@ export const PreMortemTool: React.FC<PreMortemToolProps> = ({
   const [activeTab, setActiveTab] = useState<'causes' | 'timeline' | 'adversary' | 'revised' | 'killswitch'>('causes');
   const [expandedCause, setExpandedCause] = useState<number | null>(1);
 
-  const handleApplyPreset = (preset: (typeof PRESETS)[0]) => {
+  const handleApplyPreset = (preset: ReturnType<typeof getPresets>[0]) => {
     setActivePreset(preset);
     setIsPresetPreview(true);
     setPlan(preset.plan);

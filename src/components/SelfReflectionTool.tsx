@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Brain,
   Sparkles,
@@ -19,12 +19,39 @@ import {
   CheckCircle2,
   AlertTriangle,
   RefreshCw,
+  Volume2,
+  VolumeX,
+  Copy,
+  Check,
+  Settings,
+  Sun,
+  Moon,
+  ExternalLink,
+  Clock,
+  Edit3,
+  X,
+  MessageCircle,
 } from 'lucide-react';
-import { ReflectionMethod, SelfReflectionData } from '../types';
+import {
+  ReflectionMethod,
+  SelfReflectionData,
+  AiReflectionPrompt,
+  TelegramReflectionSettings,
+} from '../types';
 import { useThemeLanguage } from '../context/ThemeLanguageContext';
-import { getUserProfile } from '../services/userStatsService';
+import {
+  getUserProfile,
+  getTelegramSettings,
+  updateTelegramSettings,
+} from '../services/userStatsService';
 import { saveJournalEntry } from '../services/storageService';
 import { requestSelfReflectionFeedback } from '../services/geminiService';
+import {
+  generateAiReflectionPrompt,
+  sendTelegramMessage,
+  checkAndSendAutoTelegramReflection,
+} from '../services/telegramService';
+import { speakText, stopSpeaking } from '../utils/speechUtils';
 import { VoiceInputButton } from './VoiceInputButton';
 
 interface SelfReflectionProps {
@@ -151,6 +178,239 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
   );
   const [isSaved, setIsSaved] = useState(false);
 
+  // AI Daily Reflection Prompt & Telegram state
+  const [promptType, setPromptType] = useState<'morning' | 'evening'>(() => {
+    const hour = new Date().getHours();
+    return hour >= 16 ? 'evening' : 'morning';
+  });
+  const [dailyPrompt, setDailyPrompt] = useState<AiReflectionPrompt | null>(null);
+  const [isLoadingPrompt, setIsLoadingPrompt] = useState(false);
+  const [isSpeakingPrompt, setIsSpeakingPrompt] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState<'Kore' | 'Charon' | 'Zephyr'>('Kore');
+  const [isPromptCopied, setIsPromptCopied] = useState(false);
+  const [isSendingTelegram, setIsSendingTelegram] = useState(false);
+  const [telegramStatus, setTelegramStatus] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
+
+  // Telegram Settings Modal
+  const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
+  const [telegramSettings, setTelegramSettings] = useState<TelegramReflectionSettings>(() =>
+    getTelegramSettings()
+  );
+  const [isTestingTelegram, setIsTestingTelegram] = useState(false);
+  const [testTelegramResult, setTestTelegramResult] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
+  const [telegramSavedNotice, setTelegramSavedNotice] = useState(false);
+
+  const loadPrompt = async (type: 'morning' | 'evening') => {
+    setIsLoadingPrompt(true);
+    setTelegramStatus(null);
+    try {
+      const prompt = await generateAiReflectionPrompt({ type, lang });
+      setDailyPrompt(prompt);
+    } catch (e) {
+      console.error('Failed to load reflection prompt:', e);
+    } finally {
+      setIsLoadingPrompt(false);
+    }
+  };
+
+  // Initialize Telegram settings, load prompt, and check auto-scheduled delivery
+  useEffect(() => {
+    const settings = getTelegramSettings();
+    setTelegramSettings(settings);
+
+    // Initial fetch of prompt
+    loadPrompt(promptType);
+
+    // Check if auto-scheduled Telegram reflection needs to be sent
+    checkAndSendAutoTelegramReflection().then((res) => {
+      if (res.sent) {
+        console.log(`Auto reflection sent to Telegram: ${res.type}`);
+      }
+    });
+
+    return () => {
+      stopSpeaking();
+    };
+  }, []);
+
+  const handleToggleSpeakPrompt = () => {
+    if (isSpeakingPrompt) {
+      stopSpeaking();
+      setIsSpeakingPrompt(false);
+      return;
+    }
+
+    if (!dailyPrompt) return;
+
+    // Full text for speech synthesis
+    const speechScript = `${dailyPrompt.greeting}. ${dailyPrompt.questionTitle}: ${dailyPrompt.question}. Маленьке завдання: ${dailyPrompt.microTask}. Нагадування дня: ${dailyPrompt.reminder}. ${dailyPrompt.wishes}`;
+
+    setIsSpeakingPrompt(true);
+    const success = speakText(speechScript, {
+      lang,
+      rate: 0.95,
+      voiceName: selectedVoice,
+      onStart: () => setIsSpeakingPrompt(true),
+      onEnd: () => setIsSpeakingPrompt(false),
+      onError: () => setIsSpeakingPrompt(false),
+    });
+
+    if (!success) {
+      setIsSpeakingPrompt(false);
+    }
+  };
+
+  const handleCopyPrompt = () => {
+    if (!dailyPrompt) return;
+    navigator.clipboard.writeText(dailyPrompt.fullFormattedText);
+    setIsPromptCopied(true);
+    setTimeout(() => setIsPromptCopied(false), 2500);
+  };
+
+  const handleSendPromptToTelegram = async () => {
+    if (!dailyPrompt) return;
+    const targetChat = (
+      telegramSettings.telegramChatId ||
+      telegramSettings.telegramUsername ||
+      ''
+    ).trim();
+
+    if (!targetChat) {
+      setIsTelegramModalOpen(true);
+      setTelegramStatus({
+        type: 'error',
+        message:
+          lang === 'en'
+            ? 'Please link your Telegram Chat ID in settings first.'
+            : lang === 'ru'
+            ? 'Пожалуйста, укажите ваш Telegram Chat ID в настройках.'
+            : 'Будь ласка, спочатку вкажіть ваш Telegram Chat ID у налаштуваннях.',
+      });
+      return;
+    }
+
+    setIsSendingTelegram(true);
+    setTelegramStatus(null);
+    try {
+      const res = await sendTelegramMessage(
+        targetChat,
+        dailyPrompt.fullFormattedText,
+        telegramSettings.botToken
+      );
+      if (res.success) {
+        setTelegramStatus({
+          type: 'success',
+          message:
+            lang === 'en'
+              ? '✓ Sent successfully to Telegram!'
+              : lang === 'ru'
+              ? '✓ Успешно отправлено в Telegram!'
+              : '✓ Успішно надіслано в Telegram-бот!',
+        });
+        setTimeout(() => setTelegramStatus(null), 4000);
+      } else {
+        setTelegramStatus({
+          type: 'error',
+          message: res.error || 'Помилка надсилання.',
+        });
+      }
+    } catch (err: any) {
+      setTelegramStatus({
+        type: 'error',
+        message: err.message || 'Помилка під час відправки.',
+      });
+    } finally {
+      setIsSendingTelegram(false);
+    }
+  };
+
+  const handleInsertPromptIntoReflection = () => {
+    if (!dailyPrompt) return;
+    const textToInsert = `[${dailyPrompt.questionTitle}]: ${dailyPrompt.question}\n[Завдання]: ${dailyPrompt.microTask}`;
+
+    if (selectedMethod === 'express_checkin') {
+      setExpressWins((prev) => (prev ? `${prev}\n\n${textToInsert}` : textToInsert));
+    } else if (selectedMethod === 'stoic_evening') {
+      setStoicDoneWell((prev) => (prev ? `${prev}\n\n${textToInsert}` : textToInsert));
+    } else if (selectedMethod === 'what_so_what') {
+      setWhatHappened((prev) => (prev ? `${prev}\n\n${textToInsert}` : textToInsert));
+    } else if (selectedMethod === 'gibbs_cycle') {
+      setGibbsDescription((prev) => (prev ? `${prev}\n\n${textToInsert}` : textToInsert));
+    } else {
+      setKptKeep((prev) => (prev ? `${prev}\n\n${textToInsert}` : textToInsert));
+    }
+
+    // Smooth scroll down to the form
+    const formEl = document.getElementById('reflection-main-form');
+    if (formEl) {
+      formEl.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleSaveTelegramSettings = () => {
+    const updated = updateTelegramSettings(telegramSettings);
+    if (updated?.telegramSettings) {
+      setTelegramSettings(updated.telegramSettings);
+    }
+    setTelegramSavedNotice(true);
+    setTimeout(() => {
+      setTelegramSavedNotice(false);
+      setIsTelegramModalOpen(false);
+    }, 1200);
+  };
+
+  const handleTestTelegramConnection = async () => {
+    const targetChat = (
+      telegramSettings.telegramChatId ||
+      telegramSettings.telegramUsername ||
+      ''
+    ).trim();
+
+    if (!targetChat) {
+      setTestTelegramResult({
+        type: 'error',
+        message:
+          lang === 'en'
+            ? 'Please enter Telegram Chat ID first.'
+            : lang === 'ru'
+            ? 'Сначала укажите Telegram Chat ID.'
+            : 'Спочатку вкажіть Telegram Chat ID.',
+      });
+      return;
+    }
+
+    setIsTestingTelegram(true);
+    setTestTelegramResult(null);
+
+    const testMsg = `🌿 <b>Навігатор Саморефлексії & Goal Makers</b>\n\n✓ Тестове повідомлення успішне!\nВаш зв'язок із Telegram-ботом налаштовано правильно. Тепер вам надходитимуть щоденні глибокі питання та мікро-завдання саморефлексії! ✨`;
+
+    const res = await sendTelegramMessage(targetChat, testMsg, telegramSettings.botToken);
+    setIsTestingTelegram(false);
+
+    if (res.success) {
+      setTestTelegramResult({
+        type: 'success',
+        message:
+          lang === 'en'
+            ? '✓ Test message delivered to your Telegram!'
+            : lang === 'ru'
+            ? '✓ Тестовое сообщение доставлено в ваш Telegram!'
+            : '✓ Тестове повідомлення успішно доставлено у ваш Telegram!',
+      });
+    } else {
+      setTestTelegramResult({
+        type: 'error',
+        message: res.error || 'Не вдалося надіслати тестове повідомлення.',
+      });
+    }
+  };
+
   const toggleEmotion = (emo: string) => {
     setSelectedEmotions((prev) =>
       prev.includes(emo) ? prev.filter((e) => e !== emo) : [...prev, emo]
@@ -269,7 +529,20 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center flex-wrap gap-2">
+            <button
+              id="reflection-telegram-btn"
+              type="button"
+              onClick={() => setIsTelegramModalOpen(true)}
+              className="flex items-center gap-1.5 rounded-xl border border-sky-400/40 bg-sky-50 dark:bg-sky-950/40 px-3 py-2 text-xs font-semibold text-sky-800 dark:text-sky-300 transition hover:bg-sky-100 dark:hover:bg-sky-900/40 shadow-xs cursor-pointer"
+            >
+              <Send className="h-3.5 w-3.5 text-sky-500" />
+              <span>Telegram</span>
+              {telegramSettings.enabled && (
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              )}
+            </button>
+
             <button
               id="reflection-guide-btn"
               type="button"
@@ -407,6 +680,681 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
         )}
       </div>
 
+      {/* AI Daily Reflection Prompt & Telegram Delivery Block */}
+      <div className="rounded-2xl border border-teal-500/30 bg-linear-to-br from-emerald-50/40 via-white to-teal-50/30 dark:from-emerald-950/25 dark:via-stone-900 dark:to-teal-950/25 p-5 sm:p-6 shadow-xs space-y-4">
+        {/* Top Control Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-200/60 dark:border-stone-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-xl bg-teal-500/15 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold text-base">
+              🌿
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
+                <span>
+                  {lang === 'en'
+                    ? 'AI Reflection of the Day & Telegram'
+                    : lang === 'ru'
+                    ? 'ИИ-Вопрос дня & Telegram-Бот'
+                    : 'ШІ-Питання дня & Telegram-Бот'}
+                </span>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-teal-500/15 text-teal-700 dark:text-teal-300 border border-teal-500/30">
+                  {promptType === 'morning' ? '☀️ Ранкова' : '🌙 Вечірня'}
+                </span>
+              </h2>
+              <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                {lang === 'en'
+                  ? 'Daily inspiration, focus questions, micro-tasks & automated bot delivery'
+                  : lang === 'ru'
+                  ? 'Глубокий вопрос, микро-задание и рассылка в Telegram'
+                  : 'Глибоке коучингове питання, мікро-завдання та надсилання у Telegram'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center flex-wrap gap-2">
+            {/* Morning / Evening Toggle */}
+            <div className="inline-flex rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-100/80 dark:bg-stone-800 p-0.5 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setPromptType('morning');
+                  loadPrompt('morning');
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
+                  promptType === 'morning'
+                    ? 'bg-white dark:bg-stone-900 text-teal-700 dark:text-teal-300 shadow-2xs font-bold'
+                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900'
+                }`}
+              >
+                <Sun className="h-3.5 w-3.5 text-amber-500" />
+                <span>{lang === 'en' ? 'Morning' : lang === 'ru' ? 'Утро' : 'Ранок'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPromptType('evening');
+                  loadPrompt('evening');
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
+                  promptType === 'evening'
+                    ? 'bg-white dark:bg-stone-900 text-indigo-700 dark:text-indigo-300 shadow-2xs font-bold'
+                    : 'text-stone-600 dark:text-stone-400 hover:text-stone-900'
+                }`}
+              >
+                <Moon className="h-3.5 w-3.5 text-indigo-500" />
+                <span>{lang === 'en' ? 'Evening' : lang === 'ru' ? 'Вечер' : 'Вечір'}</span>
+              </button>
+            </div>
+
+            {/* Telegram Link Status Badge & Modal Trigger */}
+            <button
+              type="button"
+              onClick={() => setIsTelegramModalOpen(true)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer ${
+                telegramSettings.enabled &&
+                (telegramSettings.telegramChatId || telegramSettings.telegramUsername)
+                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20'
+                  : 'border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-800/80 text-stone-700 dark:text-stone-300 hover:bg-stone-200'
+              }`}
+            >
+              <Send className="h-3.5 w-3.5 text-sky-500" />
+              <span>
+                {telegramSettings.enabled &&
+                (telegramSettings.telegramChatId || telegramSettings.telegramUsername)
+                  ? `Telegram: ${telegramSettings.telegramUsername || telegramSettings.telegramChatId}`
+                  : lang === 'en'
+                  ? 'Link Telegram'
+                  : lang === 'ru'
+                  ? 'Привязать Telegram'
+                  : 'Підвʼязати Telegram'}
+              </span>
+              <Settings className="h-3.5 w-3.5 text-stone-400 ml-0.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Prompt Content Card with the 5 Elements */}
+        {isLoadingPrompt ? (
+          <div className="py-12 flex flex-col items-center justify-center space-y-3">
+            <RefreshCw className="h-6 w-6 text-teal-600 animate-spin" />
+            <p className="text-xs text-stone-500">
+              {lang === 'en'
+                ? 'Generating thoughtful reflection question & micro-task...'
+                : lang === 'ru'
+                ? 'ИИ формулирует глубокий вопрос дня и микро-задание...'
+                : 'ШІ формулює щире питання дня та мікро-завдання...'}
+            </p>
+          </div>
+        ) : dailyPrompt ? (
+          <div className="space-y-3.5 animate-fadeIn">
+            {/* 1. Greeting */}
+            <div className="font-medium text-stone-800 dark:text-stone-200 text-sm flex items-center gap-2">
+              <span className="text-base">🌿</span>
+              <span className="font-semibold">{dailyPrompt.greeting}</span>
+            </div>
+
+            {/* 2. Question of the day */}
+            <div className="rounded-xl border border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 p-3.5 space-y-1">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                <span>💭</span>
+                <span>{dailyPrompt.questionTitle}:</span>
+              </div>
+              <p className="text-sm font-serif font-bold text-stone-900 dark:text-stone-100 leading-relaxed">
+                {dailyPrompt.question}
+              </p>
+            </div>
+
+            {/* 3. Micro-Task */}
+            <div className="rounded-xl border border-teal-500/30 bg-teal-50/40 dark:bg-teal-950/20 p-3.5 space-y-1">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400 flex items-center gap-1.5">
+                <span>🎯</span>
+                <span>
+                  {lang === 'en'
+                    ? 'Micro-task for joy & presence:'
+                    : lang === 'ru'
+                    ? 'Маленькое задание:'
+                    : 'Маленьке завдання:'}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
+                {dailyPrompt.microTask}
+              </p>
+            </div>
+
+            {/* 4. Daily Reminder */}
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-50/40 dark:bg-emerald-950/20 p-3.5 space-y-1">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                <span>💚</span>
+                <span>
+                  {lang === 'en'
+                    ? 'Daily reminder:'
+                    : lang === 'ru'
+                    ? 'Напоминание дня:'
+                    : 'Нагадування дня:'}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
+                {dailyPrompt.reminder}
+              </p>
+            </div>
+
+            {/* 5. Wish from AI */}
+            <div className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 font-medium flex items-center gap-2 pt-1">
+              <span className="text-amber-500 text-base">☀️</span>
+              <span>{dailyPrompt.wishes}</span>
+            </div>
+
+            {/* Notification / Delivery Status */}
+            {telegramStatus && (
+              <div
+                className={`rounded-xl p-3 text-xs font-semibold flex items-center gap-2 ${
+                  telegramStatus.type === 'success'
+                    ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                    : 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30'
+                }`}
+              >
+                {telegramStatus.type === 'success' ? (
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                ) : (
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                )}
+                <span>{telegramStatus.message}</span>
+              </div>
+            )}
+
+            {/* Action Buttons Toolbar */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-stone-200/60 dark:border-stone-800">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Regenerate */}
+                <button
+                  type="button"
+                  onClick={() => loadPrompt(promptType)}
+                  disabled={isLoadingPrompt}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 text-xs font-semibold transition cursor-pointer active:scale-95 shadow-2xs"
+                >
+                  <RefreshCw
+                    className={`h-3.5 w-3.5 text-teal-600 ${isLoadingPrompt ? 'animate-spin' : ''}`}
+                  />
+                  <span>
+                    {lang === 'en'
+                      ? 'New Question'
+                      : lang === 'ru'
+                      ? 'Новый вопрос'
+                      : 'Нове питання'}
+                  </span>
+                </button>
+
+                {/* Voice Selector & Speak / Stop TTS */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {/* Voice Selector */}
+                  <div className="flex items-center bg-stone-100 dark:bg-stone-800/90 p-0.5 rounded-xl border border-stone-250 dark:border-stone-700 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedVoice('Kore');
+                        if (isSpeakingPrompt) {
+                          stopSpeaking();
+                          setIsSpeakingPrompt(false);
+                        }
+                      }}
+                      className={`px-2 py-1 rounded-lg text-2xs font-medium transition cursor-pointer ${
+                        selectedVoice === 'Kore'
+                          ? 'bg-white dark:bg-stone-700 text-teal-700 dark:text-teal-300 shadow-2xs font-bold'
+                          : 'text-stone-500 hover:text-stone-700 dark:text-stone-400'
+                      }`}
+                      title={
+                        lang === 'en'
+                          ? 'Kore: Warm, gentle female voice'
+                          : lang === 'ru'
+                          ? 'Kore: Тёплый женский голос'
+                          : 'Коре: Теплий, лагідний жіночий голос'
+                      }
+                    >
+                      👩 Kore
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedVoice('Charon');
+                        if (isSpeakingPrompt) {
+                          stopSpeaking();
+                          setIsSpeakingPrompt(false);
+                        }
+                      }}
+                      className={`px-2 py-1 rounded-lg text-2xs font-medium transition cursor-pointer ${
+                        selectedVoice === 'Charon'
+                          ? 'bg-white dark:bg-stone-700 text-teal-700 dark:text-teal-300 shadow-2xs font-bold'
+                          : 'text-stone-500 hover:text-stone-700 dark:text-stone-400'
+                      }`}
+                      title={
+                        lang === 'en'
+                          ? 'Charon: Deep, calm male voice'
+                          : lang === 'ru'
+                          ? 'Charon: Спокойный мужской голос'
+                          : 'Харон: Спокійний, впевнений чоловічий голос'
+                      }
+                    >
+                      👨 Charon
+                    </button>
+                  </div>
+
+                  {/* Speak / Stop Button */}
+                  <button
+                    type="button"
+                    onClick={handleToggleSpeakPrompt}
+                    title={
+                      lang === 'en'
+                        ? 'Listen with natural Ukrainian AI voice (no accent)'
+                        : lang === 'ru'
+                        ? 'Озвучить чистым голосом ШИ'
+                        : 'Озвучити природним українським ШІ-голосом'
+                    }
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer active:scale-95 shadow-2xs ${
+                      isSpeakingPrompt
+                        ? 'border-amber-500/50 bg-amber-500/15 text-amber-700 dark:text-amber-300 animate-pulse'
+                        : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 hover:bg-stone-50'
+                    }`}
+                  >
+                    {isSpeakingPrompt ? (
+                      <>
+                        <VolumeX className="h-3.5 w-3.5 text-amber-600" />
+                        <span>
+                          {lang === 'en' ? 'Stop Audio' : lang === 'ru' ? 'Остановить' : 'Зупинити'}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="h-3.5 w-3.5 text-teal-600" />
+                        <span>
+                          {lang === 'en' ? 'Speak' : lang === 'ru' ? 'Озвучить' : 'Озвучити'}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Copy */}
+                <button
+                  type="button"
+                  onClick={handleCopyPrompt}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 text-stone-700 dark:text-stone-200 text-xs font-semibold transition cursor-pointer active:scale-95 shadow-2xs"
+                >
+                  {isPromptCopied ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                      <span>
+                        {lang === 'en' ? 'Copied!' : lang === 'ru' ? 'Скопировано!' : 'Скопійовано!'}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5 text-stone-500" />
+                      <span>
+                        {lang === 'en' ? 'Copy Text' : lang === 'ru' ? 'Копировать' : 'Скопіювати'}
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Send to Telegram Now */}
+                <button
+                  type="button"
+                  onClick={handleSendPromptToTelegram}
+                  disabled={isSendingTelegram}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white text-xs font-bold transition shadow-2xs cursor-pointer active:scale-95"
+                >
+                  {isSendingTelegram ? (
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Send className="h-3.5 w-3.5" />
+                  )}
+                  <span>
+                    {isSendingTelegram
+                      ? lang === 'en'
+                        ? 'Sending...'
+                        : lang === 'ru'
+                        ? 'Отправка...'
+                        : 'Надсилаю...'
+                      : lang === 'en'
+                      ? 'Send to Telegram'
+                      : lang === 'ru'
+                      ? 'Отправить в Telegram'
+                      : 'Надіслати в Telegram'}
+                  </span>
+                </button>
+
+                {/* Answer in reflection */}
+                <button
+                  type="button"
+                  onClick={handleInsertPromptIntoReflection}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition shadow-2xs cursor-pointer active:scale-95"
+                >
+                  <Edit3 className="h-3.5 w-3.5" />
+                  <span>
+                    {lang === 'en'
+                      ? 'Answer in Reflection'
+                      : lang === 'ru'
+                      ? 'Ответить в рефлексии'
+                      : 'Відповісти у рефлексії'}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {/* Telegram Bot Settings Modal */}
+      {isTelegramModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-lg rounded-3xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-stone-100 dark:border-stone-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-xl bg-sky-500/15 text-sky-600 flex items-center justify-center">
+                  <Send className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-stone-900 dark:text-stone-100">
+                    {lang === 'en'
+                      ? 'Telegram Bot Notifications Setup'
+                      : lang === 'ru'
+                      ? 'Настройка Telegram-бота для саморефлексии'
+                      : 'Налаштування Telegram-бота для саморефлексії'}
+                  </h3>
+                  <p className="text-[11px] text-stone-500">
+                    {lang === 'en'
+                      ? 'Morning & evening self-reflection prompts'
+                      : lang === 'ru'
+                      ? 'Утренняя и вечерняя саморефлексия'
+                      : 'Ранкова та вечірня саморефлексія'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsTelegramModalOpen(false)}
+                className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 dark:hover:bg-stone-800 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              {/* Enable Main Switch */}
+              <label className="flex items-center gap-3 p-3 rounded-xl border border-teal-500/30 bg-teal-50/30 dark:bg-teal-950/20 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={telegramSettings.enabled}
+                  onChange={(e) =>
+                    setTelegramSettings({ ...telegramSettings, enabled: e.target.checked })
+                  }
+                  className="h-4 w-4 rounded-sm text-teal-600 focus:ring-teal-500 cursor-pointer"
+                />
+                <span className="font-bold text-stone-900 dark:text-stone-100">
+                  {lang === 'en'
+                    ? 'Enable automated Telegram delivery'
+                    : lang === 'ru'
+                    ? 'Включить автоматическую рассылку в Telegram'
+                    : 'Увімкнути автоматичне надсилання у Telegram-бот'}
+                </span>
+              </label>
+
+              {/* Schedule Checkboxes: Morning / Evening */}
+              <div className="rounded-xl border border-stone-200 dark:border-stone-800 p-3.5 space-y-3">
+                <span className="font-bold text-stone-700 dark:text-stone-300 block text-[11px] uppercase tracking-wider">
+                  {lang === 'en'
+                    ? 'Schedule Selection (Choose Morning, Evening, or Both):'
+                    : lang === 'ru'
+                    ? 'Выбор времени (Утренняя, Вечерняя или обе):'
+                    : 'Вибір розкладу (Ранкова, Вечірня або обидві):'}
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Morning Checkbox */}
+                  <div className="space-y-1.5 p-2.5 rounded-lg bg-stone-50 dark:bg-stone-950/50 border border-stone-200 dark:border-stone-800">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={telegramSettings.morningEnabled}
+                        onChange={(e) =>
+                          setTelegramSettings({
+                            ...telegramSettings,
+                            morningEnabled: e.target.checked,
+                          })
+                        }
+                        className="h-4 w-4 rounded-sm text-teal-600 focus:ring-teal-500 cursor-pointer"
+                      />
+                      <span className="font-bold text-stone-800 dark:text-stone-200">
+                        ☀️{' '}
+                        {lang === 'en'
+                          ? 'Morning reflection'
+                          : lang === 'ru'
+                          ? 'Утренняя рефлексия'
+                          : 'Ранкова саморефлексія'}
+                      </span>
+                    </label>
+                    <div className="flex items-center gap-1.5 pl-6">
+                      <Clock className="h-3 w-3 text-stone-400" />
+                      <input
+                        type="time"
+                        value={telegramSettings.morningTime || '08:00'}
+                        onChange={(e) =>
+                          setTelegramSettings({
+                            ...telegramSettings,
+                            morningTime: e.target.value,
+                          })
+                        }
+                        className="rounded-md border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 py-0.5 text-xs text-stone-800 dark:text-stone-200"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Evening Checkbox */}
+                  <div className="space-y-1.5 p-2.5 rounded-lg bg-stone-50 dark:bg-stone-950/50 border border-stone-200 dark:border-stone-800">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={telegramSettings.eveningEnabled}
+                        onChange={(e) =>
+                          setTelegramSettings({
+                            ...telegramSettings,
+                            eveningEnabled: e.target.checked,
+                          })
+                        }
+                        className="h-4 w-4 rounded-sm text-teal-600 focus:ring-teal-500 cursor-pointer"
+                      />
+                      <span className="font-bold text-stone-800 dark:text-stone-200">
+                        🌙{' '}
+                        {lang === 'en'
+                          ? 'Evening reflection'
+                          : lang === 'ru'
+                          ? 'Вечерняя рефлексия'
+                          : 'Вечірня саморефлексія'}
+                      </span>
+                    </label>
+                    <div className="flex items-center gap-1.5 pl-6">
+                      <Clock className="h-3 w-3 text-stone-400" />
+                      <input
+                        type="time"
+                        value={telegramSettings.eveningTime || '21:00'}
+                        onChange={(e) =>
+                          setTelegramSettings({
+                            ...telegramSettings,
+                            eveningTime: e.target.value,
+                          })
+                        }
+                        className="rounded-md border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 px-2 py-0.5 text-xs text-stone-800 dark:text-stone-200"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Telegram Chat ID */}
+              <div className="space-y-1">
+                <label className="font-bold text-stone-800 dark:text-stone-200 block">
+                  {lang === 'en'
+                    ? 'Telegram Chat ID or @username'
+                    : lang === 'ru'
+                    ? 'Telegram Chat ID или @username'
+                    : 'Telegram Chat ID або @username'}{' '}
+                  *
+                </label>
+                <input
+                  type="text"
+                  placeholder={
+                    lang === 'en'
+                      ? 'e.g. 123456789 or @myusername'
+                      : 'наприклад: 123456789 або @mytelegram'
+                  }
+                  value={telegramSettings.telegramChatId || ''}
+                  onChange={(e) =>
+                    setTelegramSettings({ ...telegramSettings, telegramChatId: e.target.value })
+                  }
+                  className="w-full rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 px-3 py-2 text-xs text-stone-900 dark:text-stone-100 font-medium focus:border-teal-500 focus:outline-hidden"
+                />
+                <div className="rounded-lg bg-stone-100 dark:bg-stone-800/60 p-2.5 text-[11px] text-stone-600 dark:text-stone-400 space-y-1">
+                  <p className="font-semibold text-stone-700 dark:text-stone-300">
+                    💡{' '}
+                    {lang === 'en'
+                      ? 'How to get your Chat ID:'
+                      : lang === 'ru'
+                      ? 'Как узнать свой Chat ID:'
+                      : 'Як швидко дізнатися свій Chat ID:'}
+                  </p>
+                  <ol className="list-decimal pl-4 space-y-0.5">
+                    <li>
+                      {lang === 'en'
+                        ? 'Open @userinfobot in Telegram and press /start'
+                        : lang === 'ru'
+                        ? 'Откройте бота @userinfobot в Telegram и нажмите /start'
+                        : 'Відкрийте бота @userinfobot у Telegram і натисніть /start'}
+                    </li>
+                    <li>
+                      {lang === 'en'
+                        ? 'Copy the numeric "Id" and paste it into the field above'
+                        : lang === 'ru'
+                        ? 'Скопируйте числовой "Id" и вставьте в поле выше'
+                        : 'Скопіюйте числовий "Id" та вставте у поле вище'}
+                    </li>
+                  </ol>
+                </div>
+              </div>
+
+              {/* Bot Token (Optional) */}
+              <div className="space-y-1">
+                <label className="font-bold text-stone-800 dark:text-stone-200 block">
+                  {lang === 'en'
+                    ? 'Custom Bot Token (Optional)'
+                    : lang === 'ru'
+                    ? 'Токен бота от @BotFather (Опционально)'
+                    : 'Власний токен бота від @BotFather (Опціонально)'}
+                </label>
+                <input
+                  type="password"
+                  placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz..."
+                  value={telegramSettings.botToken || ''}
+                  onChange={(e) =>
+                    setTelegramSettings({ ...telegramSettings, botToken: e.target.value })
+                  }
+                  className="w-full rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 px-3 py-2 text-xs text-stone-900 dark:text-stone-100 focus:border-teal-500 focus:outline-hidden"
+                />
+                <span className="text-[10px] text-stone-400 block">
+                  {lang === 'en'
+                    ? 'Leave blank to use default application bot'
+                    : lang === 'ru'
+                    ? 'Оставьте пустым для использования бота по умолчанию'
+                    : 'Залиште порожнім, якщо використовується стандартний бот додатку'}
+                </span>
+              </div>
+
+              {/* Test Message Result */}
+              {testTelegramResult && (
+                <div
+                  className={`rounded-xl p-3 text-xs font-semibold flex items-center gap-2 ${
+                    testTelegramResult.type === 'success'
+                      ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                      : 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30'
+                  }`}
+                >
+                  {testTelegramResult.type === 'success' ? (
+                    <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                  )}
+                  <span>{testTelegramResult.message}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between gap-3 pt-3 border-t border-stone-100 dark:border-stone-800">
+              <button
+                type="button"
+                onClick={handleTestTelegramConnection}
+                disabled={isTestingTelegram}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 text-xs font-bold hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer disabled:opacity-50"
+              >
+                {isTestingTelegram ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <MessageCircle className="h-3.5 w-3.5 text-sky-500" />
+                )}
+                <span>
+                  {isTestingTelegram
+                    ? lang === 'en'
+                      ? 'Testing...'
+                      : lang === 'ru'
+                      ? 'Проверка...'
+                      : 'Тестую...'
+                    : lang === 'en'
+                    ? 'Test Connection'
+                    : lang === 'ru'
+                    ? 'Проверить связь'
+                    : 'Тестове повідомлення'}
+                </span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsTelegramModalOpen(false)}
+                  className="px-3.5 py-2 rounded-xl text-stone-600 dark:text-stone-400 text-xs font-medium hover:bg-stone-100 dark:hover:bg-stone-800 cursor-pointer"
+                >
+                  {lang === 'en' ? 'Cancel' : lang === 'ru' ? 'Отмена' : 'Скасувати'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveTelegramSettings}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
+                >
+                  {telegramSavedNotice ? (
+                    <Check className="h-3.5 w-3.5" />
+                  ) : (
+                    <BookmarkCheck className="h-3.5 w-3.5" />
+                  )}
+                  <span>
+                    {telegramSavedNotice
+                      ? lang === 'en'
+                        ? 'Saved!'
+                        : lang === 'ru'
+                        ? 'Сохранено!'
+                        : 'Збережено!'
+                      : lang === 'en'
+                      ? 'Save Settings'
+                      : lang === 'ru'
+                      ? 'Сохранить настройки'
+                      : 'Зберегти налаштування'}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Method Selector Tabs */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         {(Object.keys(METHODS_CONFIG) as ReflectionMethod[]).map((m) => {
@@ -538,7 +1486,7 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
       </div>
 
       {/* Main Form Fields depending on selectedMethod */}
-      <div className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5 sm:p-7 shadow-xs space-y-6">
+      <div id="reflection-main-form" className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 p-5 sm:p-7 shadow-xs space-y-6">
         {/* Method 1: Stoic Evening */}
         {selectedMethod === 'stoic_evening' && (
           <div className="space-y-5">
@@ -551,7 +1499,12 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
                     ? '1. Что сегодня сделано достойно, правильно и честно?'
                     : '1. Що сьогодні зроблено гідно, правильно і чесно?'}
                 </span>
-                <VoiceInputButton onTranscript={(txt) => setStoicDoneWell((p) => (p ? `${p} ${txt}` : txt))} />
+                <VoiceInputButton
+                  id="voice-input-stoic-well"
+                  currentValue={stoicDoneWell}
+                  onTranscript={(text) => setStoicDoneWell(text)}
+                  fieldLabel="Гідні вчинки"
+                />
               </label>
               <p className="text-[11px] text-stone-500">
                 {lang === 'en'
@@ -584,7 +1537,12 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
                     ? '2. Где я поддался(лась) слабости, автоматизму или лишним эмоциям?'
                     : '2. Де я піддався(лася) слабкості, автоматизму або зайвим емоціям?'}
                 </span>
-                <VoiceInputButton onTranscript={(txt) => setStoicFaltered((p) => (p ? `${p} ${txt}` : txt))} />
+                <VoiceInputButton
+                  id="voice-input-stoic-faltered"
+                  currentValue={stoicFaltered}
+                  onTranscript={(text) => setStoicFaltered(text)}
+                  fieldLabel="Слабкості та автоматизми"
+                />
               </label>
               <p className="text-[11px] text-stone-500">
                 {lang === 'en'
@@ -617,7 +1575,12 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
                     ? '3. Что завтра я сделаю мудрее, спокойнее и лучше?'
                     : '3. Що завтра я зроблю мудріше, спокійніше та краще?'}
                 </span>
-                <VoiceInputButton onTranscript={(txt) => setStoicTomorrowBetter((p) => (p ? `${p} ${txt}` : txt))} />
+                <VoiceInputButton
+                  id="voice-input-stoic-tomorrow"
+                  currentValue={stoicTomorrowBetter}
+                  onTranscript={(text) => setStoicTomorrowBetter(text)}
+                  fieldLabel="Мудрі дії завтра"
+                />
               </label>
               <p className="text-[11px] text-stone-500">
                 {lang === 'en'
@@ -655,7 +1618,12 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
                     ? '1. Описание события (Description): Что конкретно произошло?'
                     : '1. Опис події (Description): Що конкретно сталося?'}
                 </span>
-                <VoiceInputButton onTranscript={(txt) => setGibbsDescription((p) => (p ? `${p} ${txt}` : txt))} />
+                <VoiceInputButton
+                  id="voice-input-gibbs-desc"
+                  currentValue={gibbsDescription}
+                  onTranscript={(text) => setGibbsDescription(text)}
+                  fieldLabel="Опис події"
+                />
               </label>
               <textarea
                 value={gibbsDescription}
@@ -681,7 +1649,12 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
                     ? '2. Чувства и мысли (Feelings): Что я переживал(а)?'
                     : '2. Почуття та думки (Feelings): Що я переживав(ла)?'}
                 </span>
-                <VoiceInputButton onTranscript={(txt) => setGibbsFeelings((p) => (p ? `${p} ${txt}` : txt))} />
+                <VoiceInputButton
+                  id="voice-input-gibbs-feelings"
+                  currentValue={gibbsFeelings}
+                  onTranscript={(text) => setGibbsFeelings(text)}
+                  fieldLabel="Почуття та думки"
+                />
               </label>
               <textarea
                 value={gibbsFeelings}
@@ -700,12 +1673,20 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300">
-                  {lang === 'en'
-                    ? '3. Evaluation: What went well / poorly?'
-                    : lang === 'ru'
-                    ? '3. Оценка (Evaluation): Что было хорошо / плохо?'
-                    : '3. Оцінка (Evaluation): Що було добре/погано?'}
+                <label className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 flex items-center justify-between">
+                  <span>
+                    {lang === 'en'
+                      ? '3. Evaluation: What went well / poorly?'
+                      : lang === 'ru'
+                      ? '3. Оценка (Evaluation): Что было хорошо / плохо?'
+                      : '3. Оцінка (Evaluation): Що було добре/погано?'}
+                  </span>
+                  <VoiceInputButton
+                    id="voice-input-gibbs-eval"
+                    currentValue={gibbsEvaluation}
+                    onTranscript={(text) => setGibbsEvaluation(text)}
+                    fieldLabel="Оцінка"
+                  />
                 </label>
                 <textarea
                   value={gibbsEvaluation}
@@ -723,12 +1704,20 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300">
-                  {lang === 'en'
-                    ? '4. Analysis: Why did this happen?'
-                    : lang === 'ru'
-                    ? '4. Анализ (Analysis): Почему это произошло?'
-                    : '4. Аналіз (Analysis): Чому це сталося?'}
+                <label className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 flex items-center justify-between">
+                  <span>
+                    {lang === 'en'
+                      ? '4. Analysis: Why did this happen?'
+                      : lang === 'ru'
+                      ? '4. Анализ (Analysis): Почему это произошло?'
+                      : '4. Аналіз (Analysis): Чому це сталося?'}
+                  </span>
+                  <VoiceInputButton
+                    id="voice-input-gibbs-analysis"
+                    currentValue={gibbsAnalysis}
+                    onTranscript={(text) => setGibbsAnalysis(text)}
+                    fieldLabel="Аналіз"
+                  />
                 </label>
                 <textarea
                   value={gibbsAnalysis}
@@ -748,12 +1737,20 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300">
-                  {lang === 'en'
-                    ? '5. Conclusion: What did I learn?'
-                    : lang === 'ru'
-                    ? '5. Вывод (Conclusion): Чему это меня научило?'
-                    : '5. Висновок (Conclusion): Чого це мене навчило?'}
+                <label className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 flex items-center justify-between">
+                  <span>
+                    {lang === 'en'
+                      ? '5. Conclusion: What did I learn?'
+                      : lang === 'ru'
+                      ? '5. Вывод (Conclusion): Чему это меня научило?'
+                      : '5. Висновок (Conclusion): Чого це мене навчило?'}
+                  </span>
+                  <VoiceInputButton
+                    id="voice-input-gibbs-conclusion"
+                    currentValue={gibbsConclusion}
+                    onTranscript={(text) => setGibbsConclusion(text)}
+                    fieldLabel="Висновок"
+                  />
                 </label>
                 <textarea
                   value={gibbsConclusion}
@@ -771,12 +1768,20 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400">
-                  {lang === 'en'
-                    ? '6. Action Plan: What will I do next time?'
-                    : lang === 'ru'
-                    ? '6. План действий (Action Plan): Что сделаю в следующий раз?'
-                    : '6. План дій (Action Plan): Що зроблю наступного разу?'}
+                <label className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400 flex items-center justify-between">
+                  <span>
+                    {lang === 'en'
+                      ? '6. Action Plan: What will I do next time?'
+                      : lang === 'ru'
+                      ? '6. План действий (Action Plan): Что сделаю в следующий раз?'
+                      : '6. План дій (Action Plan): Що зроблю наступного разу?'}
+                  </span>
+                  <VoiceInputButton
+                    id="voice-input-gibbs-action"
+                    currentValue={gibbsActionPlan}
+                    onTranscript={(text) => setGibbsActionPlan(text)}
+                    fieldLabel="План дій"
+                  />
                 </label>
                 <textarea
                   value={gibbsActionPlan}
@@ -808,7 +1813,12 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
                     ? '1. Что произошло? (What?)'
                     : '1. Що сталося? (What?)'}
                 </span>
-                <VoiceInputButton onTranscript={(txt) => setWhatHappened((p) => (p ? `${p} ${txt}` : txt))} />
+                <VoiceInputButton
+                  id="voice-input-what"
+                  currentValue={whatHappened}
+                  onTranscript={(text) => setWhatHappened(text)}
+                  fieldLabel="Що сталося"
+                />
               </label>
               <textarea
                 value={whatHappened}
@@ -834,7 +1844,12 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
                     ? '2. Ну и что? Какое значение это имеет для меня? (So What?)'
                     : '2. Ну і що? Яке це має значення для мене? (So What?)'}
                 </span>
-                <VoiceInputButton onTranscript={(txt) => setSoWhatMeaning((p) => (p ? `${p} ${txt}` : txt))} />
+                <VoiceInputButton
+                  id="voice-input-so-what"
+                  currentValue={soWhatMeaning}
+                  onTranscript={(text) => setSoWhatMeaning(text)}
+                  fieldLabel="Ну і що"
+                />
               </label>
               <textarea
                 value={soWhatMeaning}
@@ -860,7 +1875,12 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
                     ? '3. Что теперь? Что я с этим сделаю? (Now What?)'
                     : '3. Що тепер? Що я з цим робитиму? (Now What?)'}
                 </span>
-                <VoiceInputButton onTranscript={(txt) => setNowWhatNextStep((p) => (p ? `${p} ${txt}` : txt))} />
+                <VoiceInputButton
+                  id="voice-input-now-what"
+                  currentValue={nowWhatNextStep}
+                  onTranscript={(text) => setNowWhatNextStep(text)}
+                  fieldLabel="Що тепер"
+                />
               </label>
               <textarea
                 value={nowWhatNextStep}
@@ -891,7 +1911,12 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
                     ? 'KEEP (Сохранить): Что работает отлично и стоит продолжать?'
                     : 'KEEP (Зберегти): Що працює класно і що варто продовжувати?'}
                 </span>
-                <VoiceInputButton onTranscript={(txt) => setKptKeep((p) => (p ? `${p} ${txt}` : txt))} />
+                <VoiceInputButton
+                  id="voice-input-kpt-keep"
+                  currentValue={kptKeep}
+                  onTranscript={(text) => setKptKeep(text)}
+                  fieldLabel="Keep Зберегти"
+                />
               </label>
               <textarea
                 value={kptKeep}
@@ -917,7 +1942,12 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
                     ? 'PROBLEM (Проблема): Где возникли трудности, срывы или слив ресурса?'
                     : 'PROBLEM (Проблема): Де виникли труднощі, зриви або злив ресурсу?'}
                 </span>
-                <VoiceInputButton onTranscript={(txt) => setKptProblem((p) => (p ? `${p} ${txt}` : txt))} />
+                <VoiceInputButton
+                  id="voice-input-kpt-problem"
+                  currentValue={kptProblem}
+                  onTranscript={(text) => setKptProblem(text)}
+                  fieldLabel="Problem Проблема"
+                />
               </label>
               <textarea
                 value={kptProblem}
@@ -943,7 +1973,12 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
                     ? 'TRY (Попробовать): Какой новый эксперимент или действие я протестирую?'
                     : 'TRY (Спробувати): Який новий експеримент чи дію я протестую?'}
                 </span>
-                <VoiceInputButton onTranscript={(txt) => setKptTry((p) => (p ? `${p} ${txt}` : txt))} />
+                <VoiceInputButton
+                  id="voice-input-kpt-try"
+                  currentValue={kptTry}
+                  onTranscript={(text) => setKptTry(text)}
+                  fieldLabel="Try Спробувати"
+                />
               </label>
               <textarea
                 value={kptTry}
@@ -974,7 +2009,12 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
                     ? '1. Победы дня (хотя бы одна мелочь):'
                     : '1. Перемоги дня (хоча б одна дрібниця):'}
                 </span>
-                <VoiceInputButton onTranscript={(txt) => setExpressWins((p) => (p ? `${p} ${txt}` : txt))} />
+                <VoiceInputButton
+                  id="voice-input-express-wins"
+                  currentValue={expressWins}
+                  onTranscript={(text) => setExpressWins(text)}
+                  fieldLabel="Перемоги дня"
+                />
               </label>
               <textarea
                 value={expressWins}
@@ -1000,7 +2040,12 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
                     ? '2. Трудности и преодоление:'
                     : '2. Труднощі та подолання:'}
                 </span>
-                <VoiceInputButton onTranscript={(txt) => setExpressDifficulties((p) => (p ? `${p} ${txt}` : txt))} />
+                <VoiceInputButton
+                  id="voice-input-express-diff"
+                  currentValue={expressDifficulties}
+                  onTranscript={(text) => setExpressDifficulties(text)}
+                  fieldLabel="Труднощі дня"
+                />
               </label>
               <textarea
                 value={expressDifficulties}
@@ -1026,7 +2071,12 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
                     ? '3. Благодарность себе и дню:'
                     : '3. Вдячність собі та дню:'}
                 </span>
-                <VoiceInputButton onTranscript={(txt) => setExpressGratitude((p) => (p ? `${p} ${txt}` : txt))} />
+                <VoiceInputButton
+                  id="voice-input-express-grat"
+                  currentValue={expressGratitude}
+                  onTranscript={(text) => setExpressGratitude(text)}
+                  fieldLabel="Вдячність"
+                />
               </label>
               <textarea
                 value={expressGratitude}

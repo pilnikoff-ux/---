@@ -529,7 +529,12 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
           <div className="md:col-span-2 space-y-1.5">
             <label className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 flex items-center justify-between">
               <span>{lang === 'en' ? 'Goal Title' : lang === 'ru' ? 'Название цели' : 'Назва цілі'} *</span>
-              <VoiceInputButton onTranscript={(txt) => setTitle((p) => (p ? `${p} ${txt}` : txt))} />
+              <VoiceInputButton
+                id="voice-input-smart-title"
+                currentValue={title}
+                onTranscript={(text) => setTitle(text)}
+                fieldLabel="Назва цілі"
+              />
             </label>
             <input
               type="text"
@@ -580,7 +585,12 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
                   ? 'S — Specific (Конкретная): Что именно должно произойти в физическом мире?'
                   : 'S — Specific (Конкретна): Що саме має відбутися у фізичному світі?'}
               </span>
-              <VoiceInputButton onTranscript={(txt) => setSpecific((p) => (p ? `${p} ${txt}` : txt))} />
+              <VoiceInputButton
+                id="voice-input-smart-specific"
+                currentValue={specific}
+                onTranscript={(text) => setSpecific(text)}
+                fieldLabel="Конкретна мета"
+              />
             </label>
             <textarea
               value={specific}
@@ -607,7 +617,12 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
                   ? 'M — Measurable (Измеримая): Какие метрики подтвердят 100% готовность?'
                   : 'M — Measurable (Вимірювана): Які конкретні метрики свідчитимуть про 100% готовність?'}
               </span>
-              <VoiceInputButton onTranscript={(txt) => setMeasurable((p) => (p ? `${p} ${txt}` : txt))} />
+              <VoiceInputButton
+                id="voice-input-smart-measurable"
+                currentValue={measurable}
+                onTranscript={(text) => setMeasurable(text)}
+                fieldLabel="Вимірюваність"
+              />
             </label>
             <textarea
               value={measurable}
@@ -635,7 +650,12 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
                     ? 'A — Achievable (Достижимая & Экологичная):'
                     : 'A — Achievable (Досяжна & Екологічна):'}
                 </span>
-                <VoiceInputButton onTranscript={(txt) => setAchievable((p) => (p ? `${p} ${txt}` : txt))} />
+                <VoiceInputButton
+                  id="voice-input-smart-achievable"
+                  currentValue={achievable}
+                  onTranscript={(text) => setAchievable(text)}
+                  fieldLabel="Досяжність"
+                />
               </label>
               <textarea
                 value={achievable}
@@ -661,7 +681,12 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
                     ? 'R — Relevant (Релевантная): Почему это важно сейчас?'
                     : 'R — Relevant (Релевантна): Чому це важливо зараз?'}
                 </span>
-                <VoiceInputButton onTranscript={(txt) => setRelevant((p) => (p ? `${p} ${txt}` : txt))} />
+                <VoiceInputButton
+                  id="voice-input-smart-relevant"
+                  currentValue={relevant}
+                  onTranscript={(text) => setRelevant(text)}
+                  fieldLabel="Релевантність цінностям"
+                />
               </label>
               <textarea
                 value={relevant}
@@ -689,7 +714,12 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
                   ? 'T — Time-bound (Промежуточные чекпоинты и сроки):'
                   : 'T — Time-bound (Проміжні чекпоїнти та час):'}
               </span>
-              <VoiceInputButton onTranscript={(txt) => setTimeBound((p) => (p ? `${p} ${txt}` : txt))} />
+              <VoiceInputButton
+                id="voice-input-smart-timebound"
+                currentValue={timeBound}
+                onTranscript={(text) => setTimeBound(text)}
+                fieldLabel="Часові рамки"
+              />
             </label>
             <input
               type="text"
@@ -782,7 +812,12 @@ export const SmartGoalsTool: React.FC<SmartGoalsProps> = ({
                   ? 'Правило 72 часов: Первое микро-действие'
                   : 'Правило 72 годин: Перша найпростіша мікро-дія'}
               </span>
-              <VoiceInputButton onTranscript={(txt) => setFirst72hStep((p) => (p ? `${p} ${txt}` : txt))} />
+              <VoiceInputButton
+                id="voice-input-smart-72h"
+                currentValue={first72hStep}
+                onTranscript={(text) => setFirst72hStep(text)}
+                fieldLabel="Перша дія 72 годин"
+              />
             </label>
             <p className="text-[11px] text-stone-500">
               {lang === 'en'

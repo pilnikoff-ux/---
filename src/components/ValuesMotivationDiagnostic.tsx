@@ -483,7 +483,9 @@ export const ValuesMotivationDiagnostic: React.FC<ValuesMotivationDiagnosticProp
                 : 'Опишіть поточний життєвий контекст або розвилку рішень (за бажанням):'}
             </span>
             <VoiceInputButton
-              onTranscript={(text) => setUserSituation((prev) => (prev ? `${prev} ${text}` : text))}
+              id="voice-input-val-situation"
+              currentValue={userSituation}
+              onTranscript={(text) => setUserSituation(text)}
               className="p-1"
             />
           </label>

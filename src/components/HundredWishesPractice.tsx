@@ -571,7 +571,12 @@ export const HundredWishesPractice: React.FC<HundredWishesProps> = ({
             className="w-full rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 px-4 py-3 text-sm text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:border-teal-500 focus:outline-hidden focus:ring-1 focus:ring-teal-500 pr-12"
           />
           <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-            <VoiceInputButton onTranscript={(txt) => setNewText((prev) => (prev ? `${prev} ${txt}` : txt))} />
+            <VoiceInputButton
+              id="voice-input-wish"
+              currentValue={newText}
+              onTranscript={(text) => setNewText(text)}
+              fieldLabel="Бажання"
+            />
           </div>
         </div>
 

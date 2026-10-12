@@ -331,6 +331,8 @@ export const BeliefPatterningTool: React.FC<BeliefPatterningToolProps> = ({ onSa
                 : 'Обмежуюче переконання для розбору:'}
             </label>
             <VoiceInputButton
+              id="voice-input-belief"
+              currentValue={limitingBelief}
               onTranscript={(text) => setLimitingBelief(text)}
               className="p-1"
             />
@@ -360,7 +362,9 @@ export const BeliefPatterningTool: React.FC<BeliefPatterningToolProps> = ({ onSa
                 : 'Контекст ситуації (за бажанням):'}
             </label>
             <VoiceInputButton
-              onTranscript={(text) => setContext((prev) => (prev ? `${prev} ${text}` : text))}
+              id="voice-input-belief-context"
+              currentValue={context}
+              onTranscript={(text) => setContext(text)}
               className="p-1"
             />
           </div>

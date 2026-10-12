@@ -2019,18 +2019,295 @@ app.post('/api/telemetry/user-registration', (req: Request, res: Response) => {
 // DEPRECATED EXPRESS SYNC
 // (Replaced by secure, authenticated Firebase Firestore)
 // ==========================================
-app.post('/api/sync/push', (req: Request, res: Response) => {
-  res.status(410).json({
-    success: false,
-    error: 'Файлова синхронізація знята з експлуатації для безпеки. Використовуйте Firebase Firestore.',
-  });
+// ==========================================
+// TELEGRAM NOTIFICATIONS & REFLECTION API
+// ==========================================
+
+// Endpoint: Send Reflection Message via Telegram Bot API
+app.post('/api/telegram/send-reflection', async (req: Request, res: Response) => {
+  try {
+    const { chatId, message, botToken, type = 'morning' } = req.body;
+
+    if (!chatId || !String(chatId).trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Вкажіть Telegram Chat ID або Username для надсилання сповіщення.',
+      });
+    }
+
+    if (!message || !String(message).trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Повідомлення для надсилання не може бути порожнім.',
+      });
+    }
+
+    // Use token from request or environment variable
+    const token = (botToken || process.env.TELEGRAM_BOT_TOKEN || '').trim();
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        error:
+          'Будь ласка, вкажіть токен Telegram-бота (Bot Token). Отримайте його безкоштовно за 1 хвилину в Telegram у @BotFather (команда /newbot).',
+        needsBotToken: true,
+      });
+    }
+
+    // Clean Chat ID
+    let targetChatId = String(chatId).trim();
+    if (!targetChatId.startsWith('@') && isNaN(Number(targetChatId))) {
+      // If user entered username without @, prepend it
+      targetChatId = `@${targetChatId}`;
+    }
+
+    const telegramApiUrl = `https://api.telegram.org/bot${token}/sendMessage`;
+
+    const response = await fetch(telegramApiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chat_id: targetChatId,
+        text: message,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+      }),
+    });
+
+    const data: any = await response.json();
+
+    if (!data.ok) {
+      let userFriendlyError = data.description || 'Помилка надсилання в Telegram';
+      if (userFriendlyError.includes('chat not found')) {
+        userFriendlyError =
+          'Чат не знайдено. Переконайтеся, що ви натиснули кнопку "Start" (/start) у вашому боті або що Chat ID вказано вірно.';
+      } else if (userFriendlyError.includes('Unauthorized') || userFriendlyError.includes('Not Found')) {
+        userFriendlyError = 'Невірний токен Telegram-бота. Перевірте токен від @BotFather.';
+      } else if (userFriendlyError.includes('bot was blocked by the user')) {
+        userFriendlyError = 'Бот заблокований користувачем. Розблокуйте бота у вашому Telegram.';
+      }
+
+      return res.status(400).json({
+        success: false,
+        error: userFriendlyError,
+        rawDescription: data.description,
+      });
+    }
+
+    return res.json({
+      success: true,
+      messageId: data.result?.message_id,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    console.error('Error sending Telegram reflection:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Не вдалося звʼязатися із сервером Telegram API. Перевірте зʼєднання з мережею.',
+    });
+  }
 });
 
-app.post('/api/sync/pull', (req: Request, res: Response) => {
-  res.status(410).json({
-    success: false,
-    error: 'Файлова синхронізація знята з експлуатації для безпеки. Використовуйте Firebase Firestore.',
-  });
+// Endpoint: AI Daily/Evening Reflection Prompt Generator
+app.post('/api/gemini/generate-reflection-prompt', async (req: Request, res: Response) => {
+  try {
+    const { type = 'morning', date, userName, lang = 'ua', moodOrTheme } = req.body;
+
+    const isMorning = type === 'morning';
+    const timeLabelUk = isMorning ? 'ранкової' : 'вечірньої';
+    const questionTitleUk = isMorning ? 'Питання дня' : 'Питання вечора';
+
+    const systemInstruction = `Ти — чуйний, теплий психолог-коуч та майстер саморефлексії.
+Твоє завдання — згенерувати надихаюче щоденне послання для ${timeLabelUk} саморефлексії.
+
+Послання СТРОГО повинно містити 5 обов'язкових компонентів:
+1. Привітання (вітання з днем тижня і поточною датою, наприклад "🌿 Доброго ранку! Неділя, 11 жовтня." або "🌙 Доброго вечора! Неділя, 11 жовтня.").
+2. ${questionTitleUk} (глибоке, щире коучингово-психологічне питання, яке спонукає зазирнути в себе, відчути свої бажання, живий інтерес, вдячність або ресурси, без самокритики чи осуду).
+3. Маленьке завдання (проста, заземлююча 5-10 хвилинна мікро-практика для задоволення, спостереження, творчості чи відновлення енергії).
+4. Нагадування дня (мудре психологічне нагадування, наприклад: "Не все корисне має бути продуктивним. Радість, цікавість і задоволення — теж важливі джерела енергії.").
+5. Побажання від ШІ (тепле, живе, підтримуюче фінальне побажання).
+
+Тон: турботливий, надихаючий, щирий, без кліше та менторського тону.
+Мова: ${lang === 'ru' ? 'російська' : lang === 'en' ? 'англійська' : 'українська'}.
+Поверни результат СТРОГО у валідному форматі JSON.`;
+
+    const prompt = `Згенеруй ${timeLabelUk} рефлексію для користувача ${userName || ''}.
+Поточна дата: ${date || 'Сьогодні'}.
+Контекстний стан: ${moodOrTheme || 'Пошук ясності та натхнення'}.`;
+
+    const response = await generateWithRetryAndFallback({
+      contents: prompt,
+      config: {
+        systemInstruction,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            greeting: {
+              type: Type.STRING,
+              description: 'Привітання з днем тижня та датою (наприклад "🌿 Доброго ранку! Неділя, 11 жовтня.")',
+            },
+            questionTitle: {
+              type: Type.STRING,
+              description: 'Заголовок питання (наприклад "Питання дня" або "Питання вечора")',
+            },
+            question: {
+              type: Type.STRING,
+              description: 'Глибоке надихаюче питання для саморефлексії',
+            },
+            microTask: {
+              type: Type.STRING,
+              description: 'Маленьке 10-хвилинне завдання для радості або усвідомленості',
+            },
+            reminder: {
+              type: Type.STRING,
+              description: 'Психологічне нагадування дня',
+            },
+            wishes: {
+              type: Type.STRING,
+              description: 'Тепле фінальне побажання від ШІ',
+            },
+            fullFormattedText: {
+              type: Type.STRING,
+              description: 'Повний відформатований текст для Telegram з емодзі',
+            },
+          },
+          required: [
+            'greeting',
+            'questionTitle',
+            'question',
+            'microTask',
+            'reminder',
+            'wishes',
+            'fullFormattedText',
+          ],
+        },
+      },
+    });
+
+    const parsed = JSON.parse(response.text || '{}');
+
+    // Ensure fullFormattedText has proper emoji formatting if model omitted it
+    if (!parsed.fullFormattedText || parsed.fullFormattedText.length < 20) {
+      parsed.fullFormattedText = `${parsed.greeting}
+
+💭 ${parsed.questionTitle}:
+${parsed.question}
+
+🎯 Маленьке завдання:
+${parsed.microTask}
+
+💚 Нагадування дня:
+${parsed.reminder}
+
+☀️ ${parsed.wishes}`;
+    }
+
+    return res.json({
+      success: true,
+      data: parsed,
+    });
+  } catch (error: any) {
+    console.error('Error generating reflection prompt:', error);
+    const fallbackDate = new Date().toLocaleDateString('uk-UA', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+    // Resilient fallback with classic beautiful Linetsky / psychological reflection
+    return res.json({
+      success: true,
+      data: {
+        greeting: `🌿 Доброго ранку! ${fallbackDate.charAt(0).toUpperCase() + fallbackDate.slice(1)}.`,
+        questionTitle: 'Питання дня',
+        question:
+          'Що останнім часом викликає в мене щиру цікавість і бажання діяти, навіть коли ніхто нічого від мене не очікує?',
+        microTask:
+          'Сьогодні приділи 10 хвилин тому, що тебе надихає: музиці, творчості, прогулянці або новому захопленню. Роби це не заради результату, а просто для задоволення. Після цього поміть, чи змінився твій настрій.',
+        reminder:
+          'Не все корисне має бути продуктивним. Радість, цікавість і задоволення — теж важливі джерела енергії.',
+        wishes: 'Нехай сьогодні знайдеться час не лише для справ, а й для життя!',
+        fullFormattedText: `🌿 Доброго ранку! ${fallbackDate.charAt(0).toUpperCase() + fallbackDate.slice(1)}.
+
+💭 Питання дня:
+Що останнім часом викликає в мене щиру цікавість і бажання діяти, навіть коли ніхто нічого від мене не очікує?
+
+🎯 Маленьке завдання:
+Сьогодні приділи 10 хвилин тому, що тебе надихає: музиці, творчості, прогулянці або новому захопленню.
+Роби це не заради результату, а просто для задоволення. Після цього поміть, чи змінився твій настрій.
+
+💚 Нагадування дня:
+Не все корисне має бути продуктивним. Радість, цікавість і задоволення — теж важливі джерела енергії.
+
+☀️ Нехай сьогодні знайдеться час не лише для справ, а й для життя!`,
+      },
+    });
+  }
+});
+
+// Endpoint: High-Fidelity Studio Neural TTS (Gemini Text-to-Speech)
+// Generates authentic, natural Ukrainian speech with perfect phonetics and zero German accent
+app.post('/api/tts', async (req: Request, res: Response) => {
+  try {
+    const { text, voice = 'Kore', lang = 'ua' } = req.body;
+    if (!text || typeof text !== 'string') {
+      return res.status(400).json({ error: 'Text is required for TTS' });
+    }
+
+    const trimmed = text.trim();
+    if (!trimmed) {
+      return res.status(400).json({ error: 'Text cannot be empty' });
+    }
+
+    // Limit text length to 4000 characters to prevent excessive generation latency
+    const cleanText = trimmed.slice(0, 4000);
+
+    const validVoices = ['Kore', 'Zephyr', 'Puck', 'Charon', 'Fenrir'];
+    const chosenVoice = validVoices.includes(voice) ? voice : 'Kore';
+
+    const ai = getAiClient();
+    const response = await ai.models.generateContent({
+      model: 'gemini-3.8-flash-lite-tts',
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: cleanText }],
+        },
+      ],
+      config: {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: chosenVoice },
+          },
+        },
+      },
+    });
+
+    const audioBase64 =
+      response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    const mimeType =
+      response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType || 'audio/wav';
+
+    if (!audioBase64) {
+      return res.status(500).json({ error: 'No audio returned from speech synthesis' });
+    }
+
+    return res.json({
+      success: true,
+      audioBase64,
+      mimeType,
+      voice: chosenVoice,
+    });
+  } catch (error: any) {
+    console.error('Error in /api/tts:', error);
+    return res.status(500).json({
+      success: false,
+      error: cleanErrorMessage(error),
+    });
+  }
 });
 
 async function setupServer() {

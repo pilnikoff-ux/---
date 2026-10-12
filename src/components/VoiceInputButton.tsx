@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Loader2 } from 'lucide-react';
+import { Mic, MicOff, AlertCircle } from 'lucide-react';
 import { useThemeLanguage } from '../context/ThemeLanguageContext';
 
 interface VoiceInputButtonProps {
@@ -29,16 +29,17 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
   className = '',
   compact = false,
 }) => {
-  const handleTranscript = (text: string) => {
-    if (onTranscript) onTranscript(text);
-    if (onVoiceInput) onVoiceInput(text);
-  };
   const { lang } = useThemeLanguage();
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const baseValueRef = useRef<string>('');
+
+  const handleTranscript = (text: string) => {
+    if (onTranscript) onTranscript(text);
+    if (onVoiceInput) onVoiceInput(text);
+  };
 
   useEffect(() => {
     const SpeechRecognition =
@@ -86,43 +87,45 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
+      recognition.maxAlternatives = 1;
       recognition.lang = lang === 'ru' ? 'ru-RU' : lang === 'en' ? 'en-US' : 'uk-UA';
 
-      // Store initial text so we can append spoken text seamlessly
-      baseValueRef.current = currentValue ? currentValue.trim() + ' ' : '';
-
-      let accumulatedFinal = '';
+      // Capture the base text at the exact moment recording begins
+      baseValueRef.current = (currentValue || '').trim();
 
       recognition.onstart = () => {
         setIsListening(true);
       };
 
       recognition.onresult = (event: any) => {
+        let finalTranscript = '';
         let interimTranscript = '';
-        let newFinalTranscript = '';
 
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            newFinalTranscript += transcript + ' ';
-          } else {
-            interimTranscript += transcript;
+        // Iterate cleanly through all results of this session from 0 to length - 1.
+        // This avoids event.resultIndex discrepancies across browser engines (WebKit vs Chromium)
+        // and guarantees we never repeat or duplicate words 10 times.
+        for (let i = 0; i < event.results.length; ++i) {
+          const result = event.results[i];
+          if (result && result[0]) {
+            const chunk = result[0].transcript;
+            if (result.isFinal) {
+              finalTranscript += chunk + ' ';
+            } else {
+              interimTranscript += chunk;
+            }
           }
         }
 
-        if (newFinalTranscript) {
-          accumulatedFinal += newFinalTranscript;
-        }
-
-        const combinedSpoken = (accumulatedFinal + interimTranscript).trim();
-        if (combinedSpoken) {
-          const finalCombinedText = baseValueRef.current + combinedSpoken;
-          handleTranscript(finalCombinedText);
+        const sessionSpoken = (finalTranscript + interimTranscript).trim();
+        if (sessionSpoken) {
+          const base = baseValueRef.current;
+          const combined = base ? `${base} ${sessionSpoken}` : sessionSpoken;
+          handleTranscript(combined);
         }
       };
 
       recognition.onerror = (event: any) => {
-        console.warn('Speech recognition error:', event.error);
+        console.warn('Speech recognition event error:', event.error);
         if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
           setErrorMessage(
             lang === 'ru'
@@ -132,14 +135,22 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
               : 'Доступ до мікрофону заблоковано. Будь ласка, надайте дозвіл у браузері.'
           );
         } else if (event.error === 'no-speech') {
-          // quiet
+          // Normal timeout if user was silent, ignore
+        } else if (event.error === 'network') {
+          setErrorMessage(
+            lang === 'ru'
+              ? 'Ошибка сети голосового ввода.'
+              : lang === 'en'
+              ? 'Voice recognition network error.'
+              : 'Помилка мережі розпізнавання голосу.'
+          );
         } else {
           setErrorMessage(
             lang === 'ru'
-              ? `Ошибка распознавания: ${event.error}`
+              ? `Статус распознавания: ${event.error}`
               : lang === 'en'
-              ? `Voice input note: ${event.error}`
-              : `Помилка розпізнавання: ${event.error}`
+              ? `Recognition note: ${event.error}`
+              : `Статус розпізнавання: ${event.error}`
           );
         }
         stopListening();
@@ -164,7 +175,9 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
     }
   };
 
-  const toggleListening = () => {
+  const toggleListening = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (isListening) {
       stopListening();
     } else {
@@ -243,7 +256,8 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
       {/* Temporary error toast or inline warning */}
       {errorMessage && (
         <div className="absolute top-full right-0 mt-1 z-30 flex items-center gap-1.5 rounded-lg border border-rose-500/40 bg-rose-50 dark:bg-rose-950 px-2.5 py-1.5 text-[11px] text-rose-700 dark:text-rose-200 shadow-md whitespace-nowrap">
-          <span>⚠️ {errorMessage}</span>
+          <AlertCircle className="h-3.5 w-3.5 text-rose-500 shrink-0" />
+          <span>{errorMessage}</span>
           <button
             type="button"
             onClick={() => setErrorMessage(null)}

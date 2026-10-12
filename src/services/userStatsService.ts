@@ -1,5 +1,5 @@
-import { UserProfile, UserActivityLog, UserFeedback, SelfLearningSettings } from '../types';
-export type { SelfLearningSettings };
+import { UserProfile, UserActivityLog, UserFeedback, SelfLearningSettings, TelegramReflectionSettings } from '../types';
+export type { SelfLearningSettings, TelegramReflectionSettings };
 
 const USER_PROFILE_KEY = 'psych_nav_user_profile_v1';
 const AUTH_DISMISSED_KEY = 'psych_nav_auth_dismissed_v1';
@@ -418,6 +418,43 @@ export function updateSelfLearningSettings(feedbacks: UserFeedback[]): SelfLearn
   }
 
   return updated;
+}
+
+// Telegram Self-Reflection Notification Settings
+export function getTelegramSettings(user?: UserProfile | null): TelegramReflectionSettings {
+  const profile = user || getUserProfile();
+  if (profile?.telegramSettings) {
+    return profile.telegramSettings;
+  }
+  return {
+    enabled: false,
+    telegramUsername: '',
+    telegramChatId: '',
+    morningEnabled: true,
+    morningTime: '08:00',
+    eveningEnabled: true,
+    eveningTime: '21:00',
+  };
+}
+
+export function updateTelegramSettings(settings: Partial<TelegramReflectionSettings>): UserProfile | null {
+  const profile = getUserProfile();
+  if (!profile) return null;
+
+  const currentSettings = getTelegramSettings(profile);
+  const updatedSettings: TelegramReflectionSettings = {
+    ...currentSettings,
+    ...settings,
+  };
+
+  const updatedProfile: UserProfile = {
+    ...profile,
+    telegramSettings: updatedSettings,
+    lastActiveAt: new Date().toISOString(),
+  };
+
+  saveUserProfile(updatedProfile);
+  return updatedProfile;
 }
 
 // Aliases for component convenience

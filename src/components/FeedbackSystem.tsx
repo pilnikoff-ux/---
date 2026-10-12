@@ -365,7 +365,9 @@ export const FeedbackSystem: React.FC = () => {
                     : 'Ваш детальний коментар:'}
                 </label>
                 <VoiceInputButton
-                  onTranscript={(text) => setComment((prev) => (prev ? `${prev} ${text}` : text))}
+                  id="voice-input-feedback-comment"
+                  currentValue={comment}
+                  onTranscript={(text) => setComment(text)}
                   className="p-1"
                 />
               </div>

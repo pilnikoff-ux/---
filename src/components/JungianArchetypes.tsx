@@ -551,7 +551,9 @@ export const JungianArchetypes: React.FC<JungianArchetypesProps> = ({ onSavedToJ
                     : 'Ваш поточний запит або дилема (за бажанням):'}
                 </span>
                 <VoiceInputButton
-                  onTranscript={(text) => setUserContext((prev) => (prev ? `${prev} ${text}` : text))}
+                  id="voice-input-jung-context"
+                  currentValue={userContext}
+                  onTranscript={(text) => setUserContext(text)}
                   className="p-1"
                 />
               </label>

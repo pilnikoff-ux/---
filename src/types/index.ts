@@ -403,6 +403,32 @@ export interface DailyAffirmationItem {
   isAiGenerated?: boolean;
 }
 
+export interface TelegramReflectionSettings {
+  enabled: boolean;
+  telegramUsername?: string; // e.g. @username or username
+  telegramChatId?: string; // Numeric Chat ID (e.g. 123456789)
+  morningEnabled: boolean; // ☀️ Ранкова саморефлексія
+  morningTime?: string; // e.g. "08:00"
+  eveningEnabled: boolean; // 🌙 Вечірня саморефлексія
+  eveningTime?: string; // e.g. "21:00"
+  botToken?: string; // Optional custom bot token from @BotFather
+  lastSentMorningDate?: string; // YYYY-MM-DD
+  lastSentEveningDate?: string; // YYYY-MM-DD
+}
+
+export interface AiReflectionPrompt {
+  id?: string;
+  type: 'morning' | 'evening';
+  greeting: string; // e.g. "🌿 Доброго ранку! Неділя, 11 жовтня."
+  questionTitle: string; // "Питання дня" / "Питання вечора"
+  question: string; // "Що останнім часом викликає в мене щиру цікавість..."
+  microTask: string; // "Сьогодні приділи 10 хвилин тому, що тебе надихає..."
+  reminder: string; // "Не все корисне має бути продуктивним..."
+  wishes: string; // "Нехай сьогодні знайдеться час не лише для справ, а й для життя!"
+  fullFormattedText: string;
+  createdAt: string;
+}
+
 export interface UserProfile {
   id: string;
   login: string;
@@ -417,6 +443,7 @@ export interface UserProfile {
   registeredAt: string;
   lastLoginAt?: string;
   lastActiveAt?: string;
+  telegramSettings?: TelegramReflectionSettings;
 }
 
 export interface UserActivityLog {
