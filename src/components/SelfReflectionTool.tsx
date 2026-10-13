@@ -1194,20 +1194,25 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
 
               {/* Telegram Chat ID */}
               <div className="space-y-1">
-                <label className="font-bold text-stone-800 dark:text-stone-200 block">
-                  {lang === 'en'
-                    ? 'Telegram Chat ID or @username'
-                    : lang === 'ru'
-                    ? 'Telegram Chat ID или @username'
-                    : 'Telegram Chat ID або @username'}{' '}
-                  *
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-stone-800 dark:text-stone-200 block">
+                    {lang === 'en'
+                      ? 'Your Personal Telegram Chat ID'
+                      : lang === 'ru'
+                      ? 'Ваш личный Telegram Chat ID'
+                      : 'Ваш особистий Telegram Chat ID (Отримувач)'}{' '}
+                    *
+                  </label>
+                  <span className="text-[10px] text-teal-650 dark:text-teal-400 font-semibold">
+                    {lang === 'en' ? 'Your account, NOT the bot' : 'ID вашого акаунту, НЕ бота'}
+                  </span>
+                </div>
                 <input
                   type="text"
                   placeholder={
                     lang === 'en'
-                      ? 'e.g. 123456789 or @myusername'
-                      : 'наприклад: 123456789 або @mytelegram'
+                      ? 'e.g. 123456789'
+                      : 'наприклад: 123456789'
                   }
                   value={telegramSettings.telegramChatId || ''}
                   onChange={(e) =>
@@ -1215,43 +1220,49 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
                   }
                   className="w-full rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 px-3 py-2 text-xs text-stone-900 dark:text-stone-100 font-medium focus:border-teal-500 focus:outline-hidden"
                 />
-                <div className="rounded-lg bg-stone-100 dark:bg-stone-800/60 p-2.5 text-[11px] text-stone-600 dark:text-stone-400 space-y-1">
-                  <p className="font-semibold text-stone-700 dark:text-stone-300">
+                <div className="rounded-lg bg-teal-50/60 dark:bg-teal-950/30 border border-teal-500/20 p-2.5 text-[11px] text-stone-600 dark:text-stone-300 space-y-1">
+                  <p className="font-semibold text-teal-800 dark:text-teal-200">
                     💡{' '}
                     {lang === 'en'
-                      ? 'How to get your Chat ID:'
+                      ? 'How to get your personal Chat ID in 5 seconds:'
                       : lang === 'ru'
-                      ? 'Как узнать свой Chat ID:'
-                      : 'Як швидко дізнатися свій Chat ID:'}
+                      ? 'Как узнать свой личный Chat ID за 5 секунд:'
+                      : 'Як дізнатися свій особистий Chat ID за 5 секунд:'}
                   </p>
-                  <ol className="list-decimal pl-4 space-y-0.5">
+                  <ol className="list-decimal pl-4 space-y-0.5 text-stone-600 dark:text-stone-400">
                     <li>
                       {lang === 'en'
                         ? 'Open @userinfobot in Telegram and press /start'
                         : lang === 'ru'
                         ? 'Откройте бота @userinfobot в Telegram и нажмите /start'
-                        : 'Відкрийте бота @userinfobot у Telegram і натисніть /start'}
+                        : 'Відкрийте в Telegram бота @userinfobot і натисніть кнопку Start (/start)'}
                     </li>
                     <li>
                       {lang === 'en'
-                        ? 'Copy the numeric "Id" and paste it into the field above'
+                        ? 'Copy the numeric "Id" (e.g. 123456789) and paste it into this field'
                         : lang === 'ru'
-                        ? 'Скопируйте числовой "Id" и вставьте в поле выше'
-                        : 'Скопіюйте числовий "Id" та вставте у поле вище'}
+                        ? 'Скопируйте числовой "Id" (например 123456789) и вставьте в это поле'
+                        : 'Скопіюйте числове поле "Id" (наприклад 123456789) та вставте сюди'}
                     </li>
                   </ol>
                 </div>
               </div>
 
-              {/* Bot Token (Optional) */}
+              {/* Bot Token */}
               <div className="space-y-1">
-                <label className="font-bold text-stone-800 dark:text-stone-200 block">
-                  {lang === 'en'
-                    ? 'Custom Bot Token (Optional)'
-                    : lang === 'ru'
-                    ? 'Токен бота от @BotFather (Опционально)'
-                    : 'Власний токен бота від @BotFather (Опціонально)'}
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-stone-800 dark:text-stone-200 block">
+                    {lang === 'en'
+                      ? 'Bot Token from @BotFather'
+                      : lang === 'ru'
+                      ? 'Токен бота от @BotFather (Отправитель)'
+                      : 'Токен бота від @BotFather (Відправник)'}{' '}
+                    *
+                  </label>
+                  <span className="text-[10px] text-stone-500">
+                    {lang === 'en' ? 'Key from @BotFather' : 'Ключ бота'}
+                  </span>
+                </div>
                 <input
                   type="password"
                   placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz..."
@@ -1261,13 +1272,18 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
                   }
                   className="w-full rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-950 px-3 py-2 text-xs text-stone-900 dark:text-stone-100 focus:border-teal-500 focus:outline-hidden"
                 />
-                <span className="text-[10px] text-stone-400 block">
-                  {lang === 'en'
-                    ? 'Leave blank to use default application bot'
-                    : lang === 'ru'
-                    ? 'Оставьте пустым для использования бота по умолчанию'
-                    : 'Залиште порожнім, якщо використовується стандартний бот додатку'}
-                </span>
+                <div className="rounded-lg bg-amber-500/10 border border-amber-500/25 p-2.5 text-[11px] text-amber-900 dark:text-amber-200 space-y-1">
+                  <p className="font-semibold text-amber-800 dark:text-amber-300">
+                    ⚠️ {lang === 'en' ? 'Important step:' : 'Важливо після створення бота:'}
+                  </p>
+                  <p className="text-stone-600 dark:text-stone-300">
+                    {lang === 'en'
+                      ? 'After creating a bot in @BotFather, be sure to open your new bot in Telegram and press "Start" (/start), otherwise Telegram will not allow it to message you.'
+                      : lang === 'ru'
+                      ? 'После создания бота в @BotFather обязательно найдите своего бота в Telegram и нажмите «Старт» (/start), иначе Telegram запретит боту писать вам.'
+                      : 'Після створення бота в @BotFather обов’язково знайдіть свого створеного бота в Telegram і натисніть «Розпочати» (/start), інакше Telegram забороняє ботам писати першими.'}
+                  </p>
+                </div>
               </div>
 
               {/* Test Message Result */}
