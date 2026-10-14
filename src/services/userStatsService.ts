@@ -7,6 +7,7 @@ const PROFILE_DRAFT_KEY = 'psych_nav_profile_draft_v1';
 const ACTIVITY_LOGS_KEY = 'psych_nav_activity_logs_v1';
 const FEEDBACKS_KEY = 'psych_nav_feedbacks_v1';
 const SELF_LEARNING_SETTINGS_KEY = 'psych_nav_self_learning_rules_v1';
+const TELEGRAM_SETTINGS_KEY = 'psych_nav_telegram_settings_v1';
 
 // Default Anonymous Guest Profile if not registered
 const DEFAULT_GUEST_PROFILE: UserProfile = {
@@ -121,8 +122,13 @@ export function saveUserProfile(profileData: {
   birthDate?: string;
   dateOfBirth?: string;
   fieldOfActivity?: string;
+  telegramSettings?: TelegramReflectionSettings;
 }): UserProfile {
   const existing = getUserProfile();
+  const directStoredTelegram = getStoredTelegramSettings();
+  const mergedTelegram =
+    profileData.telegramSettings || existing?.telegramSettings || directStoredTelegram || undefined;
+
   const profile: UserProfile = {
     id: profileData.id || existing?.id || `user_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
     login: profileData.login.trim(),
@@ -134,6 +140,7 @@ export function saveUserProfile(profileData: {
     birthDate: profileData.birthDate || profileData.dateOfBirth || existing?.birthDate,
     dateOfBirth: profileData.dateOfBirth || profileData.birthDate || existing?.dateOfBirth,
     fieldOfActivity: profileData.fieldOfActivity?.trim() || existing?.fieldOfActivity,
+    telegramSettings: mergedTelegram,
     registeredAt: existing?.registeredAt || new Date().toISOString(),
     lastLoginAt: new Date().toISOString(),
     lastActiveAt: new Date().toISOString(),
@@ -421,11 +428,43 @@ export function updateSelfLearningSettings(feedbacks: UserFeedback[]): SelfLearn
 }
 
 // Telegram Self-Reflection Notification Settings
+export function getStoredTelegramSettings(): TelegramReflectionSettings | null {
+  try {
+    const raw = localStorage.getItem(TELEGRAM_SETTINGS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveStoredTelegramSettings(settings: TelegramReflectionSettings): void {
+  try {
+    localStorage.setItem(TELEGRAM_SETTINGS_KEY, JSON.stringify(settings));
+  } catch (e) {
+    console.error('Failed to save direct telegram settings', e);
+  }
+}
+
 export function getTelegramSettings(user?: UserProfile | null): TelegramReflectionSettings {
   const profile = user || getUserProfile();
-  if (profile?.telegramSettings) {
-    return profile.telegramSettings;
+  const stored = getStoredTelegramSettings();
+
+  // Merge direct stored settings and profile settings
+  if (stored || profile?.telegramSettings) {
+    return {
+      enabled: stored?.enabled ?? profile?.telegramSettings?.enabled ?? false,
+      telegramUsername: stored?.telegramUsername || profile?.telegramSettings?.telegramUsername || '',
+      telegramChatId: stored?.telegramChatId || profile?.telegramSettings?.telegramChatId || '',
+      morningEnabled: stored?.morningEnabled ?? profile?.telegramSettings?.morningEnabled ?? true,
+      morningTime: stored?.morningTime || profile?.telegramSettings?.morningTime || '08:00',
+      eveningEnabled: stored?.eveningEnabled ?? profile?.telegramSettings?.eveningEnabled ?? true,
+      eveningTime: stored?.eveningTime || profile?.telegramSettings?.eveningTime || '21:00',
+      botToken: stored?.botToken || profile?.telegramSettings?.botToken || '',
+      lastSentMorningDate: stored?.lastSentMorningDate || profile?.telegramSettings?.lastSentMorningDate,
+      lastSentEveningDate: stored?.lastSentEveningDate || profile?.telegramSettings?.lastSentEveningDate,
+    };
   }
+
   return {
     enabled: false,
     telegramUsername: '',
@@ -434,27 +473,33 @@ export function getTelegramSettings(user?: UserProfile | null): TelegramReflecti
     morningTime: '08:00',
     eveningEnabled: true,
     eveningTime: '21:00',
+    botToken: '',
   };
 }
 
 export function updateTelegramSettings(settings: Partial<TelegramReflectionSettings>): UserProfile | null {
   const profile = getUserProfile();
-  if (!profile) return null;
-
   const currentSettings = getTelegramSettings(profile);
   const updatedSettings: TelegramReflectionSettings = {
     ...currentSettings,
     ...settings,
   };
 
-  const updatedProfile: UserProfile = {
-    ...profile,
-    telegramSettings: updatedSettings,
-    lastActiveAt: new Date().toISOString(),
-  };
+  // 1. Always save to dedicated localStorage key so it survives profile recreation or guest mode
+  saveStoredTelegramSettings(updatedSettings);
 
-  saveUserProfile(updatedProfile);
-  return updatedProfile;
+  // 2. Also save into profile and trigger saveUserProfile
+  if (profile) {
+    const updatedProfile: UserProfile = {
+      ...profile,
+      telegramSettings: updatedSettings,
+      lastActiveAt: new Date().toISOString(),
+    };
+    saveUserProfile(updatedProfile);
+    return updatedProfile;
+  }
+
+  return null;
 }
 
 // Aliases for component convenience

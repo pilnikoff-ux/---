@@ -14,6 +14,21 @@
         "fieldOfActivity": { "type": "string", "maxLength": 150 },
         "authProvider": { "type": "string", "enum": ["google", "local"] },
         "avatarUrl": { "type": "string", "maxLength": 1000 },
+        "telegramSettings": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "telegramUsername": { "type": "string" },
+            "telegramChatId": { "type": "string" },
+            "morningEnabled": { "type": "boolean" },
+            "morningTime": { "type": "string" },
+            "eveningEnabled": { "type": "boolean" },
+            "eveningTime": { "type": "string" },
+            "botToken": { "type": "string" },
+            "lastSentMorningDate": { "type": "string" },
+            "lastSentEveningDate": { "type": "string" }
+          }
+        },
         "registeredAt": { "type": "string", "maxLength": 100 },
         "updatedAt": { "type": "string", "maxLength": 100 }
       },

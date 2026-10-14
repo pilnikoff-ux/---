@@ -27,7 +27,8 @@ service cloud.firestore {
         && (!('dateOfBirth' in data) || (data.dateOfBirth is string && data.dateOfBirth.size() <= 50))
         && (!('fieldOfActivity' in data) || (data.fieldOfActivity is string && data.fieldOfActivity.size() <= 150))
         && (!('authProvider' in data) || (data.authProvider in ['google', 'local']))
-        && (!('avatarUrl' in data) || (data.avatarUrl is string && data.avatarUrl.size() <= 1000));
+        && (!('avatarUrl' in data) || (data.avatarUrl is string && data.avatarUrl.size() <= 1000))
+        && (!('telegramSettings' in data) || data.telegramSettings is map);
     }
 
     function isValidJournalEntry(data, userId) {

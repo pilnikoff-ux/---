@@ -44,6 +44,7 @@ import {
   getTelegramSettings,
   updateTelegramSettings,
 } from '../services/userStatsService';
+import { syncTelegramSettingsToFirestore } from '../services/firestoreSyncService';
 import { saveJournalEntry } from '../services/storageService';
 import { requestSelfReflectionFeedback } from '../services/geminiService';
 import {
@@ -224,6 +225,12 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
     const settings = getTelegramSettings();
     setTelegramSettings(settings);
 
+    // When cloud sync finishes on login, refresh telegram settings if restored from Firestore
+    const handleCloudSync = () => {
+      setTelegramSettings(getTelegramSettings());
+    };
+    window.addEventListener('journal_cloud_synced', handleCloudSync);
+
     // Initial fetch of prompt
     loadPrompt(promptType);
 
@@ -236,8 +243,17 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
 
     return () => {
       stopSpeaking();
+      window.removeEventListener('journal_cloud_synced', handleCloudSync);
     };
   }, []);
+
+  const handleOpenTelegramModal = () => {
+    // Always refresh latest persisted settings before displaying modal
+    const freshSettings = getTelegramSettings();
+    setTelegramSettings(freshSettings);
+    setTestTelegramResult(null);
+    setIsTelegramModalOpen(true);
+  };
 
   const handleToggleSpeakPrompt = () => {
     if (isSpeakingPrompt) {
@@ -282,7 +298,7 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
     ).trim();
 
     if (!targetChat) {
-      setIsTelegramModalOpen(true);
+      handleOpenTelegramModal();
       setTelegramStatus({
         type: 'error',
         message:
@@ -353,11 +369,15 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
     }
   };
 
-  const handleSaveTelegramSettings = () => {
+  const handleSaveTelegramSettings = async () => {
+    // 1. Save to dedicated local storage and UserProfile
     const updated = updateTelegramSettings(telegramSettings);
     if (updated?.telegramSettings) {
       setTelegramSettings(updated.telegramSettings);
     }
+    // 2. Sync to cloud Firestore document
+    await syncTelegramSettingsToFirestore(telegramSettings);
+
     setTelegramSavedNotice(true);
     setTimeout(() => {
       setTelegramSavedNotice(false);
@@ -394,14 +414,18 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
     setIsTestingTelegram(false);
 
     if (res.success) {
+      // Auto-save verified configuration so user never loses working credentials
+      updateTelegramSettings(telegramSettings);
+      syncTelegramSettingsToFirestore(telegramSettings);
+
       setTestTelegramResult({
         type: 'success',
         message:
           lang === 'en'
-            ? '✓ Test message delivered to your Telegram!'
+            ? '✓ Test message delivered & settings saved!'
             : lang === 'ru'
-            ? '✓ Тестовое сообщение доставлено в ваш Telegram!'
-            : '✓ Тестове повідомлення успішно доставлено у ваш Telegram!',
+            ? '✓ Тестовое сообщение доставлено и настройки сохранены!'
+            : '✓ Тестове повідомлення доставлено та налаштування збережено!',
       });
     } else {
       setTestTelegramResult({
@@ -533,7 +557,7 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
             <button
               id="reflection-telegram-btn"
               type="button"
-              onClick={() => setIsTelegramModalOpen(true)}
+              onClick={handleOpenTelegramModal}
               className="flex items-center gap-1.5 rounded-xl border border-sky-400/40 bg-sky-50 dark:bg-sky-950/40 px-3 py-2 text-xs font-semibold text-sky-800 dark:text-sky-300 transition hover:bg-sky-100 dark:hover:bg-sky-900/40 shadow-xs cursor-pointer"
             >
               <Send className="h-3.5 w-3.5 text-sky-500" />
@@ -749,7 +773,7 @@ export const SelfReflectionTool: React.FC<SelfReflectionProps> = ({ onSavedToJou
             {/* Telegram Link Status Badge & Modal Trigger */}
             <button
               type="button"
-              onClick={() => setIsTelegramModalOpen(true)}
+              onClick={handleOpenTelegramModal}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition cursor-pointer ${
                 telegramSettings.enabled &&
                 (telegramSettings.telegramChatId || telegramSettings.telegramUsername)

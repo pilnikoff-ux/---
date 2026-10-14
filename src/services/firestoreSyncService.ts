@@ -13,8 +13,13 @@ import {
   collection,
   FirebaseUser,
 } from './firebase';
-import { JournalEntry, UserProfile } from '../types';
-import { getUserProfile, saveUserProfile } from './userStatsService';
+import { JournalEntry, UserProfile, TelegramReflectionSettings } from '../types';
+import {
+  getUserProfile,
+  saveUserProfile,
+  getTelegramSettings,
+  saveStoredTelegramSettings,
+} from './userStatsService';
 import { getJournalEntries, saveJournalEntriesDirectly } from './storageService';
 
 export interface FirestoreSyncStatus {
@@ -64,24 +69,44 @@ export function initFirebaseAuth(onUserChange?: (user: FirebaseUser | null) => v
       try {
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         const existingProfile = getUserProfile();
+        const localTelegramSettings = getTelegramSettings(existingProfile);
+
+        // Fetch remote profile from Firestore to restore settings if they exist in cloud
+        const userDocSnap = await getDoc(userDocRef);
+        const remoteData = userDocSnap.exists() ? (userDocSnap.data() as UserProfile) : null;
+
+        // Smart merge: if local has custom data, preserve it; otherwise restore remote cloud data
+        const remoteTelegram = remoteData?.telegramSettings;
+        const localHasData = !!(localTelegramSettings?.telegramChatId || localTelegramSettings?.botToken);
+        const remoteHasData = !!(remoteTelegram?.telegramChatId || remoteTelegram?.botToken);
+
+        const mergedTelegramSettings = localHasData
+          ? { ...remoteTelegram, ...localTelegramSettings }
+          : remoteHasData
+          ? remoteTelegram
+          : localTelegramSettings;
 
         const profileData: UserProfile = {
           id: firebaseUser.uid,
-          login: existingProfile?.login || firebaseUser.email?.split('@')[0] || 'user',
-          fullName: firebaseUser.displayName || existingProfile?.fullName || existingProfile?.name || 'Користувач',
-          name: firebaseUser.displayName || existingProfile?.name || 'Користувач',
-          email: firebaseUser.email || existingProfile?.email || '',
-          avatarUrl: firebaseUser.photoURL || existingProfile?.avatarUrl || '',
+          login: remoteData?.login || existingProfile?.login || firebaseUser.email?.split('@')[0] || 'user',
+          fullName: firebaseUser.displayName || remoteData?.fullName || existingProfile?.fullName || existingProfile?.name || 'Користувач',
+          name: firebaseUser.displayName || remoteData?.name || existingProfile?.name || 'Користувач',
+          email: firebaseUser.email || remoteData?.email || existingProfile?.email || '',
+          avatarUrl: firebaseUser.photoURL || remoteData?.avatarUrl || existingProfile?.avatarUrl || '',
           authProvider: 'google',
-          dateOfBirth: existingProfile?.dateOfBirth || '',
-          fieldOfActivity: existingProfile?.fieldOfActivity || '',
-          registeredAt: existingProfile?.registeredAt || new Date().toISOString(),
+          dateOfBirth: remoteData?.dateOfBirth || existingProfile?.dateOfBirth || '',
+          fieldOfActivity: remoteData?.fieldOfActivity || existingProfile?.fieldOfActivity || '',
+          telegramSettings: mergedTelegramSettings,
+          registeredAt: remoteData?.registeredAt || existingProfile?.registeredAt || new Date().toISOString(),
           lastLoginAt: new Date().toISOString(),
           lastActiveAt: new Date().toISOString(),
         };
 
         await setDoc(userDocRef, profileData, { merge: true });
         saveUserProfile(profileData);
+        if (mergedTelegramSettings) {
+          saveStoredTelegramSettings(mergedTelegramSettings);
+        }
 
         // Perform initial sync of journal entries
         await syncFirestoreJournal(firebaseUser.uid);
@@ -267,5 +292,31 @@ export async function deleteEntryFromFirestore(entryId: string): Promise<void> {
     notifyStatus();
   } catch (err) {
     console.warn('Firestore delete error:', err);
+  }
+}
+
+/**
+ * Persist Telegram Settings to user's Firestore document
+ */
+export async function syncTelegramSettingsToFirestore(
+  settings: TelegramReflectionSettings
+): Promise<boolean> {
+  const currentUser = auth.currentUser;
+  if (!currentUser) return false;
+
+  try {
+    const userDocRef = doc(db, 'users', currentUser.uid);
+    await setDoc(
+      userDocRef,
+      {
+        telegramSettings: settings,
+        lastActiveAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+    return true;
+  } catch (err) {
+    console.warn('Failed to sync telegram settings to Firestore:', err);
+    return false;
   }
 }
